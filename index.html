@@ -291,6 +291,7 @@
             <div><div class="label">조회일까지의 총변동비</div><div class="value" id="totalVariableCost">₩0</div></div>
             <div><div class="label">월 고정비</div><div class="value" id="monthlyFixedCost">₩0</div></div>
             <div><div class="label">총이익</div><div class="value" id="afterFixedProfit">₩0</div></div>
+            <div><div class="label">BEP 매출</div><div class="value" id="bepRevenue">₩0</div></div>
             <div><div class="label">일평균 BEP 순이익</div><div class="value" id="dailyTarget">₩0</div></div>
           </div>
           <div class="note">1월 1일 데이터는 1월 2일에 확정 조회합니다. 화면의 기준일은 “조회 가능한 마지막 영업 데이터 날짜”입니다.</div>
@@ -542,6 +543,7 @@ mtd_achievement_rate =
       const mtdNet = enrichedRows.reduce((sum, row) => sum + row.dailyNet, 0);
       const mtdNetRate = revenue > 0 ? mtdNet / revenue : 0;
       const dailyTarget = fixedCost / daysInMonth;
+      const bepRevenue = mtdNetRate > 0 ? fixedCost / mtdNetRate : 0;
       const mtdTarget = fixedCost;
       const rate = mtdTarget > 0 ? mtdNet / mtdTarget : 0;
       const afterFixedProfit = mtdNet - fixedCost;
@@ -563,6 +565,7 @@ mtd_achievement_rate =
       document.getElementById("fMonthlyBep").textContent = won(fixedCost);
       document.getElementById("dailyTarget").textContent = won(dailyTarget);
       document.getElementById("monthlyFixedCost").textContent = won(fixedCost);
+      document.getElementById("bepRevenue").textContent = won(bepRevenue);
       document.getElementById("totalAdSpend").textContent = won(totalAdSpend);
       document.getElementById("totalRevenue").textContent = won(revenue);
       document.getElementById("totalContribution").textContent = won(commerceContribution);
