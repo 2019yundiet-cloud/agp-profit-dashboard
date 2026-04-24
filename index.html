@@ -1,0 +1,579 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AGP 순이익 달성률 대시보드</title>
+  <style>
+    :root {
+      --ink: #17181c;
+      --muted: #667085;
+      --line: #e6e8ef;
+      --panel: #ffffff;
+      --bg: #f5f6f8;
+      --soft: #f9fafb;
+      --red: #c24135;
+      --yellow: #b77b12;
+      --green: #20704b;
+      --blue: #285f9f;
+      --teal: #08756f;
+      --violet: #6d4bb5;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Pretendard", sans-serif;
+      letter-spacing: 0;
+    }
+    header {
+      background: #fff;
+      border-bottom: 1px solid var(--line);
+      padding: 22px 28px 16px;
+    }
+    main { padding: 20px 28px 52px; }
+    .wrap { max-width: 1320px; margin: 0 auto; }
+    .topline {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    h1 { margin: 0; font-size: 27px; line-height: 1.18; }
+    h2 { margin: 0 0 12px; font-size: 17px; }
+    .sub { margin-top: 7px; color: var(--muted); font-size: 13px; line-height: 1.45; }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      min-height: 28px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 5px 10px;
+      background: #fff;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 750;
+      white-space: nowrap;
+    }
+    .grid { display: grid; gap: 14px; }
+    .hero { grid-template-columns: 1.06fr .94fr; align-items: stretch; }
+    .kpis { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 17px;
+    }
+    section { margin-top: 14px; }
+    .label { color: var(--muted); font-size: 11px; font-weight: 800; text-transform: uppercase; }
+    .value { margin-top: 7px; font-size: 26px; font-weight: 850; line-height: 1.1; }
+    .note { margin-top: 8px; color: var(--muted); font-size: 12px; line-height: 1.45; }
+    .good { color: var(--green); }
+    .warn { color: var(--yellow); }
+    .bad { color: var(--red); }
+    .blue { color: var(--blue); }
+    .teal { color: var(--teal); }
+    .violet { color: var(--violet); }
+    .gauge-card {
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      gap: 18px;
+      align-items: center;
+      min-height: 330px;
+    }
+    .gauge {
+      width: 260px;
+      height: 260px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      background:
+        conic-gradient(var(--gauge-color) calc(var(--gauge-pct) * 1%), #edf0f5 0);
+      position: relative;
+    }
+    .gauge::before {
+      content: "";
+      position: absolute;
+      inset: 22px;
+      border-radius: 50%;
+      background: #fff;
+      box-shadow: inset 0 0 0 1px var(--line);
+    }
+    .gauge-inner {
+      position: relative;
+      text-align: center;
+      padding: 20px;
+    }
+    .gauge-num { font-size: 44px; font-weight: 900; line-height: 1; }
+    .gauge-caption { margin-top: 8px; color: var(--muted); font-size: 12px; font-weight: 750; }
+    .formula {
+      display: grid;
+      gap: 8px;
+    }
+    .formula-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 14px;
+      align-items: center;
+      border-bottom: 1px solid var(--line);
+      padding: 8px 0;
+      font-size: 13px;
+    }
+    .formula-row strong { font-size: 15px; }
+    .bridge {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      align-items: stretch;
+    }
+    .bridge-step {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--soft);
+      padding: 14px;
+      min-width: 0;
+    }
+    .bridge-step .value { overflow-wrap: anywhere; }
+    .bridge-op {
+      margin-top: 9px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.4;
+    }
+    .inputs {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 12px;
+    }
+    input {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px 11px;
+      font-size: 14px;
+      background: var(--soft);
+      color: var(--ink);
+    }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th, td { padding: 10px 8px; border-bottom: 1px solid var(--line); text-align: right; }
+    th:first-child, td:first-child { text-align: left; }
+    th { color: var(--muted); font-size: 11px; font-weight: 850; }
+    .bar-row {
+      display: grid;
+      grid-template-columns: 176px 1fr 112px;
+      gap: 12px;
+      align-items: center;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--line);
+      font-size: 13px;
+    }
+    .track { height: 10px; background: #edf0f5; border-radius: 999px; overflow: hidden; }
+    .fill { height: 100%; border-radius: 999px; background: var(--blue); }
+    .profit-bars {
+      display: grid;
+      gap: 8px;
+      margin-top: 12px;
+    }
+    .profit-bar {
+      display: grid;
+      grid-template-columns: 76px 1fr 110px 92px;
+      gap: 10px;
+      align-items: center;
+      font-size: 12px;
+    }
+    .profit-track {
+      height: 16px;
+      background: #edf0f5;
+      border-radius: 999px;
+      overflow: hidden;
+      position: relative;
+    }
+    .profit-fill {
+      height: 100%;
+      min-width: 2px;
+      border-radius: 999px;
+      background: var(--green);
+    }
+    .profit-fill.loss { background: var(--red); }
+    .sql {
+      background: #101828;
+      color: #e7edf8;
+      border-radius: 8px;
+      padding: 14px;
+      overflow: auto;
+      font-size: 12px;
+      line-height: 1.55;
+    }
+    .mini {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 12px;
+    }
+    .mini > div {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 11px;
+      background: var(--soft);
+      min-width: 0;
+    }
+    .mini .value { font-size: 21px; overflow-wrap: anywhere; }
+    @media (max-width: 980px) {
+      header, main { padding-left: 16px; padding-right: 16px; }
+      .hero, .kpis, .two, .three, .inputs, .mini { grid-template-columns: 1fr; }
+      .bridge { grid-template-columns: 1fr; }
+      .gauge-card { grid-template-columns: 1fr; }
+      .gauge { width: min(260px, 100%); height: auto; aspect-ratio: 1; margin: 0 auto; }
+      .bar-row { grid-template-columns: 1fr; gap: 6px; }
+      .profit-bar { grid-template-columns: 1fr; gap: 5px; }
+      table { font-size: 12px; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <div class="topline">
+        <div>
+          <h1>AGP 순이익 달성률 대시보드</h1>
+          <div class="sub">Supabase의 자사몰/네이버 일간 매출과 메타/네이버 광고비를 1원 단위로 합산해 “매출에서 비용을 빼면 얼마가 남는지”를 보는 공유용 화면입니다.</div>
+        </div>
+        <span class="badge">D+1 확정 데이터 · 설계 기준 2026-04-24</span>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div class="wrap">
+      <section class="grid hero">
+        <div class="card gauge-card">
+          <div class="gauge" id="gauge">
+            <div class="gauge-inner">
+              <div class="gauge-num" id="gaugeNum">0%</div>
+              <div class="gauge-caption" id="gaugeStatus">계산 대기</div>
+            </div>
+          </div>
+          <div>
+            <h2>MTD BEP 달성률</h2>
+            <div class="formula">
+              <div class="formula-row"><span>총 매출</span><strong id="fRevenue">₩0</strong></div>
+              <div class="formula-row"><span>- 총 변동비</span><strong id="fVariableCost">₩0</strong></div>
+              <div class="formula-row"><span>- 총 광고비</span><strong id="fTotalAdSpend">₩0</strong></div>
+              <div class="formula-row"><span>= 총 순수익</span><strong id="fNetProfit">₩0</strong></div>
+              <div class="formula-row"><span>MTD 순수익률</span><strong id="fNetRate">0.0%</strong></div>
+              <div class="formula-row"><span>조회일까지 BEP 목표</span><strong id="fMtdTarget">₩0</strong></div>
+              <div class="formula-row"><span>월간 BEP 목표</span><strong id="fMonthlyBep">₩0</strong></div>
+            </div>
+            <div class="note">MTD는 이번 달 1일부터 데이터 기준일까지의 누적값입니다. 게이지는 순수익률이 아니라 BEP 목표 대비 달성률입니다.</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>조회일 입력</h2>
+          <div class="inputs">
+            <label><div class="label">데이터 기준일</div><input id="queryDayInput" type="number" value="24" min="1" max="30" step="1"></label>
+            <label><div class="label">월 일수</div><input id="daysInput" type="number" value="30" min="28" max="31" step="1"></label>
+            <label><div class="label">월 고정비</div><input id="fixedInput" type="number" value="23064879" min="0" step="100000"></label>
+            <label><div class="label">일별 광고비</div><input value="매일 차감" disabled></label>
+            <label><div class="label">데이터 확정</div><input value="D+1 조회" disabled></label>
+          </div>
+          <div class="mini">
+            <div><div class="label">총 광고비</div><div class="value" id="totalAdSpend">₩0</div></div>
+            <div><div class="label">총 매출</div><div class="value" id="totalRevenue">₩0</div></div>
+            <div><div class="label">총 변동비</div><div class="value" id="totalVariableCost">₩0</div></div>
+            <div><div class="label">그래서 남은 이익</div><div class="value" id="mtdNet">₩0</div></div>
+            <div><div class="label">일평균 BEP 순이익</div><div class="value" id="dailyTarget">₩0</div></div>
+            <div><div class="label">월간 BEP 순이익</div><div class="value" id="monthlyBep">₩0</div></div>
+          </div>
+          <div class="note">1월 1일 데이터는 1월 2일에 확정 조회합니다. 화면의 기준일은 “조회 가능한 마지막 영업 데이터 날짜”입니다.</div>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>1일부터 데이터 기준일까지, 그래서 이익은?</h2>
+        <div class="bridge">
+          <div class="bridge-step">
+            <div class="label">총 매출</div>
+            <div class="value" id="bridgeRevenue">₩0</div>
+            <div class="bridge-op">자사몰 + 네이버 결제 매출</div>
+          </div>
+          <div class="bridge-step">
+            <div class="label">- 총 변동비</div>
+            <div class="value bad" id="bridgeVariable">₩0</div>
+            <div class="bridge-op">제품원가 + 부가세, PG, 물류, 채널수수료</div>
+          </div>
+          <div class="bridge-step">
+            <div class="label">- 총 광고비</div>
+            <div class="value bad" id="bridgeAds">₩0</div>
+            <div class="bridge-op">Meta + Naver SearchAd 매일 차감</div>
+          </div>
+          <div class="bridge-step">
+            <div class="label">= 남은 순수익</div>
+            <div class="value good" id="bridgeProfit">₩0</div>
+            <div class="bridge-op" id="bridgeProfitNote">BEP 목표 대비 계산 중</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>일별 순수익 / 1일 BEP 달성률</h2>
+        <div class="note">각 막대는 `일 매출 - 일 변동비 - 일 광고비`입니다. 오른쪽 %는 그날의 BEP 순이익 목표 대비 달성률입니다.</div>
+        <div class="profit-bars" id="dailyProfitBars"></div>
+      </section>
+
+      <section class="grid kpis">
+        <div class="card">
+          <div class="label">월 고정비</div>
+          <div class="value">₩23,064,879</div>
+          <div class="note">월간 BEP 순이익 목표. 조회일까지 목표는 일할 계산.</div>
+        </div>
+        <div class="card">
+          <div class="label">운영 변동비율</div>
+          <div class="value teal">22.0%</div>
+          <div class="note">제품원가는 별도. 광고비는 매일 직접 차감하므로 마케팅비는 1.0%만 반영.</div>
+        </div>
+        <div class="card">
+          <div class="label">데이터 기반</div>
+          <div class="value violet">Supabase</div>
+          <div class="note">운영 기준은 Supabase 뷰. 현재 HTML은 연결 전 예시 데이터.</div>
+        </div>
+        <div class="card">
+          <div class="label">차감 광고비</div>
+          <div class="value violet">Meta + Naver</div>
+          <div class="note">`stg_ads_daily`의 `meta`, `naver_searchad` 지출 합산</div>
+        </div>
+        <div class="card">
+          <div class="label">네이버 광고 기준</div>
+          <div class="value blue">salesAmt</div>
+          <div class="note">예산/예상비용이 아니라 SearchAd 실제 지출 기준</div>
+        </div>
+      </section>
+
+      <section class="grid two">
+        <div class="card">
+          <h2>비용 구조</h2>
+          <div id="fixedBars"></div>
+        </div>
+        <div class="card">
+          <h2>변동비 룰</h2>
+          <table>
+            <thead><tr><th>항목</th><th>비율</th><th>상태</th></tr></thead>
+            <tbody id="varRows"></tbody>
+          </table>
+          <div class="note">운영 변동비 22.0%는 제품원가와 광고비를 제외한 룰입니다. 실제 손익은 Supabase 주문 파이프라인의 SKU 원가, 수수료, 배송비 실측값을 우선합니다.</div>
+        </div>
+      </section>
+
+      <section class="grid two">
+        <div class="card">
+          <h2>Supabase 소비 뷰</h2>
+          <table>
+            <thead><tr><th>뷰</th><th>역할</th></tr></thead>
+            <tbody>
+              <tr><td>mart_daily_profit_gauge_source</td><td>자사몰/네이버 매출, 변동비, 광고비 일자 정렬</td></tr>
+              <tr><td>mart_daily_profit_gauge</td><td>일간 순수익, MTD 목표와 달성률 계산</td></tr>
+              <tr><td>mart_daily_profit_gauge_latest</td><td>대시보드 첫 화면 최신 1행</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="card">
+          <h2>핵심 산식</h2>
+          <pre class="sql">daily_net_profit =
+  payment_amount
+  - variable_cost
+  - meta_ad_spend
+  - naver_searchad_spend
+
+mtd_achievement_rate =
+  mtd_net_profit / mtd_bep_target_profit</pre>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>제품별 부가세 제외 원가</h2>
+        <table>
+          <thead><tr><th>제품</th><th>원가</th></tr></thead>
+          <tbody id="cogsRows"></tbody>
+        </table>
+      </section>
+    </div>
+  </main>
+
+  <script>
+    const fixedCosts = [
+      ["인건비 (준호+세영+보미)", 11350046, 49.2],
+      ["금융 (대출이자)", 4000000, 17.3],
+      ["차량 (리스 3대)", 2414833, 10.5],
+      ["사무실 (마곡 임대+관리비)", 1600000, 6.9],
+      ["복지 (복리후생 카드비)", 1470000, 6.4],
+      ["전문서비스 (경리/노무/세무)", 1230000, 5.3],
+      ["AI 서비스", 1000000, 4.3]
+    ];
+    const variableCosts = [
+      ["부가세", 10.0, "확정"],
+      ["포장재비", 0.0, "확정"],
+      ["반품/교환", 0.0, "확정"],
+      ["카드/PG 수수료", 3.5, "추정"],
+      ["마케팅비", 1.0, "추정"],
+      ["물류비", 1.5, "추정"],
+      ["채널 판매수수료", 5.0, "추정"],
+      ["기타", 1.0, "추정"],
+      ["운영 변동비 합계", 22.0, "혼합"]
+    ];
+    const cogs = [
+      ["윤식단 단백밥 그릴드함박", 3140],
+      ["윤식단 단백밥 단짠불고기", 2935],
+      ["윤식단 단백밥 오리지널 [L]", 2969],
+      ["윤식단 단백밥 오리지널 [S]", 2461],
+      ["윤식단 단백밥 직화제육", 3152],
+      ["윤식단 단백밥 훈제오리", 3090],
+      ["밸런시 마라 280g", 7410],
+      ["밸런시 시그니처 280g", 6530],
+      ["밸런시 커리 280g", 7410],
+      ["밸런시 토마토 280g", 7720],
+      ["윤식단 순수단백 저당 제육볶음", 1180],
+      ["윤식단 함박스테이크 150g (7개입)", 1500],
+      ["윤식단 닭가슴살 100g (10개입)", 780],
+      ["윤식단 닭가슴살 150g (7개입)", 1170],
+      ["데리야끼 소스 40g", 231],
+      ["바베큐 소스 40g", 327],
+      ["볼케이노 소스 40g", 285],
+      ["블랙알리오 소스 40g", 231],
+      ["양념치킨 소스 40g", 225]
+    ];
+    const won = n => "₩" + Math.round(n).toLocaleString("ko-KR");
+    const percent = n => (n * 100).toFixed(1) + "%";
+    const read = id => Number(document.getElementById(id).value || 0);
+    const productCostRateForDemo = 0.40;
+    const operatingVariableRate = 0.22;
+    const monthRows = [
+      { day: 1, revenue: 3260000, imweb: 742000, naver: 318000, meta: 410000, naverAd: 52000 },
+      { day: 2, revenue: 3860000, imweb: 864000, naver: 392000, meta: 438000, naverAd: 64000 },
+      { day: 3, revenue: 2990000, imweb: 681000, naver: 287000, meta: 405000, naverAd: 59000 },
+      { day: 4, revenue: 4810000, imweb: 1120000, naver: 443000, meta: 512000, naverAd: 73000 },
+      { day: 5, revenue: 4050000, imweb: 954000, naver: 361000, meta: 498000, naverAd: 67000 },
+      { day: 6, revenue: 2580000, imweb: 588000, naver: 251000, meta: 392000, naverAd: 48000 },
+      { day: 7, revenue: 5260000, imweb: 1204000, naver: 508000, meta: 620000, naverAd: 86000 },
+      { day: 8, revenue: 5760000, imweb: 1338000, naver: 536000, meta: 642000, naverAd: 91000 },
+      { day: 9, revenue: 3790000, imweb: 887000, naver: 344000, meta: 501000, naverAd: 77000 },
+      { day: 10, revenue: 4410000, imweb: 1021000, naver: 412000, meta: 533000, naverAd: 82000 },
+      { day: 11, revenue: 3040000, imweb: 697000, naver: 291000, meta: 454000, naverAd: 61000 },
+      { day: 12, revenue: 4990000, imweb: 1156000, naver: 463000, meta: 571000, naverAd: 85000 },
+      { day: 13, revenue: 3370000, imweb: 759000, naver: 335000, meta: 487000, naverAd: 69000 },
+      { day: 14, revenue: 5890000, imweb: 1389000, naver: 522000, meta: 691000, naverAd: 98000 },
+      { day: 15, revenue: 5420000, imweb: 1265000, naver: 498000, meta: 638000, naverAd: 93000 },
+      { day: 16, revenue: 3970000, imweb: 914000, naver: 376000, meta: 545000, naverAd: 84000 },
+      { day: 17, revenue: 4710000, imweb: 1088000, naver: 441000, meta: 583000, naverAd: 88000 },
+      { day: 18, revenue: 2710000, imweb: 617000, naver: 264000, meta: 462000, naverAd: 71000 },
+      { day: 19, revenue: 6380000, imweb: 1492000, naver: 582000, meta: 720000, naverAd: 106000 },
+      { day: 20, revenue: 4310000, imweb: 1008000, naver: 409000, meta: 596000, naverAd: 91000 },
+      { day: 21, revenue: 5840000, imweb: 1377000, naver: 517000, meta: 674000, naverAd: 99000 },
+      { day: 22, revenue: 5502000, imweb: 1253777, naver: 496775, meta: 610396, naverAd: 85000 },
+      { day: 23, revenue: 5080000, imweb: 919318, naver: 716179, meta: 566000, naverAd: 78000 },
+      { day: 24, revenue: 6050000, imweb: 1432000, naver: 544000, meta: 652000, naverAd: 94000 }
+    ];
+
+    document.getElementById("fixedBars").innerHTML = fixedCosts.map(([name, amount, share]) => `
+      <div class="bar-row">
+        <div>${name}</div>
+        <div class="track"><div class="fill" style="width:${share}%"></div></div>
+        <div>${won(amount)} <span class="note">${share.toFixed(1)}%</span></div>
+      </div>
+    `).join("");
+
+    document.getElementById("varRows").innerHTML = variableCosts.map(([name, rate, status]) => `
+      <tr>
+        <td>${name}</td>
+        <td>${rate.toFixed(1)}%</td>
+        <td>${status}</td>
+      </tr>
+    `).join("");
+
+    document.getElementById("cogsRows").innerHTML = cogs.map(([name, amount]) => `
+      <tr><td>${name}</td><td>${won(amount)}</td></tr>
+    `).join("");
+
+    function gaugeColor(rate) {
+      if (rate >= 1.2) return ["var(--blue)", "초과달성"];
+      if (rate >= 1.0) return ["var(--green)", "정상"];
+      if (rate >= 0.7) return ["var(--yellow)", "주의"];
+      return ["var(--red)", "위험"];
+    }
+
+    function updateGauge() {
+      const fixedCost = read("fixedInput");
+      const daysInMonth = Math.min(Math.max(read("daysInput"), 28), 31);
+      const queryDay = Math.min(Math.max(read("queryDayInput"), 1), daysInMonth);
+      const rows = monthRows.filter(row => row.day <= queryDay);
+      const enrichedRows = rows.map(row => ({
+        ...row,
+        adSpend: row.meta + row.naverAd,
+        variableCost: row.revenue * (productCostRateForDemo + operatingVariableRate),
+        dailyNet: row.revenue - (row.revenue * (productCostRateForDemo + operatingVariableRate)) - row.meta - row.naverAd
+      }));
+      const revenue = enrichedRows.reduce((sum, row) => sum + row.revenue, 0);
+      const meta = enrichedRows.reduce((sum, row) => sum + row.meta, 0);
+      const naverAd = enrichedRows.reduce((sum, row) => sum + row.naverAd, 0);
+      const totalAdSpend = meta + naverAd;
+      const totalVariableCost = enrichedRows.reduce((sum, row) => sum + row.variableCost, 0);
+      const mtdNet = enrichedRows.reduce((sum, row) => sum + row.dailyNet, 0);
+      const mtdNetRate = revenue > 0 ? mtdNet / revenue : 0;
+      const dailyTarget = fixedCost / daysInMonth;
+      const mtdTarget = dailyTarget * queryDay;
+      const rate = mtdTarget > 0 ? mtdNet / mtdTarget : 0;
+      const capped = Math.max(0, Math.min(rate * 100, 200));
+      const [color, status] = gaugeColor(rate);
+      document.getElementById("gauge").style.setProperty("--gauge-color", color);
+      document.getElementById("gauge").style.setProperty("--gauge-pct", capped / 2);
+      document.getElementById("gaugeNum").textContent = percent(rate);
+      document.getElementById("gaugeStatus").textContent = `${status} · ${queryDay}일 누적`;
+      document.getElementById("fRevenue").textContent = won(revenue);
+      document.getElementById("fVariableCost").textContent = won(totalVariableCost);
+      document.getElementById("fTotalAdSpend").textContent = won(totalAdSpend);
+      document.getElementById("fNetProfit").textContent = won(mtdNet);
+      document.getElementById("fNetRate").textContent = percent(mtdNetRate);
+      document.getElementById("fMtdTarget").textContent = won(mtdTarget);
+      document.getElementById("fMonthlyBep").textContent = won(fixedCost);
+      document.getElementById("dailyTarget").textContent = won(dailyTarget);
+      document.getElementById("monthlyBep").textContent = won(fixedCost);
+      document.getElementById("totalAdSpend").textContent = won(totalAdSpend);
+      document.getElementById("totalRevenue").textContent = won(revenue);
+      document.getElementById("totalVariableCost").textContent = won(totalVariableCost);
+      document.getElementById("mtdNet").textContent = won(mtdNet);
+      document.getElementById("mtdNet").className = "value " + (mtdNet >= 0 ? "good" : "bad");
+      document.getElementById("bridgeRevenue").textContent = won(revenue);
+      document.getElementById("bridgeVariable").textContent = won(totalVariableCost);
+      document.getElementById("bridgeAds").textContent = won(totalAdSpend);
+      document.getElementById("bridgeProfit").textContent = won(mtdNet);
+      document.getElementById("bridgeProfit").className = "value " + (mtdNet >= 0 ? "good" : "bad");
+      document.getElementById("bridgeProfitNote").textContent = `${queryDay}일까지 BEP 목표 ${won(mtdTarget)} 대비 ${percent(rate)} 달성`;
+      document.getElementById("dailyProfitBars").innerHTML = enrichedRows.map(row => {
+        const dailyBepRate = dailyTarget > 0 ? row.dailyNet / dailyTarget : 0;
+        const width = Math.max(Math.min(Math.abs(dailyBepRate) * 100, 160), 2);
+        const cls = row.dailyNet < 0 ? "profit-fill loss" : "profit-fill";
+        const label = `${row.day}일`;
+        return `
+          <div class="profit-bar">
+            <div>${label}</div>
+            <div class="profit-track" title="광고비 ${won(row.adSpend)} 차감 후">
+              <div class="${cls}" style="width:${width}%"></div>
+            </div>
+            <div>${won(row.dailyNet)}</div>
+            <div>${percent(dailyBepRate)}</div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    ["queryDayInput", "daysInput", "fixedInput"].forEach(id => {
+      document.getElementById(id).addEventListener("input", updateGauge);
+    });
+    updateGauge();
+  </script>
+</body>
+</html>
