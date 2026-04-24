@@ -241,7 +241,7 @@
       <div class="topline">
         <div>
           <h1>AGP 순이익 달성률 대시보드</h1>
-          <div class="sub">Supabase의 자사몰/네이버 일간 매출과 메타/네이버 광고비를 1원 단위로 합산해 “매출에서 비용을 빼면 얼마가 남는지”를 보는 공유용 화면입니다.</div>
+          <div class="sub">Supabase의 자사몰/네이버 일간 공헌이익과 메타/네이버 광고비를 1원 단위로 합산해 월 고정비 커버 여부를 보는 공유용 화면입니다.</div>
         </div>
         <span class="badge">D+1 확정 데이터 · 설계 기준 2026-04-24</span>
       </div>
@@ -261,11 +261,12 @@
           <div>
             <h2>MTD BEP 달성률</h2>
             <div class="formula">
-              <div class="formula-row"><span>총 매출</span><strong id="fRevenue">₩0</strong></div>
-              <div class="formula-row"><span>- 총 변동비</span><strong id="fVariableCost">₩0</strong></div>
+              <div class="formula-row"><span>자사몰 공헌이익</span><strong id="fImwebContribution">₩0</strong></div>
+              <div class="formula-row"><span>+ 네이버 공헌이익</span><strong id="fNaverContribution">₩0</strong></div>
+              <div class="formula-row"><span>= 총 공헌이익</span><strong id="fCommerceContribution">₩0</strong></div>
               <div class="formula-row"><span>- 총 광고비</span><strong id="fTotalAdSpend">₩0</strong></div>
               <div class="formula-row"><span>= 고정비 전 순수익</span><strong id="fNetProfit">₩0</strong></div>
-              <div class="formula-row"><span>- 조회일까지 고정비</span><strong id="fMtdTarget">₩0</strong></div>
+              <div class="formula-row"><span>- 월 고정비 전체</span><strong id="fMtdTarget">₩0</strong></div>
               <div class="formula-row"><span>= 고정비 차감 후 이익</span><strong id="fAfterFixed">₩0</strong></div>
               <div class="formula-row"><span>MTD 순수익률</span><strong id="fNetRate">0.0%</strong></div>
               <div class="formula-row"><span>월간 BEP 목표</span><strong id="fMonthlyBep">₩0</strong></div>
@@ -286,7 +287,7 @@
           <div class="mini">
             <div><div class="label">총 광고비</div><div class="value" id="totalAdSpend">₩0</div></div>
             <div><div class="label">총 매출</div><div class="value" id="totalRevenue">₩0</div></div>
-            <div><div class="label">총 변동비</div><div class="value" id="totalVariableCost">₩0</div></div>
+            <div><div class="label">총 공헌이익</div><div class="value" id="totalContribution">₩0</div></div>
             <div><div class="label">고정비 전 순수익</div><div class="value" id="mtdNet">₩0</div></div>
             <div><div class="label">고정비 차감 후 이익</div><div class="value" id="afterFixedProfit">₩0</div></div>
             <div><div class="label">일평균 BEP 순이익</div><div class="value" id="dailyTarget">₩0</div></div>
@@ -302,12 +303,12 @@
           <div class="bridge-step">
             <div class="label">총 매출</div>
             <div class="value" id="bridgeRevenue">₩0</div>
-            <div class="bridge-op">자사몰 + 네이버 결제 매출</div>
+            <div class="bridge-op">Supabase 자사몰 + 네이버 결제 매출 참고값</div>
           </div>
           <div class="bridge-step">
-            <div class="label">- 총 변동비</div>
-            <div class="value bad" id="bridgeVariable">₩0</div>
-            <div class="bridge-op">제품원가 + 부가세, PG, 물류, 채널수수료</div>
+            <div class="label">총 공헌이익</div>
+            <div class="value good" id="bridgeContribution">₩0</div>
+            <div class="bridge-op">자사몰 공헌이익 + 네이버 공헌이익</div>
           </div>
           <div class="bridge-step">
             <div class="label">- 총 광고비</div>
@@ -320,9 +321,9 @@
             <div class="bridge-op" id="bridgeProfitNote">BEP 목표 대비 계산 중</div>
           </div>
           <div class="bridge-step">
-            <div class="label">- 조회일까지 고정비</div>
+            <div class="label">- 월 고정비 전체</div>
             <div class="value bad" id="bridgeFixed">₩0</div>
-            <div class="bridge-op">월 고정비를 데이터 기준일까지 일할 차감</div>
+            <div class="bridge-op">월 BEP 기준 전체 고정비 차감</div>
           </div>
           <div class="bridge-step">
             <div class="label">= 최종 이익</div>
@@ -334,7 +335,7 @@
 
       <section class="card">
         <h2>일별 순수익 / 1일 BEP 달성률</h2>
-        <div class="note">각 막대는 `일 매출 - 일 변동비 - 일 광고비`입니다. 오른쪽 %는 그날의 BEP 순이익 목표 대비 달성률입니다.</div>
+        <div class="note">각 막대는 `자사몰 공헌이익 + 네이버 공헌이익 - 메타/네이버 광고비`입니다. 오른쪽 %는 그날의 BEP 순이익 목표 대비 달성률입니다.</div>
         <div class="profit-bars" id="dailyProfitBars"></div>
       </section>
 
@@ -342,7 +343,7 @@
         <div class="card">
           <div class="label">월 고정비</div>
           <div class="value">₩23,064,879</div>
-          <div class="note">월간 BEP 순이익 목표. 조회일까지 목표는 일할 계산.</div>
+          <div class="note">월간 BEP 순이익 목표. 고정비 차감 후 이익은 월 고정비 전체를 차감.</div>
         </div>
         <div class="card">
           <div class="label">운영 변동비율</div>
@@ -352,12 +353,12 @@
         <div class="card">
           <div class="label">데이터 기반</div>
           <div class="value violet">Supabase</div>
-          <div class="note">운영 기준은 Supabase 뷰. 현재 HTML은 연결 전 예시 데이터.</div>
+          <div class="note">운영 기준은 `mart_daily_profit_gauge_latest_closed`. 현재 HTML은 Supabase 뷰 형태의 예시 데이터.</div>
         </div>
         <div class="card">
           <div class="label">차감 광고비</div>
           <div class="value violet">Meta + Naver</div>
-          <div class="note">`stg_ads_daily`의 `meta`, `naver_searchad` 지출 합산</div>
+          <div class="note">`stg_ads_daily`의 `meta`, `naver_searchad` 지출 합산. 네이버는 SearchAd `salesAmt` 기준.</div>
         </div>
         <div class="card">
           <div class="label">네이버 광고 기준</div>
@@ -461,8 +462,6 @@ mtd_achievement_rate =
     const won = n => "₩" + Math.round(n).toLocaleString("ko-KR");
     const percent = n => (n * 100).toFixed(1) + "%";
     const read = id => Number(document.getElementById(id).value || 0);
-    const productCostRateForDemo = 0.40;
-    const operatingVariableRate = 0.22;
     const monthRows = [
       { day: 1, revenue: 3260000, imweb: 742000, naver: 318000, meta: 410000, naverAd: 52000 },
       { day: 2, revenue: 3860000, imweb: 864000, naver: 392000, meta: 438000, naverAd: 64000 },
@@ -525,28 +524,31 @@ mtd_achievement_rate =
       const enrichedRows = rows.map(row => ({
         ...row,
         adSpend: row.meta + row.naverAd,
-        variableCost: row.revenue * (productCostRateForDemo + operatingVariableRate),
-        dailyNet: row.revenue - (row.revenue * (productCostRateForDemo + operatingVariableRate)) - row.meta - row.naverAd
+        commerceContribution: row.imweb + row.naver,
+        dailyNet: row.imweb + row.naver - row.meta - row.naverAd
       }));
       const revenue = enrichedRows.reduce((sum, row) => sum + row.revenue, 0);
+      const imwebContribution = enrichedRows.reduce((sum, row) => sum + row.imweb, 0);
+      const naverContribution = enrichedRows.reduce((sum, row) => sum + row.naver, 0);
+      const commerceContribution = imwebContribution + naverContribution;
       const meta = enrichedRows.reduce((sum, row) => sum + row.meta, 0);
       const naverAd = enrichedRows.reduce((sum, row) => sum + row.naverAd, 0);
       const totalAdSpend = meta + naverAd;
-      const totalVariableCost = enrichedRows.reduce((sum, row) => sum + row.variableCost, 0);
       const mtdNet = enrichedRows.reduce((sum, row) => sum + row.dailyNet, 0);
       const mtdNetRate = revenue > 0 ? mtdNet / revenue : 0;
       const dailyTarget = fixedCost / daysInMonth;
-      const mtdTarget = dailyTarget * queryDay;
+      const mtdTarget = fixedCost;
       const rate = mtdTarget > 0 ? mtdNet / mtdTarget : 0;
-      const afterFixedProfit = mtdNet - mtdTarget;
+      const afterFixedProfit = mtdNet - fixedCost;
       const capped = Math.max(0, Math.min(rate * 100, 200));
       const [color, status] = gaugeColor(rate);
       document.getElementById("gauge").style.setProperty("--gauge-color", color);
       document.getElementById("gauge").style.setProperty("--gauge-pct", capped / 2);
       document.getElementById("gaugeNum").textContent = percent(rate);
       document.getElementById("gaugeStatus").textContent = `${status} · ${queryDay}일 누적`;
-      document.getElementById("fRevenue").textContent = won(revenue);
-      document.getElementById("fVariableCost").textContent = won(totalVariableCost);
+      document.getElementById("fImwebContribution").textContent = won(imwebContribution);
+      document.getElementById("fNaverContribution").textContent = won(naverContribution);
+      document.getElementById("fCommerceContribution").textContent = won(commerceContribution);
       document.getElementById("fTotalAdSpend").textContent = won(totalAdSpend);
       document.getElementById("fNetProfit").textContent = won(mtdNet);
       document.getElementById("fMtdTarget").textContent = won(mtdTarget);
@@ -558,21 +560,21 @@ mtd_achievement_rate =
       document.getElementById("monthlyBep").textContent = won(fixedCost);
       document.getElementById("totalAdSpend").textContent = won(totalAdSpend);
       document.getElementById("totalRevenue").textContent = won(revenue);
-      document.getElementById("totalVariableCost").textContent = won(totalVariableCost);
+      document.getElementById("totalContribution").textContent = won(commerceContribution);
       document.getElementById("mtdNet").textContent = won(mtdNet);
       document.getElementById("mtdNet").className = "value " + (mtdNet >= 0 ? "good" : "bad");
       document.getElementById("afterFixedProfit").textContent = won(afterFixedProfit);
       document.getElementById("afterFixedProfit").className = "value " + (afterFixedProfit >= 0 ? "good" : "bad");
       document.getElementById("bridgeRevenue").textContent = won(revenue);
-      document.getElementById("bridgeVariable").textContent = won(totalVariableCost);
+      document.getElementById("bridgeContribution").textContent = won(commerceContribution);
       document.getElementById("bridgeAds").textContent = won(totalAdSpend);
       document.getElementById("bridgeProfit").textContent = won(mtdNet);
       document.getElementById("bridgeProfit").className = "value " + (mtdNet >= 0 ? "good" : "bad");
-      document.getElementById("bridgeProfitNote").textContent = `${queryDay}일까지 BEP 목표 ${won(mtdTarget)} 대비 ${percent(rate)} 달성`;
-      document.getElementById("bridgeFixed").textContent = won(mtdTarget);
+      document.getElementById("bridgeProfitNote").textContent = `월간 BEP 목표 ${won(fixedCost)} 대비 ${percent(rate)} 달성`;
+      document.getElementById("bridgeFixed").textContent = won(fixedCost);
       document.getElementById("bridgeFinalProfit").textContent = won(afterFixedProfit);
       document.getElementById("bridgeFinalProfit").className = "value " + (afterFixedProfit >= 0 ? "good" : "bad");
-      document.getElementById("bridgeFinalProfitNote").textContent = `고정비 일할 차감 후 ${afterFixedProfit >= 0 ? "흑자" : "적자"}`;
+      document.getElementById("bridgeFinalProfitNote").textContent = `월 고정비 전체 차감 후 ${afterFixedProfit >= 0 ? "흑자" : "적자"}`;
       document.getElementById("dailyProfitBars").innerHTML = enrichedRows.map(row => {
         const dailyBepRate = dailyTarget > 0 ? row.dailyNet / dailyTarget : 0;
         const width = Math.max(Math.min(Math.abs(dailyBepRate) * 100, 160), 2);
