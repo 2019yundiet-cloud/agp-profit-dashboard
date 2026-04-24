@@ -278,7 +278,7 @@
         <div class="card">
           <h2>조회일 입력</h2>
           <div class="inputs">
-            <label><div class="label">데이터 기준일</div><input id="queryDayInput" type="number" value="24" min="1" max="30" step="1"></label>
+            <label><div class="label">데이터 기준일</div><input id="queryDayInput" type="number" value="23" min="1" max="30" step="1"></label>
             <label><div class="label">월 일수</div><input id="daysInput" type="number" value="30" min="28" max="31" step="1"></label>
             <label><div class="label">월 고정비</div><input id="fixedInput" type="number" value="23064879" min="0" step="100000"></label>
             <label><div class="label">일별 광고비</div><input value="매일 차감" disabled></label>
@@ -353,7 +353,7 @@
         <div class="card">
           <div class="label">데이터 기반</div>
           <div class="value violet">Supabase</div>
-          <div class="note">운영 기준은 `mart_daily_profit_gauge_latest_closed`. 현재 HTML은 Supabase 뷰 형태의 예시 데이터.</div>
+          <div class="note">운영 기준은 `mart_daily_profit_gauge_latest_closed`. 현재 화면은 Supabase 2026-04-23 확정 스냅샷.</div>
         </div>
         <div class="card">
           <div class="label">차감 광고비</div>
@@ -361,9 +361,9 @@
           <div class="note">`stg_ads_daily`의 `meta`, `naver_searchad` 지출 합산. 네이버는 SearchAd `salesAmt` 기준.</div>
         </div>
         <div class="card">
-          <div class="label">네이버 광고 기준</div>
-          <div class="value blue">salesAmt</div>
-          <div class="note">예산/예상비용이 아니라 SearchAd 실제 지출 기준</div>
+          <div class="label">데이터 품질</div>
+          <div class="value bad">SearchAd 확인</div>
+          <div class="note">Supabase 기준 네이버 검색광고비 미적재일은 0원으로 표시됨</div>
         </div>
       </section>
 
@@ -463,30 +463,29 @@ mtd_achievement_rate =
     const percent = n => (n * 100).toFixed(1) + "%";
     const read = id => Number(document.getElementById(id).value || 0);
     const monthRows = [
-      { day: 1, revenue: 3260000, imweb: 742000, naver: 318000, meta: 410000, naverAd: 52000 },
-      { day: 2, revenue: 3860000, imweb: 864000, naver: 392000, meta: 438000, naverAd: 64000 },
-      { day: 3, revenue: 2990000, imweb: 681000, naver: 287000, meta: 405000, naverAd: 59000 },
-      { day: 4, revenue: 4810000, imweb: 1120000, naver: 443000, meta: 512000, naverAd: 73000 },
-      { day: 5, revenue: 4050000, imweb: 954000, naver: 361000, meta: 498000, naverAd: 67000 },
-      { day: 6, revenue: 2580000, imweb: 588000, naver: 251000, meta: 392000, naverAd: 48000 },
-      { day: 7, revenue: 5260000, imweb: 1204000, naver: 508000, meta: 620000, naverAd: 86000 },
-      { day: 8, revenue: 5760000, imweb: 1338000, naver: 536000, meta: 642000, naverAd: 91000 },
-      { day: 9, revenue: 3790000, imweb: 887000, naver: 344000, meta: 501000, naverAd: 77000 },
-      { day: 10, revenue: 4410000, imweb: 1021000, naver: 412000, meta: 533000, naverAd: 82000 },
-      { day: 11, revenue: 3040000, imweb: 697000, naver: 291000, meta: 454000, naverAd: 61000 },
-      { day: 12, revenue: 4990000, imweb: 1156000, naver: 463000, meta: 571000, naverAd: 85000 },
-      { day: 13, revenue: 3370000, imweb: 759000, naver: 335000, meta: 487000, naverAd: 69000 },
-      { day: 14, revenue: 5890000, imweb: 1389000, naver: 522000, meta: 691000, naverAd: 98000 },
-      { day: 15, revenue: 5420000, imweb: 1265000, naver: 498000, meta: 638000, naverAd: 93000 },
-      { day: 16, revenue: 3970000, imweb: 914000, naver: 376000, meta: 545000, naverAd: 84000 },
-      { day: 17, revenue: 4710000, imweb: 1088000, naver: 441000, meta: 583000, naverAd: 88000 },
-      { day: 18, revenue: 2710000, imweb: 617000, naver: 264000, meta: 462000, naverAd: 71000 },
-      { day: 19, revenue: 6380000, imweb: 1492000, naver: 582000, meta: 720000, naverAd: 106000 },
-      { day: 20, revenue: 4310000, imweb: 1008000, naver: 409000, meta: 596000, naverAd: 91000 },
-      { day: 21, revenue: 5840000, imweb: 1377000, naver: 517000, meta: 674000, naverAd: 99000 },
-      { day: 22, revenue: 5502000, imweb: 1253777, naver: 496775, meta: 610396, naverAd: 85000 },
-      { day: 23, revenue: 5080000, imweb: 919318, naver: 716179, meta: 566000, naverAd: 78000 },
-      { day: 24, revenue: 6050000, imweb: 1432000, naver: 544000, meta: 652000, naverAd: 94000 }
+      { day: 1, revenue: 7256319, imweb: 1823458, naver: 939077.2, meta: 305468, naverAd: 0 },
+      { day: 2, revenue: 5183112, imweb: 1090410, naver: 713049.52, meta: 280395, naverAd: 0 },
+      { day: 3, revenue: 3597752, imweb: 690968, naver: 987468.08, meta: 224779, naverAd: 0 },
+      { day: 4, revenue: 2358472, imweb: 371039, naver: 371397.12, meta: 230063, naverAd: 0 },
+      { day: 5, revenue: 4762150, imweb: 952601, naver: 789398.68, meta: 284456, naverAd: 0 },
+      { day: 6, revenue: 9993177, imweb: 2423599, naver: 1156918.36, meta: 500256, naverAd: 0 },
+      { day: 7, revenue: 6131589, imweb: 1493433, naver: 879840.6, meta: 581645, naverAd: 0 },
+      { day: 8, revenue: 6396002, imweb: 1730212, naver: 684275.56, meta: 511450, naverAd: 0 },
+      { day: 9, revenue: 5030623, imweb: 1207708, naver: 615447.88, meta: 488646, naverAd: 0 },
+      { day: 10, revenue: 4002536, imweb: 881643, naver: 908419.32, meta: 426351, naverAd: 0 },
+      { day: 11, revenue: 2918428, imweb: 1075286, naver: 232333.16, meta: 416594, naverAd: 0 },
+      { day: 12, revenue: 4500324, imweb: 938565, naver: 580578.08, meta: 456898, naverAd: 0 },
+      { day: 13, revenue: 9145316, imweb: 2483673, naver: 947491.96, meta: 524090, naverAd: 0 },
+      { day: 14, revenue: 6605995, imweb: 2031593, naver: 671324.56, meta: 526453, naverAd: 0 },
+      { day: 15, revenue: 6412567, imweb: 1598757, naver: 782109.92, meta: 536425, naverAd: 0 },
+      { day: 16, revenue: 4373286, imweb: 747303, naver: 710336.2, meta: 502040, naverAd: 0 },
+      { day: 17, revenue: 5049725, imweb: 1564196, naver: 583397.04, meta: 483791, naverAd: 0 },
+      { day: 18, revenue: 3362288, imweb: 916999, naver: 320212.68, meta: 426732, naverAd: 0 },
+      { day: 19, revenue: 5465897, imweb: 1124058, naver: 556736.16, meta: 508666, naverAd: 0 },
+      { day: 20, revenue: 9453589, imweb: 2721375, naver: 1083299.84, meta: 610421, naverAd: 0 },
+      { day: 21, revenue: 6561653, imweb: 1431236, naver: 836160.52, meta: 563313, naverAd: 15488 },
+      { day: 22, revenue: 5502185, imweb: 1512571, naver: 512461.96, meta: 485146, naverAd: 0 },
+      { day: 23, revenue: 5189828, imweb: 1093690, naver: 701958.48, meta: 427984, naverAd: 0 }
     ];
 
     document.getElementById("fixedBars").innerHTML = fixedCosts.map(([name, amount, share]) => `
