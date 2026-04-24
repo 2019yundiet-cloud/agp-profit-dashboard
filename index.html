@@ -126,7 +126,7 @@
     .formula-row strong { font-size: 15px; }
     .bridge {
       display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
+      grid-template-columns: repeat(3, minmax(0, 1fr));
       gap: 12px;
       align-items: stretch;
     }
@@ -264,9 +264,10 @@
               <div class="formula-row"><span>총 매출</span><strong id="fRevenue">₩0</strong></div>
               <div class="formula-row"><span>- 총 변동비</span><strong id="fVariableCost">₩0</strong></div>
               <div class="formula-row"><span>- 총 광고비</span><strong id="fTotalAdSpend">₩0</strong></div>
-              <div class="formula-row"><span>= 총 순수익</span><strong id="fNetProfit">₩0</strong></div>
+              <div class="formula-row"><span>= 고정비 전 순수익</span><strong id="fNetProfit">₩0</strong></div>
+              <div class="formula-row"><span>- 조회일까지 고정비</span><strong id="fMtdTarget">₩0</strong></div>
+              <div class="formula-row"><span>= 고정비 차감 후 이익</span><strong id="fAfterFixed">₩0</strong></div>
               <div class="formula-row"><span>MTD 순수익률</span><strong id="fNetRate">0.0%</strong></div>
-              <div class="formula-row"><span>조회일까지 BEP 목표</span><strong id="fMtdTarget">₩0</strong></div>
               <div class="formula-row"><span>월간 BEP 목표</span><strong id="fMonthlyBep">₩0</strong></div>
             </div>
             <div class="note">MTD는 이번 달 1일부터 데이터 기준일까지의 누적값입니다. 게이지는 순수익률이 아니라 BEP 목표 대비 달성률입니다.</div>
@@ -286,7 +287,8 @@
             <div><div class="label">총 광고비</div><div class="value" id="totalAdSpend">₩0</div></div>
             <div><div class="label">총 매출</div><div class="value" id="totalRevenue">₩0</div></div>
             <div><div class="label">총 변동비</div><div class="value" id="totalVariableCost">₩0</div></div>
-            <div><div class="label">그래서 남은 이익</div><div class="value" id="mtdNet">₩0</div></div>
+            <div><div class="label">고정비 전 순수익</div><div class="value" id="mtdNet">₩0</div></div>
+            <div><div class="label">고정비 차감 후 이익</div><div class="value" id="afterFixedProfit">₩0</div></div>
             <div><div class="label">일평균 BEP 순이익</div><div class="value" id="dailyTarget">₩0</div></div>
             <div><div class="label">월간 BEP 순이익</div><div class="value" id="monthlyBep">₩0</div></div>
           </div>
@@ -313,9 +315,19 @@
             <div class="bridge-op">Meta + Naver SearchAd 매일 차감</div>
           </div>
           <div class="bridge-step">
-            <div class="label">= 남은 순수익</div>
+            <div class="label">= 고정비 전 순수익</div>
             <div class="value good" id="bridgeProfit">₩0</div>
             <div class="bridge-op" id="bridgeProfitNote">BEP 목표 대비 계산 중</div>
+          </div>
+          <div class="bridge-step">
+            <div class="label">- 조회일까지 고정비</div>
+            <div class="value bad" id="bridgeFixed">₩0</div>
+            <div class="bridge-op">월 고정비를 데이터 기준일까지 일할 차감</div>
+          </div>
+          <div class="bridge-step">
+            <div class="label">= 최종 이익</div>
+            <div class="value good" id="bridgeFinalProfit">₩0</div>
+            <div class="bridge-op" id="bridgeFinalProfitNote">고정비 차감 후 계산 중</div>
           </div>
         </div>
       </section>
@@ -526,6 +538,7 @@ mtd_achievement_rate =
       const dailyTarget = fixedCost / daysInMonth;
       const mtdTarget = dailyTarget * queryDay;
       const rate = mtdTarget > 0 ? mtdNet / mtdTarget : 0;
+      const afterFixedProfit = mtdNet - mtdTarget;
       const capped = Math.max(0, Math.min(rate * 100, 200));
       const [color, status] = gaugeColor(rate);
       document.getElementById("gauge").style.setProperty("--gauge-color", color);
@@ -536,8 +549,10 @@ mtd_achievement_rate =
       document.getElementById("fVariableCost").textContent = won(totalVariableCost);
       document.getElementById("fTotalAdSpend").textContent = won(totalAdSpend);
       document.getElementById("fNetProfit").textContent = won(mtdNet);
-      document.getElementById("fNetRate").textContent = percent(mtdNetRate);
       document.getElementById("fMtdTarget").textContent = won(mtdTarget);
+      document.getElementById("fAfterFixed").textContent = won(afterFixedProfit);
+      document.getElementById("fAfterFixed").className = afterFixedProfit >= 0 ? "good" : "bad";
+      document.getElementById("fNetRate").textContent = percent(mtdNetRate);
       document.getElementById("fMonthlyBep").textContent = won(fixedCost);
       document.getElementById("dailyTarget").textContent = won(dailyTarget);
       document.getElementById("monthlyBep").textContent = won(fixedCost);
@@ -546,12 +561,18 @@ mtd_achievement_rate =
       document.getElementById("totalVariableCost").textContent = won(totalVariableCost);
       document.getElementById("mtdNet").textContent = won(mtdNet);
       document.getElementById("mtdNet").className = "value " + (mtdNet >= 0 ? "good" : "bad");
+      document.getElementById("afterFixedProfit").textContent = won(afterFixedProfit);
+      document.getElementById("afterFixedProfit").className = "value " + (afterFixedProfit >= 0 ? "good" : "bad");
       document.getElementById("bridgeRevenue").textContent = won(revenue);
       document.getElementById("bridgeVariable").textContent = won(totalVariableCost);
       document.getElementById("bridgeAds").textContent = won(totalAdSpend);
       document.getElementById("bridgeProfit").textContent = won(mtdNet);
       document.getElementById("bridgeProfit").className = "value " + (mtdNet >= 0 ? "good" : "bad");
       document.getElementById("bridgeProfitNote").textContent = `${queryDay}일까지 BEP 목표 ${won(mtdTarget)} 대비 ${percent(rate)} 달성`;
+      document.getElementById("bridgeFixed").textContent = won(mtdTarget);
+      document.getElementById("bridgeFinalProfit").textContent = won(afterFixedProfit);
+      document.getElementById("bridgeFinalProfit").className = "value " + (afterFixedProfit >= 0 ? "good" : "bad");
+      document.getElementById("bridgeFinalProfitNote").textContent = `고정비 일할 차감 후 ${afterFixedProfit >= 0 ? "흑자" : "적자"}`;
       document.getElementById("dailyProfitBars").innerHTML = enrichedRows.map(row => {
         const dailyBepRate = dailyTarget > 0 ? row.dailyNet / dailyTarget : 0;
         const width = Math.max(Math.min(Math.abs(dailyBepRate) * 100, 160), 2);
