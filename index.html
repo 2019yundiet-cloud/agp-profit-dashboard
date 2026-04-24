@@ -306,6 +306,11 @@
             <div class="bridge-op">Supabase 자사몰 + 네이버 결제 매출 참고값</div>
           </div>
           <div class="bridge-step">
+            <div class="label">조회일까지의 총변동비</div>
+            <div class="value bad" id="bridgeVariableCost">₩0</div>
+            <div class="bridge-op">총매출 - 총 공헌이익</div>
+          </div>
+          <div class="bridge-step">
             <div class="label">총 공헌이익</div>
             <div class="value good" id="bridgeContribution">₩0</div>
             <div class="bridge-op">자사몰 공헌이익 + 네이버 공헌이익</div>
@@ -565,6 +570,7 @@ mtd_achievement_rate =
       document.getElementById("afterFixedProfit").textContent = won(afterFixedProfit);
       document.getElementById("afterFixedProfit").className = "value " + (afterFixedProfit >= 0 ? "good" : "bad");
       document.getElementById("bridgeRevenue").textContent = won(revenue);
+      document.getElementById("bridgeVariableCost").textContent = won(totalVariableCost);
       document.getElementById("bridgeContribution").textContent = won(commerceContribution);
       document.getElementById("bridgeAds").textContent = won(totalAdSpend);
       document.getElementById("bridgeProfit").textContent = won(mtdNet);
