@@ -243,7 +243,7 @@
           <h1>AGP 순이익 달성률 대시보드</h1>
           <div class="sub">Supabase의 자사몰/네이버 일간 공헌이익과 메타/네이버 광고비를 1원 단위로 합산해 월 고정비 커버 여부를 보는 공유용 화면입니다.</div>
         </div>
-        <span class="badge">D+1 확정 데이터 · 설계 기준 2026-04-24</span>
+        <span class="badge">D+1 확정 데이터 · 최신 확정일 2026-04-26</span>
       </div>
     </div>
   </header>
@@ -278,7 +278,7 @@
         <div class="card">
           <h2>조회일 입력</h2>
           <div class="inputs">
-            <label><div class="label">데이터 기준일</div><input id="queryDayInput" type="number" value="23" min="1" max="30" step="1"></label>
+            <label><div class="label">데이터 기준일</div><input id="queryDayInput" type="number" value="26" min="1" max="30" step="1"></label>
             <label><div class="label">월 일수</div><input id="daysInput" type="number" value="30" min="28" max="31" step="1"></label>
             <label><div class="label">월 고정비</div><input id="fixedInput" type="number" value="23064879" min="0" step="100000"></label>
             <label><div class="label">일별 광고비</div><input value="매일 차감" disabled></label>
@@ -294,7 +294,7 @@
             <div><div class="label">BEP 매출</div><div class="value" id="bepRevenue">₩0</div></div>
             <div><div class="label">일평균 BEP 순이익</div><div class="value" id="dailyTarget">₩0</div></div>
           </div>
-          <div class="note">1월 1일 데이터는 1월 2일에 확정 조회합니다. 화면의 기준일은 “조회 가능한 마지막 영업 데이터 날짜”입니다.</div>
+          <div class="note">실행일이 2026-04-27이면 화면 기준일은 D+1 확정값인 2026-04-26입니다. 즉 화면의 기준일은 “조회 가능한 마지막 영업 데이터 날짜”입니다.</div>
         </div>
       </section>
 
@@ -359,7 +359,7 @@
         <div class="card">
           <div class="label">데이터 기반</div>
           <div class="value violet">Supabase</div>
-          <div class="note">운영 기준은 `mart_daily_profit_gauge_latest_closed`. 현재 화면은 Supabase 2026-04-23 확정 스냅샷.</div>
+          <div class="note">운영 기준은 `mart_daily_profit_gauge_latest_closed`. 현재 화면은 Supabase 2026-04-26 확정 스냅샷.</div>
         </div>
         <div class="card">
           <div class="label">차감 광고비</div>
@@ -368,8 +368,8 @@
         </div>
         <div class="card">
           <div class="label">데이터 품질</div>
-          <div class="value bad">SearchAd 확인</div>
-          <div class="note">Supabase 기준 네이버 검색광고비 미적재일은 0원으로 표시됨</div>
+          <div class="value bad">SearchAd 미적재</div>
+          <div class="note">4월 1~26일 중 25일이 `MISSING_NAVER_SEARCHAD_SPEND`이며, 최신 확정일 2026-04-26도 네이버 SearchAd 지출 0원으로 표시됩니다.</div>
         </div>
       </section>
 
@@ -491,7 +491,10 @@ mtd_achievement_rate =
       { day: 20, revenue: 9935559, imweb: 2721375, naver: 1256250.88, meta: 610421, naverAd: 0 },
       { day: 21, revenue: 6550733, imweb: 1431236, naver: 864983.08, meta: 563313, naverAd: 15488 },
       { day: 22, revenue: 5502185, imweb: 1512571, naver: 512461.96, meta: 485146, naverAd: 0 },
-      { day: 23, revenue: 5189828, imweb: 1093690, naver: 701958.48, meta: 427984, naverAd: 0 }
+      { day: 23, revenue: 5189828, imweb: 1093690, naver: 701958.48, meta: 427984, naverAd: 0 },
+      { day: 24, revenue: 3201049, imweb: 689484, naver: 633718.04, meta: 475506, naverAd: 0 },
+      { day: 25, revenue: 3247216, imweb: 744138, naver: 298168.32, meta: 469334, naverAd: 0 },
+      { day: 26, revenue: 4812918, imweb: 1307747, naver: 584081.64, meta: 516741, naverAd: 0 }
     ];
 
     document.getElementById("fixedBars").innerHTML = fixedCosts.map(([name, amount, share]) => `
