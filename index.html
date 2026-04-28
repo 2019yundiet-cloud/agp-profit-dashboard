@@ -256,7 +256,7 @@
       <div class="topline">
         <div>
           <h1>AGP 순이익 달성률 대시보드</h1>
-          <div class="sub">Supabase의 자사몰/네이버 일간 공헌이익과 메타/네이버 광고비를 1원 단위로 합산해 월 고정비 커버 여부를 보는 공유용 화면입니다.</div>
+          <div class="sub">Supabase의 자사몰/네이버 일간 공헌이익과 Meta/Google Ads/Naver SearchAd 광고비를 1원 단위로 합산해 월 고정비 커버 여부를 보는 공유용 화면입니다.</div>
         </div>
         <span class="badge">D+1 확정 데이터 · 최신 폐장행 2026-04-27</span>
       </div>
@@ -280,6 +280,9 @@
               <div class="formula-row"><span>+ 네이버 공헌이익</span><strong id="fNaverContribution">₩0</strong></div>
               <div class="formula-row"><span>= 총 공헌이익</span><strong id="fCommerceContribution">₩0</strong></div>
               <div class="formula-row"><span>- 총 광고비</span><strong id="fTotalAdSpend">₩0</strong></div>
+              <div class="formula-row"><span>└ Meta 광고비</span><strong id="fMetaAdSpend">₩0</strong></div>
+              <div class="formula-row"><span>└ Google Ads 광고비</span><strong id="fGoogleAdsSpend">₩0</strong></div>
+              <div class="formula-row"><span>└ Naver SearchAd 광고비</span><strong id="fNaverSearchAdSpend">₩0</strong></div>
               <div class="formula-row"><span>= 고정비 전 순수익</span><strong id="fNetProfit">₩0</strong></div>
               <div class="formula-row"><span>- 월 고정비 전체</span><strong id="fMtdTarget">₩0</strong></div>
               <div class="formula-row"><span>= 고정비 차감 후 이익</span><strong id="fAfterFixed">₩0</strong></div>
@@ -304,6 +307,9 @@
             <div><div class="label">총 매출</div><div class="value" id="totalRevenue">₩0</div></div>
             <div><div class="label">총 공헌이익</div><div class="value" id="totalContribution">₩0</div></div>
             <div><div class="label">총 광고비</div><div class="value" id="totalAdSpend">₩0</div></div>
+            <div><div class="label">Meta 광고비</div><div class="value" id="metaAdSpend">₩0</div></div>
+            <div><div class="label">Google Ads 광고비</div><div class="value" id="googleAdsSpend">₩0</div></div>
+            <div><div class="label">Naver SearchAd 광고비</div><div class="value" id="naverSearchAdSpend">₩0</div></div>
             <div><div class="label">조회일까지의 총변동비</div><div class="value" id="totalVariableCost">₩0</div></div>
             <div><div class="label">월 고정비</div><div class="value" id="monthlyFixedCost">₩0</div></div>
             <div><div class="label">총이익</div><div class="value" id="afterFixedProfit">₩0</div></div>
@@ -335,7 +341,7 @@
           <div class="bridge-step">
             <div class="label">- 총 광고비</div>
             <div class="value bad" id="bridgeAds">₩0</div>
-            <div class="bridge-op">Meta + Naver SearchAd 매일 차감</div>
+            <div class="bridge-op" id="bridgeAdsNote">Meta + Google Ads + Naver SearchAd 매일 차감</div>
           </div>
           <div class="bridge-step">
             <div class="label">= 고정비 전 순수익</div>
@@ -546,14 +552,14 @@ mtd_achievement_rate =
         { day: 17, revenue: 5049725, imweb: 1564196, naver: 583397.04, meta: 483791, naverAd: 0 },
         { day: 18, revenue: 3362288, imweb: 916999, naver: 320212.68, meta: 426732, naverAd: 0 },
         { day: 19, revenue: 4979967, imweb: 1124058, naver: 385594.4, meta: 508666, naverAd: 0 },
-        { day: 20, revenue: 9935559, imweb: 2721375, naver: 1256250.88, meta: 610421, naverAd: 0 },
+        { day: 20, revenue: 9935559, imweb: 2721375, naver: 1256250.88, meta: 610421, googleAd: 41146, naverAd: 4785 },
         { day: 21, revenue: 6550733, imweb: 1431236, naver: 864983.08, meta: 563313, naverAd: 15488 },
         { day: 22, revenue: 5502185, imweb: 1512571, naver: 512461.96, meta: 485146, naverAd: 0 },
         { day: 23, revenue: 5189828, imweb: 1093690, naver: 701958.48, meta: 427984, naverAd: 0 },
         { day: 24, revenue: 3201049, imweb: 689484, naver: 389690.04, meta: 475506, naverAd: 0 },
         { day: 25, revenue: 3247216, imweb: 744138, naver: 298168.32, meta: 469334, naverAd: 0 },
         { day: 26, revenue: 4812918, imweb: 1307747, naver: 584081.64, meta: 516741, naverAd: 0 },
-        { day: 27, revenue: 8671301, imweb: 2246189, naver: 1580872.08, meta: 608025, naverAd: 0 }
+        { day: 27, revenue: 8671301, imweb: 2246189, naver: 1580872.08, meta: 608068, googleAd: 43048, naverAd: 10604 }
       ]
     };
     const categoryRowsByMonth = {
@@ -619,20 +625,45 @@ mtd_achievement_rate =
 
     function summarizeRows(monthKey, queryDay) {
       const rows = (dailyRowsByMonth[monthKey] || []).filter(row => row.day <= queryDay);
-      const enrichedRows = rows.map(row => ({
-        ...row,
-        adSpend: row.meta + row.naverAd,
-        commerceContribution: row.imweb + row.naver,
-        dailyNet: row.imweb + row.naver - row.meta - row.naverAd
-      }));
+      const enrichedRows = rows.map(row => {
+        const metaAd = Number(row.meta || 0);
+        const googleAd = Number(row.googleAd || 0);
+        const naverSearchAd = Number(row.naverAd || 0);
+        const adSpend = metaAd + googleAd + naverSearchAd;
+        const commerceContribution = row.imweb + row.naver;
+        return {
+          ...row,
+          metaAd,
+          googleAd,
+          naverSearchAd,
+          adSpend,
+          commerceContribution,
+          dailyNet: commerceContribution - adSpend
+        };
+      });
       const revenue = enrichedRows.reduce((sum, row) => sum + row.revenue, 0);
       const imwebContribution = enrichedRows.reduce((sum, row) => sum + row.imweb, 0);
       const naverContribution = enrichedRows.reduce((sum, row) => sum + row.naver, 0);
       const commerceContribution = imwebContribution + naverContribution;
       const totalAdSpend = enrichedRows.reduce((sum, row) => sum + row.adSpend, 0);
+      const metaAdSpend = enrichedRows.reduce((sum, row) => sum + row.metaAd, 0);
+      const googleAdsSpend = enrichedRows.reduce((sum, row) => sum + row.googleAd, 0);
+      const naverSearchAdSpend = enrichedRows.reduce((sum, row) => sum + row.naverSearchAd, 0);
       const totalVariableCost = revenue - commerceContribution;
       const mtdNet = enrichedRows.reduce((sum, row) => sum + row.dailyNet, 0);
-      return { rows: enrichedRows, revenue, imwebContribution, naverContribution, commerceContribution, totalAdSpend, totalVariableCost, mtdNet };
+      return {
+        rows: enrichedRows,
+        revenue,
+        imwebContribution,
+        naverContribution,
+        commerceContribution,
+        totalAdSpend,
+        metaAdSpend,
+        googleAdsSpend,
+        naverSearchAdSpend,
+        totalVariableCost,
+        mtdNet
+      };
     }
 
     function previousMonthKey(monthKey) {
@@ -697,7 +728,19 @@ mtd_achievement_rate =
       const daysInMonth = Math.min(Math.max(read("daysInput") || monthMeta.daysInMonth, 28), 31);
       const queryDay = Math.min(Math.max(read("queryDayInput"), 1), daysInMonth);
       const summary = summarizeRows(monthKey, queryDay);
-      const { rows: enrichedRows, revenue, imwebContribution, naverContribution, commerceContribution, totalAdSpend, totalVariableCost, mtdNet } = summary;
+      const {
+        rows: enrichedRows,
+        revenue,
+        imwebContribution,
+        naverContribution,
+        commerceContribution,
+        totalAdSpend,
+        metaAdSpend,
+        googleAdsSpend,
+        naverSearchAdSpend,
+        totalVariableCost,
+        mtdNet
+      } = summary;
       const mtdNetRate = revenue > 0 ? mtdNet / revenue : 0;
       const dailyTarget = fixedCost / daysInMonth;
       const bepRevenue = mtdNetRate > 0 ? fixedCost / mtdNetRate : 0;
@@ -714,6 +757,9 @@ mtd_achievement_rate =
       document.getElementById("fNaverContribution").textContent = won(naverContribution);
       document.getElementById("fCommerceContribution").textContent = won(commerceContribution);
       document.getElementById("fTotalAdSpend").textContent = won(totalAdSpend);
+      document.getElementById("fMetaAdSpend").textContent = won(metaAdSpend);
+      document.getElementById("fGoogleAdsSpend").textContent = won(googleAdsSpend);
+      document.getElementById("fNaverSearchAdSpend").textContent = won(naverSearchAdSpend);
       document.getElementById("fNetProfit").textContent = won(mtdNet);
       document.getElementById("fMtdTarget").textContent = won(mtdTarget);
       document.getElementById("fAfterFixed").textContent = won(afterFixedProfit);
@@ -724,6 +770,9 @@ mtd_achievement_rate =
       document.getElementById("monthlyFixedCost").textContent = won(fixedCost);
       document.getElementById("bepRevenue").textContent = won(bepRevenue);
       document.getElementById("totalAdSpend").textContent = won(totalAdSpend);
+      document.getElementById("metaAdSpend").textContent = won(metaAdSpend);
+      document.getElementById("googleAdsSpend").textContent = won(googleAdsSpend);
+      document.getElementById("naverSearchAdSpend").textContent = won(naverSearchAdSpend);
       document.getElementById("totalRevenue").textContent = won(revenue);
       document.getElementById("totalContribution").textContent = won(commerceContribution);
       document.getElementById("totalVariableCost").textContent = won(totalVariableCost);
@@ -733,6 +782,7 @@ mtd_achievement_rate =
       document.getElementById("bridgeVariableCost").textContent = won(totalVariableCost);
       document.getElementById("bridgeContribution").textContent = won(commerceContribution);
       document.getElementById("bridgeAds").textContent = won(totalAdSpend);
+      document.getElementById("bridgeAdsNote").textContent = `Meta ${won(metaAdSpend)} · Google Ads ${won(googleAdsSpend)} · Naver SearchAd ${won(naverSearchAdSpend)}`;
       document.getElementById("bridgeProfit").textContent = won(mtdNet);
       document.getElementById("bridgeProfit").className = "value " + (mtdNet >= 0 ? "good" : "bad");
       document.getElementById("bridgeProfitNote").textContent = `월간 BEP 목표 ${won(fixedCost)} 대비 ${percent(rate)} 달성`;
@@ -750,7 +800,7 @@ mtd_achievement_rate =
         return `
           <div class="profit-bar">
             <div>${label}</div>
-            <div class="profit-track" title="광고비 ${won(row.adSpend)} 차감 후">
+            <div class="profit-track" title="Meta ${won(row.metaAd)} · Google Ads ${won(row.googleAd)} · Naver SearchAd ${won(row.naverSearchAd)} 차감 후">
               <div class="${cls}" style="width:${width}%"></div>
             </div>
             <div>${won(row.dailyNet)}</div>
