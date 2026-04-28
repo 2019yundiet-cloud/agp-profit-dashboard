@@ -291,6 +291,7 @@
             <div><div class="label">조회일까지의 총변동비</div><div class="value" id="totalVariableCost">₩0</div></div>
             <div><div class="label">월 고정비</div><div class="value" id="monthlyFixedCost">₩0</div></div>
             <div><div class="label">총이익</div><div class="value" id="afterFixedProfit">₩0</div></div>
+            <div><div class="label">이익률</div><div class="value" id="afterFixedProfitRate">0.0%</div></div>
             <div><div class="label">BEP 매출</div><div class="value" id="bepRevenue">₩0</div></div>
             <div><div class="label">일평균 BEP 순이익</div><div class="value" id="dailyTarget">₩0</div></div>
           </div>
@@ -601,6 +602,7 @@ mtd_achievement_rate =
       const mtdTarget = fixedCost;
       const rate = mtdTarget > 0 ? mtdNet / mtdTarget : 0;
       const afterFixedProfit = mtdNet - fixedCost;
+      const afterFixedProfitRate = revenue > 0 ? afterFixedProfit / revenue : 0;
       const capped = Math.max(0, Math.min(rate * 100, 200));
       const [color, status] = gaugeColor(rate);
       document.getElementById("gauge").style.setProperty("--gauge-color", color);
@@ -627,6 +629,8 @@ mtd_achievement_rate =
       document.getElementById("totalVariableCost").textContent = won(totalVariableCost);
       document.getElementById("afterFixedProfit").textContent = won(afterFixedProfit);
       document.getElementById("afterFixedProfit").className = "value " + (afterFixedProfit >= 0 ? "good" : "bad");
+      document.getElementById("afterFixedProfitRate").textContent = percent(afterFixedProfitRate);
+      document.getElementById("afterFixedProfitRate").className = "value " + (afterFixedProfit >= 0 ? "good" : "bad");
       document.getElementById("bridgeRevenue").textContent = won(revenue);
       document.getElementById("bridgeVariableCost").textContent = won(totalVariableCost);
       document.getElementById("bridgeContribution").textContent = won(commerceContribution);
