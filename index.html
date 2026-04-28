@@ -256,7 +256,7 @@
       <div class="topline">
         <div>
           <h1>AGP 순이익 달성률 대시보드</h1>
-          <div class="sub">Supabase의 자사몰/네이버 일간 공헌이익과 Meta/Google Ads/Naver SearchAd 광고비를 1원 단위로 합산해 월 고정비 커버 여부를 보는 공유용 화면입니다.</div>
+          <div class="sub">Supabase mart_daily_profit_gauge 조회 스냅샷 기준입니다. 광고비는 Meta/Google Ads/Naver SearchAd 채널별 원천 상태를 함께 표시합니다.</div>
         </div>
         <span class="badge">D+1 확정 데이터 · 최신 폐장행 2026-04-27</span>
       </div>
@@ -316,7 +316,7 @@
             <div><div class="label">BEP 매출</div><div class="value" id="bepRevenue">₩0</div></div>
             <div><div class="label">일평균 BEP 순이익</div><div class="value" id="dailyTarget">₩0</div></div>
           </div>
-          <div class="note">1월 1일 데이터는 1월 2일에 확정 조회합니다. 화면의 기준일은 “조회 가능한 마지막 영업 데이터 날짜”입니다.</div>
+          <div class="note" id="dataSourceNote">Supabase 조회 스냅샷입니다. stg_ads_daily는 API 적재값, imweb_archive_fallback은 과거 자사몰 집계 fallback, missing은 해당일 채널 광고비 미적재입니다.</div>
         </div>
       </section>
 
@@ -517,7 +517,7 @@ mtd_achievement_rate =
     const read = id => Number(document.getElementById(id).value || 0);
     const monthOptions = [
       { key: "2026-03", label: "2026년 3월", daysInMonth: 31, defaultDay: 31, firstDate: "2026-03-22", lastDate: "2026-03-31", quality: "MISSING_IMWEB" },
-      { key: "2026-04", label: "2026년 4월", daysInMonth: 30, defaultDay: 27, firstDate: "2026-04-01", lastDate: "2026-04-27", quality: "MISSING_NAVER_SEARCHAD_SPEND, OK" }
+      { key: "2026-04", label: "2026년 4월", daysInMonth: 30, defaultDay: 27, firstDate: "2026-04-01", lastDate: "2026-04-27", quality: "Supabase mart_daily_profit_gauge snapshot · API/fallback source shown per day" }
     ];
     const dailyRowsByMonth = {
       "2026-03": [
@@ -533,33 +533,33 @@ mtd_achievement_rate =
         { day: 31, revenue: 2877980, imweb: 0, naver: 2462277.36, meta: 0, naverAd: 0 }
       ],
       "2026-04": [
-        { day: 1, revenue: 7256319, imweb: 1823458, naver: 939077.2, meta: 305468, naverAd: 0 },
-        { day: 2, revenue: 5183112, imweb: 1090410, naver: 713049.52, meta: 280395, naverAd: 0 },
-        { day: 3, revenue: 3597752, imweb: 690968, naver: 987468.08, meta: 224779, naverAd: 0 },
-        { day: 4, revenue: 2358472, imweb: 371039, naver: 371397.12, meta: 230063, naverAd: 0 },
-        { day: 5, revenue: 4762150, imweb: 952601, naver: 789398.68, meta: 284456, naverAd: 0 },
-        { day: 6, revenue: 9993177, imweb: 2423599, naver: 1156918.36, meta: 500256, naverAd: 0 },
-        { day: 7, revenue: 6131589, imweb: 1493433, naver: 879840.6, meta: 581645, naverAd: 0 },
-        { day: 8, revenue: 6396002, imweb: 1730212, naver: 684275.56, meta: 511450, naverAd: 0 },
-        { day: 9, revenue: 5030623, imweb: 1207708, naver: 615447.88, meta: 488646, naverAd: 0 },
-        { day: 10, revenue: 4002536, imweb: 881643, naver: 908419.32, meta: 426351, naverAd: 0 },
-        { day: 11, revenue: 2918428, imweb: 1075286, naver: 232333.16, meta: 416594, naverAd: 0 },
-        { day: 12, revenue: 4500324, imweb: 938565, naver: 580578.08, meta: 456898, naverAd: 0 },
-        { day: 13, revenue: 9145316, imweb: 2483673, naver: 947491.96, meta: 524090, naverAd: 0 },
-        { day: 14, revenue: 6605995, imweb: 2031593, naver: 671324.56, meta: 526453, naverAd: 0 },
-        { day: 15, revenue: 6412567, imweb: 1598757, naver: 782109.92, meta: 536425, naverAd: 0 },
-        { day: 16, revenue: 4373286, imweb: 747303, naver: 710336.2, meta: 502040, naverAd: 0 },
-        { day: 17, revenue: 5049725, imweb: 1564196, naver: 583397.04, meta: 483791, naverAd: 0 },
-        { day: 18, revenue: 3362288, imweb: 916999, naver: 320212.68, meta: 426732, naverAd: 0 },
-        { day: 19, revenue: 4979967, imweb: 1124058, naver: 385594.4, meta: 508666, naverAd: 0 },
-        { day: 20, revenue: 9935559, imweb: 2721375, naver: 1256250.88, meta: 610421, googleAd: 41146, naverAd: 4785 },
-        { day: 21, revenue: 6550733, imweb: 1431236, naver: 864983.08, meta: 563313, naverAd: 15488 },
-        { day: 22, revenue: 5502185, imweb: 1512571, naver: 512461.96, meta: 485146, naverAd: 0 },
-        { day: 23, revenue: 5189828, imweb: 1093690, naver: 701958.48, meta: 427984, naverAd: 0 },
-        { day: 24, revenue: 3201049, imweb: 689484, naver: 389690.04, meta: 475506, naverAd: 0 },
-        { day: 25, revenue: 3247216, imweb: 744138, naver: 298168.32, meta: 469334, naverAd: 0 },
-        { day: 26, revenue: 4812918, imweb: 1307747, naver: 584081.64, meta: 516741, naverAd: 0 },
-        { day: 27, revenue: 8671301, imweb: 2246189, naver: 1580872.08, meta: 608068, googleAd: 43048, naverAd: 10604 }
+        { day: 1, revenue: 7256319, imweb: 1823458, naver: 939077.2, meta: 305468, googleAd: 0, naverAd: 0, metaSource: "imweb_archive_fallback", googleSource: "missing", naverSearchSource: "missing", quality: "MISSING_GOOGLE_ADS_SPEND" },
+        { day: 2, revenue: 5183112, imweb: 1090410, naver: 713049.52, meta: 280395, googleAd: 0, naverAd: 0, metaSource: "imweb_archive_fallback", googleSource: "missing", naverSearchSource: "missing", quality: "MISSING_GOOGLE_ADS_SPEND" },
+        { day: 3, revenue: 3597752, imweb: 690968, naver: 987468.08, meta: 224779, googleAd: 0, naverAd: 0, metaSource: "imweb_archive_fallback", googleSource: "missing", naverSearchSource: "missing", quality: "MISSING_GOOGLE_ADS_SPEND" },
+        { day: 4, revenue: 2358472, imweb: 371039, naver: 371397.12, meta: 230063, googleAd: 0, naverAd: 0, metaSource: "imweb_archive_fallback", googleSource: "missing", naverSearchSource: "missing", quality: "MISSING_GOOGLE_ADS_SPEND" },
+        { day: 5, revenue: 4762150, imweb: 952601, naver: 789398.68, meta: 284456, googleAd: 0, naverAd: 0, metaSource: "imweb_archive_fallback", googleSource: "missing", naverSearchSource: "missing", quality: "MISSING_GOOGLE_ADS_SPEND" },
+        { day: 6, revenue: 9993177, imweb: 2423599, naver: 1156918.36, meta: 500256, googleAd: 0, naverAd: 0, metaSource: "imweb_archive_fallback", googleSource: "missing", naverSearchSource: "missing", quality: "MISSING_GOOGLE_ADS_SPEND" },
+        { day: 7, revenue: 6131589, imweb: 1493433, naver: 879840.6, meta: 581645, googleAd: 0, naverAd: 0, metaSource: "imweb_archive_fallback", googleSource: "missing", naverSearchSource: "missing", quality: "MISSING_GOOGLE_ADS_SPEND" },
+        { day: 8, revenue: 6396002, imweb: 1730212, naver: 684275.56, meta: 511450, googleAd: 0, naverAd: 0, metaSource: "imweb_archive_fallback", googleSource: "missing", naverSearchSource: "missing", quality: "MISSING_GOOGLE_ADS_SPEND" },
+        { day: 9, revenue: 5030623, imweb: 1207708, naver: 615447.88, meta: 488646, googleAd: 0, naverAd: 0, metaSource: "imweb_archive_fallback", googleSource: "missing", naverSearchSource: "missing", quality: "MISSING_GOOGLE_ADS_SPEND" },
+        { day: 10, revenue: 4002536, imweb: 881643, naver: 908419.32, meta: 426351, googleAd: 0, naverAd: 0, metaSource: "imweb_archive_fallback", googleSource: "missing", naverSearchSource: "missing", quality: "MISSING_GOOGLE_ADS_SPEND" },
+        { day: 11, revenue: 2918428, imweb: 1075286, naver: 232333.16, meta: 416594, googleAd: 0, naverAd: 0, metaSource: "imweb_archive_fallback", googleSource: "missing", naverSearchSource: "missing", quality: "MISSING_GOOGLE_ADS_SPEND" },
+        { day: 12, revenue: 4500324, imweb: 938565, naver: 580578.08, meta: 456898, googleAd: 0, naverAd: 0, metaSource: "imweb_archive_fallback", googleSource: "missing", naverSearchSource: "missing", quality: "MISSING_GOOGLE_ADS_SPEND" },
+        { day: 13, revenue: 9145316, imweb: 2483673, naver: 947491.96, meta: 524090, googleAd: 0, naverAd: 0, metaSource: "imweb_archive_fallback", googleSource: "missing", naverSearchSource: "missing", quality: "MISSING_GOOGLE_ADS_SPEND" },
+        { day: 14, revenue: 6605995, imweb: 2031593, naver: 671324.56, meta: 526453, googleAd: 0, naverAd: 0, metaSource: "imweb_archive_fallback", googleSource: "missing", naverSearchSource: "missing", quality: "MISSING_GOOGLE_ADS_SPEND" },
+        { day: 15, revenue: 6412567, imweb: 1598757, naver: 782109.92, meta: 536425, googleAd: 0, naverAd: 0, metaSource: "imweb_archive_fallback", googleSource: "missing", naverSearchSource: "missing", quality: "MISSING_GOOGLE_ADS_SPEND" },
+        { day: 16, revenue: 4373286, imweb: 747303, naver: 710336.2, meta: 502040, googleAd: 0, naverAd: 0, metaSource: "imweb_archive_fallback", googleSource: "missing", naverSearchSource: "missing", quality: "MISSING_GOOGLE_ADS_SPEND" },
+        { day: 17, revenue: 5049725, imweb: 1564196, naver: 583397.04, meta: 483791, googleAd: 0, naverAd: 0, metaSource: "imweb_archive_fallback", googleSource: "missing", naverSearchSource: "missing", quality: "MISSING_GOOGLE_ADS_SPEND" },
+        { day: 18, revenue: 3362288, imweb: 916999, naver: 320212.68, meta: 426732, googleAd: 0, naverAd: 0, metaSource: "imweb_archive_fallback", googleSource: "missing", naverSearchSource: "missing", quality: "MISSING_GOOGLE_ADS_SPEND" },
+        { day: 19, revenue: 4979967, imweb: 1124058, naver: 385594.4, meta: 508666, googleAd: 0, naverAd: 0, metaSource: "imweb_archive_fallback", googleSource: "missing", naverSearchSource: "missing", quality: "MISSING_GOOGLE_ADS_SPEND" },
+        { day: 20, revenue: 9585639, imweb: 2589466, naver: 1256250.88, meta: 610421, googleAd: 41146, naverAd: 4785, metaSource: "stg_ads_daily", googleSource: "stg_ads_daily", naverSearchSource: "stg_ads_daily", quality: "MATCH_CHECK" },
+        { day: 21, revenue: 6550733, imweb: 1431236, naver: 864983.08, meta: 563313, googleAd: 0, naverAd: 15488, metaSource: "stg_ads_daily", googleSource: "missing", naverSearchSource: "stg_ads_daily", quality: "MISSING_GOOGLE_ADS_SPEND" },
+        { day: 22, revenue: 5502185, imweb: 1512571, naver: 512461.96, meta: 485146, googleAd: 0, naverAd: 0, metaSource: "stg_ads_daily", googleSource: "missing", naverSearchSource: "missing", quality: "MISSING_GOOGLE_ADS_SPEND" },
+        { day: 23, revenue: 5189828, imweb: 1093690, naver: 701958.48, meta: 427984, googleAd: 0, naverAd: 0, metaSource: "stg_ads_daily", googleSource: "missing", naverSearchSource: "missing", quality: "MISSING_GOOGLE_ADS_SPEND" },
+        { day: 24, revenue: 3201049, imweb: 689484, naver: 389690.04, meta: 475506, googleAd: 0, naverAd: 0, metaSource: "stg_ads_daily", googleSource: "missing", naverSearchSource: "missing", quality: "MISSING_GOOGLE_ADS_SPEND" },
+        { day: 25, revenue: 3247216, imweb: 744138, naver: 298168.32, meta: 469334, googleAd: 0, naverAd: 0, metaSource: "stg_ads_daily", googleSource: "missing", naverSearchSource: "missing", quality: "MISSING_GOOGLE_ADS_SPEND" },
+        { day: 26, revenue: 4812918, imweb: 1307747, naver: 584081.64, meta: 516741, googleAd: 0, naverAd: 0, metaSource: "stg_ads_daily", googleSource: "missing", naverSearchSource: "missing", quality: "MISSING_GOOGLE_ADS_SPEND" },
+        { day: 27, revenue: 8671301, imweb: 2246189, naver: 1580872.08, meta: 608068, googleAd: 43048, naverAd: 10604, metaSource: "stg_ads_daily", googleSource: "stg_ads_daily", naverSearchSource: "stg_ads_daily", quality: "MATCH_CHECK" }
       ]
     };
     const categoryRowsByMonth = {
@@ -651,6 +651,18 @@ mtd_achievement_rate =
       const naverSearchAdSpend = enrichedRows.reduce((sum, row) => sum + row.naverSearchAd, 0);
       const totalVariableCost = revenue - commerceContribution;
       const mtdNet = enrichedRows.reduce((sum, row) => sum + row.dailyNet, 0);
+      const sourceCounts = enrichedRows.reduce((counts, row) => {
+        ["metaSource", "googleSource", "naverSearchSource"].forEach(key => {
+          const value = row[key] || "missing";
+          counts[value] = (counts[value] || 0) + 1;
+        });
+        return counts;
+      }, {});
+      const qualityCounts = enrichedRows.reduce((counts, row) => {
+        const value = row.quality || "UNKNOWN";
+        counts[value] = (counts[value] || 0) + 1;
+        return counts;
+      }, {});
       return {
         rows: enrichedRows,
         revenue,
@@ -662,7 +674,9 @@ mtd_achievement_rate =
         googleAdsSpend,
         naverSearchAdSpend,
         totalVariableCost,
-        mtdNet
+        mtdNet,
+        sourceCounts,
+        qualityCounts
       };
     }
 
@@ -739,7 +753,9 @@ mtd_achievement_rate =
         googleAdsSpend,
         naverSearchAdSpend,
         totalVariableCost,
-        mtdNet
+        mtdNet,
+        sourceCounts,
+        qualityCounts
       } = summary;
       const mtdNetRate = revenue > 0 ? mtdNet / revenue : 0;
       const dailyTarget = fixedCost / daysInMonth;
@@ -783,6 +799,15 @@ mtd_achievement_rate =
       document.getElementById("bridgeContribution").textContent = won(commerceContribution);
       document.getElementById("bridgeAds").textContent = won(totalAdSpend);
       document.getElementById("bridgeAdsNote").textContent = `Meta ${won(metaAdSpend)} · Google Ads ${won(googleAdsSpend)} · Naver SearchAd ${won(naverSearchAdSpend)}`;
+      const sourceSummary = Object.entries(sourceCounts)
+        .sort(([a], [b]) => a.localeCompare(b))
+        .map(([source, count]) => `${source} ${count}건`)
+        .join(" · ");
+      const qualitySummary = Object.entries(qualityCounts)
+        .sort(([a], [b]) => a.localeCompare(b))
+        .map(([quality, count]) => `${quality} ${count}일`)
+        .join(" · ");
+      document.getElementById("dataSourceNote").textContent = `Supabase mart_daily_profit_gauge 조회 스냅샷입니다. 광고비 원천: ${sourceSummary}. 품질상태: ${qualitySummary}.`;
       document.getElementById("bridgeProfit").textContent = won(mtdNet);
       document.getElementById("bridgeProfit").className = "value " + (mtdNet >= 0 ? "good" : "bad");
       document.getElementById("bridgeProfitNote").textContent = `월간 BEP 목표 ${won(fixedCost)} 대비 ${percent(rate)} 달성`;
@@ -800,7 +825,7 @@ mtd_achievement_rate =
         return `
           <div class="profit-bar">
             <div>${label}</div>
-            <div class="profit-track" title="Meta ${won(row.metaAd)} · Google Ads ${won(row.googleAd)} · Naver SearchAd ${won(row.naverSearchAd)} 차감 후">
+            <div class="profit-track" title="Meta ${won(row.metaAd)} (${row.metaSource || "missing"}) · Google Ads ${won(row.googleAd)} (${row.googleSource || "missing"}) · Naver SearchAd ${won(row.naverSearchAd)} (${row.naverSearchSource || "missing"}) 차감 후">
               <div class="${cls}" style="width:${width}%"></div>
             </div>
             <div>${won(row.dailyNet)}</div>
