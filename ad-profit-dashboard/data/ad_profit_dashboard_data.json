@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-04-28T21:32:00",
+  "generated_at": "2026-04-28T23:05:59",
   "latest_date": "2026-04-27",
   "platforms": [
     {
@@ -23,23 +23,53 @@
   "daily_rows": [
     {
       "report_date": "2026-04-20",
+      "platform": "google_ads",
+      "category": "기타",
+      "spend": 0,
+      "revenue": 0,
+      "net_profit": 0,
+      "order_count": 0,
+      "real_roi": 0.0
+    },
+    {
+      "report_date": "2026-04-20",
+      "platform": "google_ads",
+      "category": "단백밥",
+      "spend": 41146,
+      "revenue": 0,
+      "net_profit": 0,
+      "order_count": 0,
+      "real_roi": 0.0
+    },
+    {
+      "report_date": "2026-04-20",
+      "platform": "google_ads",
+      "category": "샐러드",
+      "spend": 0,
+      "revenue": 0,
+      "net_profit": 0,
+      "order_count": 0,
+      "real_roi": 0.0
+    },
+    {
+      "report_date": "2026-04-20",
       "platform": "meta",
       "category": "기타",
-      "spend": 352109,
-      "revenue": 249100,
-      "net_profit": 67028,
-      "order_count": 3,
-      "real_roi": 0.19036150737413698
+      "spend": 45573,
+      "revenue": 105380,
+      "net_profit": 29556,
+      "order_count": 1,
+      "real_roi": 0.6485418998090975
     },
     {
       "report_date": "2026-04-20",
       "platform": "meta",
       "category": "단백밥",
-      "spend": 154414,
-      "revenue": 220940,
-      "net_profit": 59570,
-      "order_count": 3,
-      "real_roi": 0.3857810820262411
+      "spend": 288722,
+      "revenue": 64300,
+      "net_profit": 12053,
+      "order_count": 1,
+      "real_roi": 0.04174603944278579
     },
     {
       "report_date": "2026-04-20",
@@ -55,41 +85,101 @@
       "report_date": "2026-04-20",
       "platform": "meta",
       "category": "밸런시",
-      "spend": 46976,
-      "revenue": 80090,
-      "net_profit": 21125,
-      "order_count": 3,
-      "real_roi": 0.4496977179836512
+      "spend": 178915,
+      "revenue": 115450,
+      "net_profit": 23176,
+      "order_count": 2,
+      "real_roi": 0.12953637202023308
     },
     {
       "report_date": "2026-04-20",
       "platform": "meta",
       "category": "순수단백",
-      "spend": 18510,
-      "revenue": 71400,
-      "net_profit": 19557,
-      "order_count": 1,
-      "real_roi": 1.0565640194489465
+      "spend": 58799,
+      "revenue": 125700,
+      "net_profit": 35673,
+      "order_count": 2,
+      "real_roi": 0.6066939913944115
+    },
+    {
+      "report_date": "2026-04-20",
+      "platform": "naver_searchad",
+      "category": "기타",
+      "spend": 4785,
+      "revenue": 0,
+      "net_profit": 0,
+      "order_count": 0,
+      "real_roi": 0.0
+    },
+    {
+      "report_date": "2026-04-20",
+      "platform": "naver_searchad",
+      "category": "단백밥",
+      "spend": 0,
+      "revenue": 0,
+      "net_profit": 0,
+      "order_count": 0,
+      "real_roi": 0.0
+    },
+    {
+      "report_date": "2026-04-20",
+      "platform": "naver_searchad",
+      "category": "밸런시",
+      "spend": 0,
+      "revenue": 0,
+      "net_profit": 0,
+      "order_count": 0,
+      "real_roi": 0.0
+    },
+    {
+      "report_date": "2026-04-21",
+      "platform": "google_ads",
+      "category": "기타",
+      "spend": 0,
+      "revenue": 0,
+      "net_profit": 0,
+      "order_count": 0,
+      "real_roi": 0.0
+    },
+    {
+      "report_date": "2026-04-21",
+      "platform": "google_ads",
+      "category": "단백밥",
+      "spend": 47830,
+      "revenue": 0,
+      "net_profit": 0,
+      "order_count": 0,
+      "real_roi": 0.0
+    },
+    {
+      "report_date": "2026-04-21",
+      "platform": "google_ads",
+      "category": "샐러드",
+      "spend": 0,
+      "revenue": 0,
+      "net_profit": 0,
+      "order_count": 0,
+      "real_roi": 0.0
     },
     {
       "report_date": "2026-04-21",
       "platform": "meta",
       "category": "기타",
-      "spend": 328555,
-      "revenue": 95850,
-      "net_profit": 21838,
-      "order_count": 2,
-      "real_roi": 0.06646680160094962
+      "spend": 55520,
+      "revenue": 0,
+      "net_profit": 0,
+      "order_count": 0,
+      "real_roi": 0.0
     },
     {
       "report_date": "2026-04-21",
       "platform": "meta",
       "category": "단백밥",
-      "spend": 133313,
-      "revenue": 235710,
-      "net_profit": 35385,
-      "order_count": 4,
-      "real_roi": 0.2654279777666094
+      "spend": 259775,
+      "revenue": 277260,
+      "net_profit": 38020,
+      "order_count": 5,
+      "real_roi": 0.14635742469444712
     },
     {
       "report_date": "2026-04-21",
@@ -97,25 +187,85 @@
       "category": "단백밥 ASC",
       "spend": 39657,
       "revenue": 94000,
-      "net_profit": 11759,
+      "net_profit": 10392,
       "order_count": 1,
-      "real_roi": 0.29651763875230097
+      "real_roi": 0.26204705348362206
     },
     {
       "report_date": "2026-04-21",
       "platform": "meta",
       "category": "밸런시",
-      "spend": 44901,
+      "spend": 152905,
       "revenue": 106800,
-      "net_profit": 54416,
+      "net_profit": 52863,
       "order_count": 2,
-      "real_roi": 1.2119106478697579
+      "real_roi": 0.3457244694418103
     },
     {
       "report_date": "2026-04-21",
       "platform": "meta",
       "category": "순수단백",
-      "spend": 16887,
+      "spend": 55456,
+      "revenue": 54300,
+      "net_profit": 14382,
+      "order_count": 1,
+      "real_roi": 0.2593407386035776
+    },
+    {
+      "report_date": "2026-04-21",
+      "platform": "naver_searchad",
+      "category": "기타",
+      "spend": 8763,
+      "revenue": 0,
+      "net_profit": 0,
+      "order_count": 0,
+      "real_roi": 0.0
+    },
+    {
+      "report_date": "2026-04-21",
+      "platform": "naver_searchad",
+      "category": "단백밥",
+      "spend": 0,
+      "revenue": 0,
+      "net_profit": 0,
+      "order_count": 0,
+      "real_roi": 0.0
+    },
+    {
+      "report_date": "2026-04-21",
+      "platform": "naver_searchad",
+      "category": "밸런시",
+      "spend": 0,
+      "revenue": 0,
+      "net_profit": 0,
+      "order_count": 0,
+      "real_roi": 0.0
+    },
+    {
+      "report_date": "2026-04-22",
+      "platform": "google_ads",
+      "category": "기타",
+      "spend": 0,
+      "revenue": 0,
+      "net_profit": 0,
+      "order_count": 0,
+      "real_roi": 0.0
+    },
+    {
+      "report_date": "2026-04-22",
+      "platform": "google_ads",
+      "category": "단백밥",
+      "spend": 38148,
+      "revenue": 55270,
+      "net_profit": 12063,
+      "order_count": 1,
+      "real_roi": 0.31621579112928594
+    },
+    {
+      "report_date": "2026-04-22",
+      "platform": "google_ads",
+      "category": "샐러드",
+      "spend": 0,
       "revenue": 0,
       "net_profit": 0,
       "order_count": 0,
@@ -125,21 +275,21 @@
       "report_date": "2026-04-22",
       "platform": "meta",
       "category": "기타",
-      "spend": 268982,
-      "revenue": 268530,
-      "net_profit": 99771,
-      "order_count": 4,
-      "real_roi": 0.3709207307552178
+      "spend": 29274,
+      "revenue": 0,
+      "net_profit": 0,
+      "order_count": 0,
+      "real_roi": 0.0
     },
     {
       "report_date": "2026-04-22",
       "platform": "meta",
       "category": "단백밥",
-      "spend": 123837,
-      "revenue": 311500,
-      "net_profit": 66891,
-      "order_count": 4,
-      "real_roi": 0.5401535889919814
+      "spend": 232418,
+      "revenue": 433300,
+      "net_profit": 97088,
+      "order_count": 5,
+      "real_roi": 0.41773012417282657
     },
     {
       "report_date": "2026-04-22",
@@ -147,25 +297,85 @@
       "category": "단백밥 ASC",
       "spend": 38589,
       "revenue": 41960,
-      "net_profit": 9434,
+      "net_profit": 8960,
       "order_count": 1,
-      "real_roi": 0.24447381378112934
+      "real_roi": 0.23219052061468293
     },
     {
       "report_date": "2026-04-22",
       "platform": "meta",
       "category": "밸런시",
-      "spend": 38948,
-      "revenue": 51400,
-      "net_profit": 8547,
-      "order_count": 1,
-      "real_roi": 0.21944644140905822
+      "spend": 136747,
+      "revenue": 104800,
+      "net_profit": 46659,
+      "order_count": 2,
+      "real_roi": 0.3412067540787001
     },
     {
       "report_date": "2026-04-22",
       "platform": "meta",
       "category": "순수단백",
-      "spend": 14790,
+      "spend": 48118,
+      "revenue": 93330,
+      "net_profit": 24337,
+      "order_count": 2,
+      "real_roi": 0.5057774637349848
+    },
+    {
+      "report_date": "2026-04-22",
+      "platform": "naver_searchad",
+      "category": "기타",
+      "spend": 7021,
+      "revenue": 0,
+      "net_profit": 0,
+      "order_count": 0,
+      "real_roi": 0.0
+    },
+    {
+      "report_date": "2026-04-22",
+      "platform": "naver_searchad",
+      "category": "단백밥",
+      "spend": 0,
+      "revenue": 0,
+      "net_profit": 0,
+      "order_count": 0,
+      "real_roi": 0.0
+    },
+    {
+      "report_date": "2026-04-22",
+      "platform": "naver_searchad",
+      "category": "밸런시",
+      "spend": 0,
+      "revenue": 0,
+      "net_profit": 0,
+      "order_count": 0,
+      "real_roi": 0.0
+    },
+    {
+      "report_date": "2026-04-23",
+      "platform": "google_ads",
+      "category": "기타",
+      "spend": 0,
+      "revenue": 0,
+      "net_profit": 0,
+      "order_count": 0,
+      "real_roi": 0.0
+    },
+    {
+      "report_date": "2026-04-23",
+      "platform": "google_ads",
+      "category": "단백밥",
+      "spend": 41067,
+      "revenue": 0,
+      "net_profit": 0,
+      "order_count": 0,
+      "real_roi": 0.0
+    },
+    {
+      "report_date": "2026-04-23",
+      "platform": "google_ads",
+      "category": "샐러드",
+      "spend": 0,
       "revenue": 0,
       "net_profit": 0,
       "order_count": 0,
@@ -175,21 +385,21 @@
       "report_date": "2026-04-23",
       "platform": "meta",
       "category": "기타",
-      "spend": 237977,
-      "revenue": 254100,
-      "net_profit": 87586,
-      "order_count": 5,
-      "real_roi": 0.36804397063581773
+      "spend": 39239,
+      "revenue": 0,
+      "net_profit": 0,
+      "order_count": 0,
+      "real_roi": 0.0
     },
     {
       "report_date": "2026-04-23",
       "platform": "meta",
       "category": "단백밥",
-      "spend": 104242,
-      "revenue": 150300,
-      "net_profit": 23406,
-      "order_count": 2,
-      "real_roi": 0.22453521613169355
+      "spend": 194958,
+      "revenue": 259400,
+      "net_profit": 39351,
+      "order_count": 4,
+      "real_roi": 0.20184347397901087
     },
     {
       "report_date": "2026-04-23",
@@ -197,15 +407,35 @@
       "category": "단백밥 ASC",
       "spend": 25867,
       "revenue": 91490,
-      "net_profit": 15768,
+      "net_profit": 14439,
       "order_count": 1,
-      "real_roi": 0.6095797734565276
+      "real_roi": 0.5582015695674025
     },
     {
       "report_date": "2026-04-23",
       "platform": "meta",
       "category": "밸런시",
-      "spend": 46448,
+      "spend": 124411,
+      "revenue": 63000,
+      "net_profit": 46054,
+      "order_count": 1,
+      "real_roi": 0.370176270587006
+    },
+    {
+      "report_date": "2026-04-23",
+      "platform": "meta",
+      "category": "순수단백",
+      "spend": 43509,
+      "revenue": 82000,
+      "net_profit": 19713,
+      "order_count": 2,
+      "real_roi": 0.4530786733779218
+    },
+    {
+      "report_date": "2026-04-23",
+      "platform": "naver_searchad",
+      "category": "기타",
+      "spend": 7814,
       "revenue": 0,
       "net_profit": 0,
       "order_count": 0,
@@ -213,9 +443,49 @@
     },
     {
       "report_date": "2026-04-23",
-      "platform": "meta",
-      "category": "순수단백",
-      "spend": 13450,
+      "platform": "naver_searchad",
+      "category": "단백밥",
+      "spend": 0,
+      "revenue": 0,
+      "net_profit": 0,
+      "order_count": 0,
+      "real_roi": 0.0
+    },
+    {
+      "report_date": "2026-04-23",
+      "platform": "naver_searchad",
+      "category": "밸런시",
+      "spend": 0,
+      "revenue": 0,
+      "net_profit": 0,
+      "order_count": 0,
+      "real_roi": 0.0
+    },
+    {
+      "report_date": "2026-04-24",
+      "platform": "google_ads",
+      "category": "기타",
+      "spend": 0,
+      "revenue": 0,
+      "net_profit": 0,
+      "order_count": 0,
+      "real_roi": 0.0
+    },
+    {
+      "report_date": "2026-04-24",
+      "platform": "google_ads",
+      "category": "단백밥",
+      "spend": 37977,
+      "revenue": 0,
+      "net_profit": 0,
+      "order_count": 0,
+      "real_roi": 0.0
+    },
+    {
+      "report_date": "2026-04-24",
+      "platform": "google_ads",
+      "category": "샐러드",
+      "spend": 0,
       "revenue": 0,
       "net_profit": 0,
       "order_count": 0,
@@ -225,21 +495,21 @@
       "report_date": "2026-04-24",
       "platform": "meta",
       "category": "기타",
-      "spend": 275270,
-      "revenue": 32250,
-      "net_profit": 1690,
-      "order_count": 1,
-      "real_roi": 0.0061394267446507065
+      "spend": 74006,
+      "revenue": 0,
+      "net_profit": 0,
+      "order_count": 0,
+      "real_roi": 0.0
     },
     {
       "report_date": "2026-04-24",
       "platform": "meta",
       "category": "단백밥",
-      "spend": 133343,
-      "revenue": 107120,
-      "net_profit": 5932,
-      "order_count": 2,
-      "real_roi": 0.04448677470883361
+      "spend": 227774,
+      "revenue": 139370,
+      "net_profit": 4599,
+      "order_count": 3,
+      "real_roi": 0.020191066583543336
     },
     {
       "report_date": "2026-04-24",
@@ -255,7 +525,7 @@
       "report_date": "2026-04-24",
       "platform": "meta",
       "category": "밸런시",
-      "spend": 47816,
+      "spend": 101976,
       "revenue": 0,
       "net_profit": 0,
       "order_count": 0,
@@ -265,7 +535,67 @@
       "report_date": "2026-04-24",
       "platform": "meta",
       "category": "순수단백",
-      "spend": 12576,
+      "spend": 65249,
+      "revenue": 0,
+      "net_profit": 0,
+      "order_count": 0,
+      "real_roi": 0.0
+    },
+    {
+      "report_date": "2026-04-24",
+      "platform": "naver_searchad",
+      "category": "기타",
+      "spend": 5645,
+      "revenue": 0,
+      "net_profit": 0,
+      "order_count": 0,
+      "real_roi": 0.0
+    },
+    {
+      "report_date": "2026-04-24",
+      "platform": "naver_searchad",
+      "category": "단백밥",
+      "spend": 0,
+      "revenue": 0,
+      "net_profit": 0,
+      "order_count": 0,
+      "real_roi": 0.0
+    },
+    {
+      "report_date": "2026-04-24",
+      "platform": "naver_searchad",
+      "category": "밸런시",
+      "spend": 0,
+      "revenue": 0,
+      "net_profit": 0,
+      "order_count": 0,
+      "real_roi": 0.0
+    },
+    {
+      "report_date": "2026-04-25",
+      "platform": "google_ads",
+      "category": "기타",
+      "spend": 0,
+      "revenue": 0,
+      "net_profit": 0,
+      "order_count": 0,
+      "real_roi": 0.0
+    },
+    {
+      "report_date": "2026-04-25",
+      "platform": "google_ads",
+      "category": "단백밥",
+      "spend": 41637,
+      "revenue": 0,
+      "net_profit": 0,
+      "order_count": 0,
+      "real_roi": 0.0
+    },
+    {
+      "report_date": "2026-04-25",
+      "platform": "google_ads",
+      "category": "샐러드",
+      "spend": 0,
       "revenue": 0,
       "net_profit": 0,
       "order_count": 0,
@@ -275,21 +605,21 @@
       "report_date": "2026-04-25",
       "platform": "meta",
       "category": "기타",
-      "spend": 275738,
-      "revenue": 26700,
-      "net_profit": 2004,
-      "order_count": 1,
-      "real_roi": 0.007267768678963364
+      "spend": 87781,
+      "revenue": 0,
+      "net_profit": 0,
+      "order_count": 0,
+      "real_roi": 0.0
     },
     {
       "report_date": "2026-04-25",
       "platform": "meta",
       "category": "단백밥",
-      "spend": 123359,
+      "spend": 220208,
       "revenue": 56820,
-      "net_profit": 8154,
+      "net_profit": 7035,
       "order_count": 1,
-      "real_roi": 0.06609975761800922
+      "real_roi": 0.03194706822640413
     },
     {
       "report_date": "2026-04-25",
@@ -305,17 +635,77 @@
       "report_date": "2026-04-25",
       "platform": "meta",
       "category": "밸런시",
-      "spend": 47164,
+      "spend": 90191,
       "revenue": 123920,
-      "net_profit": 10793,
+      "net_profit": 8354,
       "order_count": 2,
-      "real_roi": 0.2288397930625053
+      "real_roi": 0.09262565000942444
     },
     {
       "report_date": "2026-04-25",
       "platform": "meta",
       "category": "순수단백",
-      "spend": 12370,
+      "spend": 60451,
+      "revenue": 26700,
+      "net_profit": 1479,
+      "order_count": 1,
+      "real_roi": 0.0244660965079155
+    },
+    {
+      "report_date": "2026-04-25",
+      "platform": "naver_searchad",
+      "category": "기타",
+      "spend": 4567,
+      "revenue": 0,
+      "net_profit": 0,
+      "order_count": 0,
+      "real_roi": 0.0
+    },
+    {
+      "report_date": "2026-04-25",
+      "platform": "naver_searchad",
+      "category": "단백밥",
+      "spend": 0,
+      "revenue": 0,
+      "net_profit": 0,
+      "order_count": 0,
+      "real_roi": 0.0
+    },
+    {
+      "report_date": "2026-04-25",
+      "platform": "naver_searchad",
+      "category": "밸런시",
+      "spend": 0,
+      "revenue": 0,
+      "net_profit": 0,
+      "order_count": 0,
+      "real_roi": 0.0
+    },
+    {
+      "report_date": "2026-04-26",
+      "platform": "google_ads",
+      "category": "기타",
+      "spend": 0,
+      "revenue": 0,
+      "net_profit": 0,
+      "order_count": 0,
+      "real_roi": 0.0
+    },
+    {
+      "report_date": "2026-04-26",
+      "platform": "google_ads",
+      "category": "단백밥",
+      "spend": 64138,
+      "revenue": 56500,
+      "net_profit": 5729,
+      "order_count": 1,
+      "real_roi": 0.08932302223330943
+    },
+    {
+      "report_date": "2026-04-26",
+      "platform": "google_ads",
+      "category": "샐러드",
+      "spend": 0,
       "revenue": 0,
       "net_profit": 0,
       "order_count": 0,
@@ -325,21 +715,21 @@
       "report_date": "2026-04-26",
       "platform": "meta",
       "category": "기타",
-      "spend": 305588,
-      "revenue": 405890,
-      "net_profit": 111684,
-      "order_count": 6,
-      "real_roi": 0.3654724661963166
+      "spend": 88748,
+      "revenue": 0,
+      "net_profit": 0,
+      "order_count": 0,
+      "real_roi": 0.0
     },
     {
       "report_date": "2026-04-26",
       "platform": "meta",
       "category": "단백밥",
-      "spend": 134045,
-      "revenue": 362140,
-      "net_profit": 67635,
-      "order_count": 4,
-      "real_roi": 0.5045693610354731
+      "spend": 247669,
+      "revenue": 674810,
+      "net_profit": 193639,
+      "order_count": 8,
+      "real_roi": 0.7818459314649795
     },
     {
       "report_date": "2026-04-26",
@@ -355,7 +745,27 @@
       "report_date": "2026-04-26",
       "platform": "meta",
       "category": "밸런시",
-      "spend": 58285,
+      "spend": 108252,
+      "revenue": 50400,
+      "net_profit": 3938,
+      "order_count": 1,
+      "real_roi": 0.036378080774489154
+    },
+    {
+      "report_date": "2026-04-26",
+      "platform": "meta",
+      "category": "순수단백",
+      "spend": 69154,
+      "revenue": 42820,
+      "net_profit": 6217,
+      "order_count": 1,
+      "real_roi": 0.08990080111056482
+    },
+    {
+      "report_date": "2026-04-26",
+      "platform": "naver_searchad",
+      "category": "기타",
+      "spend": 12976,
       "revenue": 0,
       "net_profit": 0,
       "order_count": 0,
@@ -363,9 +773,19 @@
     },
     {
       "report_date": "2026-04-26",
-      "platform": "meta",
-      "category": "순수단백",
-      "spend": 15782,
+      "platform": "naver_searchad",
+      "category": "단백밥",
+      "spend": 0,
+      "revenue": 0,
+      "net_profit": 0,
+      "order_count": 0,
+      "real_roi": 0.0
+    },
+    {
+      "report_date": "2026-04-26",
+      "platform": "naver_searchad",
+      "category": "밸런시",
+      "spend": 0,
       "revenue": 0,
       "net_profit": 0,
       "order_count": 0,
@@ -386,10 +806,10 @@
       "platform": "google_ads",
       "category": "단백밥",
       "spend": 43048,
-      "revenue": 0,
-      "net_profit": 0,
-      "order_count": 0,
-      "real_roi": 0.0
+      "revenue": 170520,
+      "net_profit": 43729,
+      "order_count": 2,
+      "real_roi": 1.0158195502694667
     },
     {
       "report_date": "2026-04-27",
@@ -407,9 +827,9 @@
       "category": "기타",
       "spend": 83377,
       "revenue": 182750,
-      "net_profit": 1245,
+      "net_profit": -369,
       "order_count": 2,
-      "real_roi": 0.014932175540017032
+      "real_roi": -0.00442568094318577
     },
     {
       "report_date": "2026-04-27",
@@ -417,9 +837,9 @@
       "category": "단백밥",
       "spend": 301813,
       "revenue": 620550,
-      "net_profit": 166146,
+      "net_profit": 160664,
       "order_count": 6,
-      "real_roi": 0.5504931861781964
+      "real_roi": 0.5323296213218118
     },
     {
       "report_date": "2026-04-27",
@@ -437,9 +857,9 @@
       "category": "밸런시",
       "spend": 143702,
       "revenue": 211000,
-      "net_profit": 112770,
+      "net_profit": 110906,
       "order_count": 2,
-      "real_roi": 0.7847489944468414
+      "real_roi": 0.7717777066429138
     },
     {
       "report_date": "2026-04-27",
@@ -447,9 +867,9 @@
       "category": "순수단백",
       "spend": 65222,
       "revenue": 52720,
-      "net_profit": 15689,
+      "net_profit": 15224,
       "order_count": 1,
-      "real_roi": 0.24054766796479715
+      "real_roi": 0.23341817178252736
     },
     {
       "report_date": "2026-04-27",
@@ -497,11 +917,11 @@
       "month": "2026-04",
       "platform": "google_ads",
       "category": "단백밥",
-      "spend": 43048,
-      "revenue": 0,
-      "net_profit": 0,
-      "order_count": 0,
-      "real_roi": 0.0
+      "spend": 354991,
+      "revenue": 282290,
+      "net_profit": 61521,
+      "order_count": 4,
+      "real_roi": 0.1733029851461023
     },
     {
       "month": "2026-04",
@@ -517,21 +937,21 @@
       "month": "2026-04",
       "platform": "meta",
       "category": "기타",
-      "spend": 2127596,
-      "revenue": 1515170,
-      "net_profit": 392846,
-      "order_count": 24,
-      "real_roi": 0.18464313713693764
+      "spend": 503518,
+      "revenue": 288130,
+      "net_profit": 29187,
+      "order_count": 3,
+      "real_roi": 0.05796615016742202
     },
     {
       "month": "2026-04",
       "platform": "meta",
       "category": "단백밥",
-      "spend": 1208366,
-      "revenue": 2065080,
-      "net_profit": 433119,
-      "order_count": 26,
-      "real_roi": 0.3584336202773001
+      "spend": 1973337,
+      "revenue": 2525810,
+      "net_profit": 552449,
+      "order_count": 33,
+      "real_roi": 0.2799567433236188
     },
     {
       "month": "2026-04",
@@ -539,35 +959,35 @@
       "category": "단백밥 ASC",
       "spend": 176724,
       "revenue": 227450,
-      "net_profit": 36961,
+      "net_profit": 33791,
       "order_count": 3,
-      "real_roi": 0.20914533396708992
+      "real_roi": 0.19120775899142164
     },
     {
       "month": "2026-04",
       "platform": "meta",
       "category": "밸런시",
-      "spend": 474240,
-      "revenue": 573210,
-      "net_profit": 207651,
-      "order_count": 10,
-      "real_roi": 0.43786057692307695
+      "spend": 1037099,
+      "revenue": 775370,
+      "net_profit": 291950,
+      "order_count": 12,
+      "real_roi": 0.28150639427865615
     },
     {
       "month": "2026-04",
       "platform": "meta",
       "category": "순수단백",
-      "spend": 169587,
-      "revenue": 124120,
-      "net_profit": 35246,
-      "order_count": 2,
-      "real_roi": 0.20783432692364393
+      "spend": 465958,
+      "revenue": 477570,
+      "net_profit": 117025,
+      "order_count": 10,
+      "real_roi": 0.2511492452109418
     },
     {
       "month": "2026-04",
       "platform": "naver_searchad",
       "category": "기타",
-      "spend": 10604,
+      "spend": 62175,
       "revenue": 0,
       "net_profit": 0,
       "order_count": 0,
@@ -688,6 +1108,19 @@
     },
     {
       "report_date": "2026-04-20",
+      "channel_code": "google_ads",
+      "ad_spend": 41146,
+      "impressions": 5827,
+      "clicks": 204,
+      "ad_conversions": 10.0,
+      "ad_conversion_value": 591202,
+      "ga4_revenue": 0,
+      "attributed_order_revenue": 0,
+      "gross_margin": 0,
+      "net_profit": -41146
+    },
+    {
+      "report_date": "2026-04-20",
       "channel_code": "meta",
       "ad_spend": 610421,
       "impressions": 49127,
@@ -698,6 +1131,19 @@
       "attributed_order_revenue": 0,
       "gross_margin": 0,
       "net_profit": -610421
+    },
+    {
+      "report_date": "2026-04-20",
+      "channel_code": "naver_searchad",
+      "ad_spend": 4785,
+      "impressions": 342,
+      "clicks": 5,
+      "ad_conversions": 0.0,
+      "ad_conversion_value": 0,
+      "ga4_revenue": 0,
+      "attributed_order_revenue": 0,
+      "gross_margin": 0,
+      "net_profit": -4785
     },
     {
       "report_date": "2026-04-21",
