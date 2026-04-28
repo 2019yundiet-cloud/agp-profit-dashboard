@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-04-28T21:27:31",
+  "generated_at": "2026-04-28T21:32:00",
   "latest_date": "2026-04-27",
   "platforms": [
     {
@@ -823,7 +823,7 @@
       "impressions": 376,
       "clicks": 12,
       "ad_conversions": 2.0,
-      "ad_conversion_value": 0,
+      "ad_conversion_value": 62800,
       "ga4_revenue": 0,
       "attributed_order_revenue": 0,
       "gross_margin": 0,
