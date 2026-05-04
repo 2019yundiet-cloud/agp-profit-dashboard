@@ -316,6 +316,7 @@
             <div><div class="label">BEP 매출</div><div class="value" id="bepRevenue">₩0</div></div>
             <div><div class="label">일평균 BEP 순이익</div><div class="value" id="dailyTarget">₩0</div></div>
           </div>
+          <div class="note" id="monthPolicyNote">월별 손익은 독립 월 단위로 관리합니다.</div>
           <div class="note" id="dataSourceNote">Supabase 조회 스냅샷입니다. 월을 바꾸면 과거 월 기준으로 다시 계산하고, URL에도 현재 월/기준일 상태를 반영합니다.</div>
         </div>
       </section>
@@ -527,14 +528,16 @@ mtd_achievement_rate =
         label: "2026년 4월",
         daysInMonth: 30,
         fixedCost: 23064879,
-        quality: "Supabase mart_daily_profit_gauge snapshot · API/fallback source shown per day"
+        quality: "Supabase mart_daily_profit_gauge snapshot · API/fallback source shown per day",
+        closeNote: "4월 30일 데이터는 5월 6일에 별도 작업하며, 그전까지 4월 확정 손익에는 포함하지 않습니다."
       },
       "2026-05": {
         label: "2026년 5월",
         daysInMonth: 31,
         fixedCost: 19694879,
         quality: "대기",
-        emptyState: "5월 데이터는 5월 1일부터 별도 월로 적재되며, 현재는 D+1 확정 행이 아직 없습니다."
+        emptyState: "5월 데이터는 5월 1일부터 별도 월로 적재되며, 현재는 D+1 확정 행이 아직 없습니다.",
+        closeNote: "5월 손익은 5월 1일부터 독립 월로 누적합니다. 4월 데이터와 합산하지 않습니다."
       }
     };
     const dailyRowsByMonth = {
@@ -659,6 +662,7 @@ mtd_achievement_rate =
           fixedCost: base.fixedCost || 0,
           quality: base.quality || "확인 필요",
           emptyState: base.emptyState || "선택한 월의 D+1 확정 데이터가 아직 없습니다.",
+          closeNote: base.closeNote || "월별 손익은 독립 월 단위로 관리합니다.",
           hasData: rows.length > 0
         };
       });
@@ -702,6 +706,7 @@ mtd_achievement_rate =
       document.getElementById("fixedInput").value = monthMeta.fixedCost;
       document.getElementById("fixedCostInfoValue").textContent = won(monthMeta.fixedCost);
       document.getElementById("fixedCostInfoNote").textContent = `${monthMeta.label} 기준 월간 BEP 순이익 목표입니다.`;
+      document.getElementById("monthPolicyNote").textContent = monthMeta.closeNote;
     }
 
     function gaugeColor(rate) {
