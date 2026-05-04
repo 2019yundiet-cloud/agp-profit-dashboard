@@ -258,7 +258,7 @@
           <h1>AGP 순이익 달성률 대시보드</h1>
           <div class="sub">Supabase mart_daily_profit_gauge 조회 스냅샷 기준입니다. 광고비는 Meta/Google Ads/Naver SearchAd 채널별 원천 상태를 함께 표시합니다.</div>
         </div>
-        <span class="badge">D+1 확정 데이터 · 최신 폐장행 2026-04-28</span>
+        <span class="badge" id="latestClosedBadge">D+1 확정 데이터 · 최신 폐장행 확인 중</span>
       </div>
     </div>
   </header>
@@ -294,10 +294,10 @@
         </div>
 
         <div class="card">
-          <h2>조회일 입력</h2>
+          <h2>월 / 기준일 조회</h2>
           <div class="inputs">
             <label><div class="label">조회 월</div><select id="monthSelect"></select></label>
-            <label><div class="label">데이터 기준일</div><input id="queryDayInput" type="number" value="28" min="1" max="30" step="1"></label>
+            <label><div class="label">데이터 기준일</div><input id="queryDayInput" type="number" value="29" min="1" max="31" step="1"></label>
             <label><div class="label">월 일수</div><input id="daysInput" type="number" value="30" min="28" max="31" step="1"></label>
             <label><div class="label">월 고정비</div><input id="fixedInput" type="number" value="23064879" min="0" step="100000"></label>
             <label><div class="label">일별 광고비</div><input value="매일 차감" disabled></label>
@@ -316,7 +316,7 @@
             <div><div class="label">BEP 매출</div><div class="value" id="bepRevenue">₩0</div></div>
             <div><div class="label">일평균 BEP 순이익</div><div class="value" id="dailyTarget">₩0</div></div>
           </div>
-          <div class="note" id="dataSourceNote">Supabase 조회 스냅샷입니다. stg_ads_daily는 API 적재값, imweb_archive_fallback은 과거 자사몰 집계 fallback, missing은 해당일 채널 광고비 미적재입니다.</div>
+          <div class="note" id="dataSourceNote">Supabase 조회 스냅샷입니다. 월을 바꾸면 과거 월 기준으로 다시 계산하고, URL에도 현재 월/기준일 상태를 반영합니다.</div>
         </div>
       </section>
 
@@ -395,8 +395,8 @@
       <section class="grid kpis">
         <div class="card">
           <div class="label">월 고정비</div>
-          <div class="value">₩23,064,879</div>
-          <div class="note">월간 BEP 순이익 목표. 고정비 차감 후 이익은 월 고정비 전체를 차감.</div>
+          <div class="value" id="fixedCostInfoValue">₩23,064,879</div>
+          <div class="note" id="fixedCostInfoNote">선택한 월 기준 월간 BEP 순이익 목표입니다.</div>
         </div>
         <div class="card">
           <div class="label">운영 변동비율</div>
@@ -406,7 +406,7 @@
         <div class="card">
           <div class="label">데이터 기반</div>
           <div class="value violet">Supabase</div>
-          <div class="note">운영 기준은 `mart_daily_profit_gauge_latest_closed`. 현재 화면은 Supabase 2026-04-27 확정 스냅샷.</div>
+          <div class="note">운영 기준은 `mart_daily_profit_gauge_latest_closed`. 월 선택으로 과거 폐장 데이터도 다시 확인할 수 있습니다.</div>
         </div>
         <div class="card">
           <div class="label">차감 광고비</div>
@@ -515,10 +515,28 @@ mtd_achievement_rate =
     const won = n => "₩" + Math.round(n).toLocaleString("ko-KR");
     const percent = n => (n * 100).toFixed(1) + "%";
     const read = id => Number(document.getElementById(id).value || 0);
-    const monthOptions = [
-      { key: "2026-03", label: "2026년 3월", daysInMonth: 31, defaultDay: 31, firstDate: "2026-03-22", lastDate: "2026-03-31", quality: "MISSING_IMWEB" },
-      { key: "2026-04", label: "2026년 4월", daysInMonth: 30, defaultDay: 28, firstDate: "2026-04-01", lastDate: "2026-04-28", quality: "Supabase mart_daily_profit_gauge snapshot · API/fallback source shown per day" }
-    ];
+    const noDataText = "미적재";
+    const monthConfig = {
+      "2026-03": {
+        label: "2026년 3월",
+        daysInMonth: 31,
+        fixedCost: 23064879,
+        quality: "MISSING_IMWEB"
+      },
+      "2026-04": {
+        label: "2026년 4월",
+        daysInMonth: 30,
+        fixedCost: 23064879,
+        quality: "Supabase mart_daily_profit_gauge snapshot · API/fallback source shown per day"
+      },
+      "2026-05": {
+        label: "2026년 5월",
+        daysInMonth: 31,
+        fixedCost: 19694879,
+        quality: "대기",
+        emptyState: "5월 데이터는 5월 1일부터 별도 월로 적재되며, 현재는 D+1 확정 행이 아직 없습니다."
+      }
+    };
     const dailyRowsByMonth = {
       "2026-03": [
         { day: 22, revenue: 803180, imweb: 0, naver: 699063.76, meta: 0, naverAd: 0 },
@@ -560,8 +578,10 @@ mtd_achievement_rate =
         { day: 25, revenue: 3247216, imweb: 744138, naver: 298168.32, meta: 469334, googleAd: 41637, naverAd: 4567, metaSource: "stg_ads_daily", googleSource: "stg_ads_daily", naverSearchSource: "stg_ads_daily", quality: "MATCH_CHECK" },
         { day: 26, revenue: 4812918, imweb: 1307747, naver: 584081.64, meta: 516741, googleAd: 64138, naverAd: 12976, metaSource: "stg_ads_daily", googleSource: "stg_ads_daily", naverSearchSource: "stg_ads_daily", quality: "OK" },
         { day: 27, revenue: 8671301, imweb: 2246189, naver: 1580872.08, meta: 608068, googleAd: 43048, naverAd: 10604, metaSource: "stg_ads_daily", googleSource: "stg_ads_daily", naverSearchSource: "stg_ads_daily", quality: "MATCH_CHECK" },
-        { day: 28, revenue: 8483252, imweb: 2197565, naver: 823514.96, meta: 612347, googleAd: 35320, naverAd: 10034, metaSource: "stg_ads_daily", googleSource: "stg_ads_daily", naverSearchSource: "stg_ads_daily", quality: "MATCH_CHECK" }
-      ]
+        { day: 28, revenue: 8483252, imweb: 2197565, naver: 823514.96, meta: 612347, googleAd: 35320, naverAd: 10034, metaSource: "stg_ads_daily", googleSource: "stg_ads_daily", naverSearchSource: "stg_ads_daily", quality: "MATCH_CHECK" },
+        { day: 29, revenue: 6496726, imweb: 1432026, naver: 922461.08, meta: 572854, googleAd: 34508, naverAd: 10330, metaSource: "stg_ads_daily", googleSource: "stg_ads_daily", naverSearchSource: "stg_ads_daily", quality: "MATCH_CHECK" }
+      ],
+      "2026-05": []
     };
     const categoryRowsByMonth = {
       "2026-03": [],
@@ -616,6 +636,73 @@ mtd_achievement_rate =
     document.getElementById("cogsRows").innerHTML = cogs.map(([name, amount]) => `
       <tr><td>${name}</td><td>${won(amount)}</td></tr>
     `).join("");
+
+    function deriveMonthOptions() {
+      const keys = Array.from(new Set([
+        ...Object.keys(monthConfig),
+        ...Object.keys(dailyRowsByMonth)
+      ])).sort();
+
+      return keys.map(key => {
+        const rows = dailyRowsByMonth[key] || [];
+        const base = monthConfig[key] || {};
+        const daysInMonth = base.daysInMonth || new Date(Number(key.slice(0, 4)), Number(key.slice(5, 7)), 0).getDate();
+        const firstDay = rows.length ? Math.min(...rows.map(row => row.day)) : 1;
+        const lastDay = rows.length ? Math.max(...rows.map(row => row.day)) : null;
+        return {
+          key,
+          label: base.label || `${key}월`,
+          daysInMonth,
+          defaultDay: lastDay || 1,
+          firstDate: `${key}-${String(firstDay).padStart(2, "0")}`,
+          lastDate: lastDay ? `${key}-${String(lastDay).padStart(2, "0")}` : null,
+          fixedCost: base.fixedCost || 0,
+          quality: base.quality || "확인 필요",
+          emptyState: base.emptyState || "선택한 월의 D+1 확정 데이터가 아직 없습니다.",
+          hasData: rows.length > 0
+        };
+      });
+    }
+
+    const monthOptions = deriveMonthOptions();
+    const monthByKey = Object.fromEntries(monthOptions.map(month => [month.key, month]));
+    const latestMonthWithData = [...monthOptions].reverse().find(month => month.hasData) || monthOptions[monthOptions.length - 1];
+    const latestClosedDate = latestMonthWithData?.lastDate || "미확인";
+    document.getElementById("latestClosedBadge").textContent = `D+1 확정 데이터 · 최신 폐장행 ${latestClosedDate}`;
+
+    function asText(value, formatter = won) {
+      return value == null ? noDataText : formatter(value);
+    }
+
+    function updateUrlState(monthKey, day) {
+      const url = new URL(window.location.href);
+      url.searchParams.set("month", monthKey);
+      url.searchParams.set("day", String(day));
+      window.history.replaceState({}, "", url);
+    }
+
+    function getInitialSelection() {
+      const url = new URL(window.location.href);
+      const requestedMonth = url.searchParams.get("month");
+      const fallbackMonth = latestMonthWithData?.key || monthOptions[monthOptions.length - 1]?.key;
+      const monthKey = monthByKey[requestedMonth] ? requestedMonth : fallbackMonth;
+      const monthMeta = monthByKey[monthKey];
+      const requestedDay = Number(url.searchParams.get("day") || monthMeta.defaultDay || 1);
+      const maxDay = monthMeta.hasData ? monthMeta.defaultDay : monthMeta.daysInMonth;
+      const day = Math.min(Math.max(requestedDay, 1), maxDay);
+      return { monthKey, day };
+    }
+
+    function syncInputsForMonth(monthMeta, requestedDay) {
+      const dayInput = document.getElementById("queryDayInput");
+      const dayMax = monthMeta.hasData ? monthMeta.defaultDay : monthMeta.daysInMonth;
+      dayInput.max = dayMax;
+      dayInput.value = Math.min(Math.max(requestedDay, 1), dayMax);
+      document.getElementById("daysInput").value = monthMeta.daysInMonth;
+      document.getElementById("fixedInput").value = monthMeta.fixedCost;
+      document.getElementById("fixedCostInfoValue").textContent = won(monthMeta.fixedCost);
+      document.getElementById("fixedCostInfoNote").textContent = `${monthMeta.label} 기준 월간 BEP 순이익 목표입니다.`;
+    }
 
     function gaugeColor(rate) {
       if (rate >= 1.2) return ["var(--blue)", "초과달성"];
@@ -690,6 +777,11 @@ mtd_achievement_rate =
       const prevKey = previousMonthKey(monthKey);
       const prevMeta = monthOptions.find(month => month.key === prevKey);
       const currentMeta = monthOptions.find(month => month.key === monthKey);
+      if (!current.rows.length) {
+        document.getElementById("compareGrid").innerHTML = `<div class="note">${currentMeta.emptyState}</div>`;
+        document.getElementById("compareNote").textContent = `${currentMeta.label}은 아직 비교 가능한 확정 데이터가 없습니다.`;
+        return;
+      }
       if (!prevKey || !prevMeta) {
         document.getElementById("compareGrid").innerHTML = `<div class="note">비교할 전월 데이터가 아직 없습니다.</div>`;
         document.getElementById("compareNote").textContent = `${currentMeta.label}은 선택 가능한 첫 월입니다.`;
@@ -697,6 +789,11 @@ mtd_achievement_rate =
       }
       const prevDay = Math.min(queryDay, prevMeta.defaultDay);
       const prev = summarizeRows(prevKey, prevDay);
+      if (!prev.rows.length) {
+        document.getElementById("compareGrid").innerHTML = `<div class="note">${prevMeta.label}의 비교 데이터가 아직 없습니다.</div>`;
+        document.getElementById("compareNote").textContent = `${currentMeta.label}과 비교할 직전 월 확정 데이터가 없습니다.`;
+        return;
+      }
       const metrics = [
         ["총매출", current.revenue, prev.revenue],
         ["총 공헌이익", current.commerceContribution, prev.commerceContribution],
@@ -738,10 +835,12 @@ mtd_achievement_rate =
 
     function updateGauge() {
       const monthKey = document.getElementById("monthSelect").value;
-      const monthMeta = monthOptions.find(month => month.key === monthKey) || monthOptions[monthOptions.length - 1];
+      const monthMeta = monthByKey[monthKey] || monthOptions[monthOptions.length - 1];
       const fixedCost = read("fixedInput");
       const daysInMonth = Math.min(Math.max(read("daysInput") || monthMeta.daysInMonth, 28), 31);
-      const queryDay = Math.min(Math.max(read("queryDayInput"), 1), daysInMonth);
+      const dayMax = monthMeta.hasData ? monthMeta.defaultDay : daysInMonth;
+      const queryDay = Math.min(Math.max(read("queryDayInput"), 1), dayMax);
+      document.getElementById("queryDayInput").value = queryDay;
       const summary = summarizeRows(monthKey, queryDay);
       const {
         rows: enrichedRows,
@@ -758,6 +857,8 @@ mtd_achievement_rate =
         sourceCounts,
         qualityCounts
       } = summary;
+      const hasRows = enrichedRows.length > 0;
+      const effectiveDay = hasRows ? enrichedRows[enrichedRows.length - 1].day : queryDay;
       const mtdNetRate = revenue > 0 ? mtdNet / revenue : 0;
       const dailyTarget = fixedCost / daysInMonth;
       const bepRevenue = mtdNetRate > 0 ? fixedCost / mtdNetRate : 0;
@@ -768,38 +869,40 @@ mtd_achievement_rate =
       const [color, status] = gaugeColor(rate);
       document.getElementById("gauge").style.setProperty("--gauge-color", color);
       document.getElementById("gauge").style.setProperty("--gauge-pct", capped / 2);
-      document.getElementById("gaugeNum").textContent = percent(rate);
-      document.getElementById("gaugeStatus").textContent = `${status} · ${queryDay}일 누적`;
-      document.getElementById("fImwebContribution").textContent = won(imwebContribution);
-      document.getElementById("fNaverContribution").textContent = won(naverContribution);
-      document.getElementById("fCommerceContribution").textContent = won(commerceContribution);
-      document.getElementById("fTotalAdSpend").textContent = won(totalAdSpend);
-      document.getElementById("fMetaAdSpend").textContent = won(metaAdSpend);
-      document.getElementById("fGoogleAdsSpend").textContent = won(googleAdsSpend);
-      document.getElementById("fNaverSearchAdSpend").textContent = won(naverSearchAdSpend);
-      document.getElementById("fNetProfit").textContent = won(mtdNet);
+      document.getElementById("gaugeNum").textContent = hasRows ? percent(rate) : "대기";
+      document.getElementById("gaugeStatus").textContent = hasRows ? `${status} · ${effectiveDay}일 누적` : monthMeta.emptyState;
+      document.getElementById("fImwebContribution").textContent = asText(hasRows ? imwebContribution : null);
+      document.getElementById("fNaverContribution").textContent = asText(hasRows ? naverContribution : null);
+      document.getElementById("fCommerceContribution").textContent = asText(hasRows ? commerceContribution : null);
+      document.getElementById("fTotalAdSpend").textContent = asText(hasRows ? totalAdSpend : null);
+      document.getElementById("fMetaAdSpend").textContent = asText(hasRows ? metaAdSpend : null);
+      document.getElementById("fGoogleAdsSpend").textContent = asText(hasRows ? googleAdsSpend : null);
+      document.getElementById("fNaverSearchAdSpend").textContent = asText(hasRows ? naverSearchAdSpend : null);
+      document.getElementById("fNetProfit").textContent = asText(hasRows ? mtdNet : null);
       document.getElementById("fMtdTarget").textContent = won(mtdTarget);
-      document.getElementById("fAfterFixed").textContent = won(afterFixedProfit);
-      document.getElementById("fAfterFixed").className = afterFixedProfit >= 0 ? "good" : "bad";
-      document.getElementById("fNetRate").textContent = percent(mtdNetRate);
+      document.getElementById("fAfterFixed").textContent = asText(hasRows ? afterFixedProfit : null);
+      document.getElementById("fAfterFixed").className = !hasRows ? "" : (afterFixedProfit >= 0 ? "good" : "bad");
+      document.getElementById("fNetRate").textContent = hasRows ? percent(mtdNetRate) : noDataText;
       document.getElementById("fMonthlyBep").textContent = won(fixedCost);
       document.getElementById("dailyTarget").textContent = won(dailyTarget);
       document.getElementById("monthlyFixedCost").textContent = won(fixedCost);
-      document.getElementById("bepRevenue").textContent = won(bepRevenue);
-      document.getElementById("totalAdSpend").textContent = won(totalAdSpend);
-      document.getElementById("metaAdSpend").textContent = won(metaAdSpend);
-      document.getElementById("googleAdsSpend").textContent = won(googleAdsSpend);
-      document.getElementById("naverSearchAdSpend").textContent = won(naverSearchAdSpend);
-      document.getElementById("totalRevenue").textContent = won(revenue);
-      document.getElementById("totalContribution").textContent = won(commerceContribution);
-      document.getElementById("totalVariableCost").textContent = won(totalVariableCost);
-      document.getElementById("afterFixedProfit").textContent = won(afterFixedProfit);
-      document.getElementById("afterFixedProfit").className = "value " + (afterFixedProfit >= 0 ? "good" : "bad");
-      document.getElementById("bridgeRevenue").textContent = won(revenue);
-      document.getElementById("bridgeVariableCost").textContent = won(totalVariableCost);
-      document.getElementById("bridgeContribution").textContent = won(commerceContribution);
-      document.getElementById("bridgeAds").textContent = won(totalAdSpend);
-      document.getElementById("bridgeAdsNote").textContent = `Meta ${won(metaAdSpend)} · Google Ads ${won(googleAdsSpend)} · Naver SearchAd ${won(naverSearchAdSpend)}`;
+      document.getElementById("bepRevenue").textContent = hasRows ? won(bepRevenue) : noDataText;
+      document.getElementById("totalAdSpend").textContent = asText(hasRows ? totalAdSpend : null);
+      document.getElementById("metaAdSpend").textContent = asText(hasRows ? metaAdSpend : null);
+      document.getElementById("googleAdsSpend").textContent = asText(hasRows ? googleAdsSpend : null);
+      document.getElementById("naverSearchAdSpend").textContent = asText(hasRows ? naverSearchAdSpend : null);
+      document.getElementById("totalRevenue").textContent = asText(hasRows ? revenue : null);
+      document.getElementById("totalContribution").textContent = asText(hasRows ? commerceContribution : null);
+      document.getElementById("totalVariableCost").textContent = asText(hasRows ? totalVariableCost : null);
+      document.getElementById("afterFixedProfit").textContent = asText(hasRows ? afterFixedProfit : null);
+      document.getElementById("afterFixedProfit").className = "value " + (!hasRows ? "" : (afterFixedProfit >= 0 ? "good" : "bad"));
+      document.getElementById("bridgeRevenue").textContent = asText(hasRows ? revenue : null);
+      document.getElementById("bridgeVariableCost").textContent = asText(hasRows ? totalVariableCost : null);
+      document.getElementById("bridgeContribution").textContent = asText(hasRows ? commerceContribution : null);
+      document.getElementById("bridgeAds").textContent = asText(hasRows ? totalAdSpend : null);
+      document.getElementById("bridgeAdsNote").textContent = hasRows
+        ? `Meta ${won(metaAdSpend)} · Google Ads ${won(googleAdsSpend)} · Naver SearchAd ${won(naverSearchAdSpend)}`
+        : monthMeta.emptyState;
       const sourceSummary = Object.entries(sourceCounts)
         .sort(([a], [b]) => a.localeCompare(b))
         .map(([source, count]) => `${source} ${count}건`)
@@ -808,17 +911,23 @@ mtd_achievement_rate =
         .sort(([a], [b]) => a.localeCompare(b))
         .map(([quality, count]) => `${quality} ${count}일`)
         .join(" · ");
-      document.getElementById("dataSourceNote").textContent = `Supabase mart_daily_profit_gauge 조회 스냅샷입니다. 광고비 원천: ${sourceSummary}. 품질상태: ${qualitySummary}.`;
-      document.getElementById("bridgeProfit").textContent = won(mtdNet);
-      document.getElementById("bridgeProfit").className = "value " + (mtdNet >= 0 ? "good" : "bad");
-      document.getElementById("bridgeProfitNote").textContent = `월간 BEP 목표 ${won(fixedCost)} 대비 ${percent(rate)} 달성`;
+      document.getElementById("dataSourceNote").textContent = hasRows
+        ? `${monthMeta.label} ${monthMeta.firstDate} ~ ${monthMeta.lastDate} 확정 데이터입니다. 광고비 원천: ${sourceSummary}. 품질상태: ${qualitySummary}.`
+        : `${monthMeta.label}은 아직 확정 데이터가 없습니다. ${monthMeta.emptyState}`;
+      document.getElementById("bridgeProfit").textContent = asText(hasRows ? mtdNet : null);
+      document.getElementById("bridgeProfit").className = "value " + (!hasRows ? "" : (mtdNet >= 0 ? "good" : "bad"));
+      document.getElementById("bridgeProfitNote").textContent = hasRows
+        ? `월간 BEP 목표 ${won(fixedCost)} 대비 ${percent(rate)} 달성`
+        : `${monthMeta.label} 데이터 적재 후 자동 계산됩니다.`;
       document.getElementById("bridgeFixed").textContent = won(fixedCost);
-      document.getElementById("bridgeFinalProfit").textContent = won(afterFixedProfit);
-      document.getElementById("bridgeFinalProfit").className = "value " + (afterFixedProfit >= 0 ? "good" : "bad");
-      document.getElementById("bridgeFinalProfitNote").textContent = `월 고정비 전체 차감 후 ${afterFixedProfit >= 0 ? "흑자" : "적자"}`;
+      document.getElementById("bridgeFinalProfit").textContent = asText(hasRows ? afterFixedProfit : null);
+      document.getElementById("bridgeFinalProfit").className = "value " + (!hasRows ? "" : (afterFixedProfit >= 0 ? "good" : "bad"));
+      document.getElementById("bridgeFinalProfitNote").textContent = hasRows
+        ? `월 고정비 전체 차감 후 ${afterFixedProfit >= 0 ? "흑자" : "적자"}`
+        : `${monthMeta.label} 최종 이익은 확정 데이터 적재 후 표시됩니다.`;
       renderComparison(monthKey, queryDay, summary, fixedCost);
       renderProductTables(monthKey);
-      document.getElementById("dailyProfitBars").innerHTML = enrichedRows.map(row => {
+      document.getElementById("dailyProfitBars").innerHTML = hasRows ? enrichedRows.map(row => {
         const dailyBepRate = dailyTarget > 0 ? row.dailyNet / dailyTarget : 0;
         const width = Math.max(Math.min(Math.abs(dailyBepRate) * 100, 160), 2);
         const cls = row.dailyNet < 0 ? "profit-fill loss" : "profit-fill";
@@ -833,25 +942,24 @@ mtd_achievement_rate =
             <div>${percent(dailyBepRate)}</div>
           </div>
         `;
-      }).join("");
+      }).join("") : `<div class="note">${monthMeta.emptyState}</div>`;
+      updateUrlState(monthKey, queryDay);
     }
 
     const monthSelect = document.getElementById("monthSelect");
     monthSelect.innerHTML = monthOptions.map(month => `<option value="${month.key}">${month.label}</option>`).join("");
-    monthSelect.value = "2026-04";
+    const initialSelection = getInitialSelection();
+    monthSelect.value = initialSelection.monthKey;
+    syncInputsForMonth(monthByKey[initialSelection.monthKey], initialSelection.day);
     monthSelect.addEventListener("change", () => {
-      const monthMeta = monthOptions.find(month => month.key === monthSelect.value);
-      document.getElementById("queryDayInput").value = monthMeta.defaultDay;
-      document.getElementById("queryDayInput").max = monthMeta.daysInMonth;
-      document.getElementById("daysInput").value = monthMeta.daysInMonth;
+      const monthMeta = monthByKey[monthSelect.value];
+      syncInputsForMonth(monthMeta, monthMeta.defaultDay);
       updateGauge();
     });
 
     ["queryDayInput", "daysInput", "fixedInput"].forEach(id => {
       document.getElementById(id).addEventListener("input", updateGauge);
     });
-    document.getElementById("daysInput").value = monthOptions[1].daysInMonth;
-    document.getElementById("queryDayInput").max = monthOptions[1].daysInMonth;
     updateGauge();
   </script>
 </body>
