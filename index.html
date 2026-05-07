@@ -256,7 +256,7 @@
       <div class="topline">
         <div>
           <h1>AGP 순이익 달성률 대시보드</h1>
-          <div class="sub">Supabase mart_daily_profit_gauge 조회 스냅샷 기준입니다. 광고비는 Meta/Google Ads/Naver SearchAd 채널별 원천 상태를 함께 표시합니다.</div>
+          <div class="sub">매출은 자사몰·네이버 운영 API 기준, 공헌이익·광고비·순수익은 Supabase mart_daily_profit_gauge 기준입니다.</div>
         </div>
         <span class="badge" id="latestClosedBadge">D+1 확정 데이터 · 최신 폐장행 확인 중</span>
       </div>
@@ -317,7 +317,7 @@
             <div><div class="label">일평균 BEP 순이익</div><div class="value" id="dailyTarget">₩0</div></div>
           </div>
           <div class="note" id="monthPolicyNote">월별 손익은 독립 월 단위로 관리합니다.</div>
-          <div class="note" id="dataSourceNote">Supabase 조회 스냅샷입니다. 월을 바꾸면 과거 월 기준으로 다시 계산하고, URL에도 현재 월/기준일 상태를 반영합니다.</div>
+          <div class="note" id="dataSourceNote">매출은 운영 API 기준, 공헌이익·광고비·순수익은 Supabase 기준입니다. 월을 바꾸면 과거 월 기준으로 다시 계산하고, URL에도 현재 월/기준일 상태를 반영합니다.</div>
         </div>
       </section>
 
@@ -327,7 +327,7 @@
           <div class="bridge-step">
             <div class="label">총 매출</div>
             <div class="value" id="bridgeRevenue">₩0</div>
-            <div class="bridge-op">Supabase 자사몰 + 네이버 결제 매출 참고값</div>
+            <div class="bridge-op">자사몰·네이버 운영 API 결제 매출 합계</div>
           </div>
           <div class="bridge-step">
             <div class="label">조회일까지의 총변동비</div>
@@ -598,12 +598,12 @@ mtd_achievement_rate =
         { day: 30, revenue: 1995520, imweb: 811391, naver: 0, meta: 457304, googleAd: 36947, naverAd: 7005, metaSource: "stg_ads_daily", googleSource: "stg_ads_daily", naverSearchSource: "stg_ads_daily", quality: "MISSING_NAVER" }
       ],
       "2026-05": [
-        { day: 1, revenue: 1581444, imweb: 549207, naver: 0, meta: 501087, googleAd: 76586, naverAd: 10671, metaSource: "stg_ads_daily", googleSource: "stg_ads_daily", naverSearchSource: "stg_ads_daily", quality: "MISSING_NAVER" },
-        { day: 2, revenue: 2011130, imweb: 925310, naver: 0, meta: 460939, googleAd: 47956, naverAd: 9111, metaSource: "stg_ads_daily", googleSource: "stg_ads_daily", naverSearchSource: "stg_ads_daily", quality: "MISSING_NAVER" },
-        { day: 3, revenue: 1829900, imweb: 642469, naver: 0, meta: 598525, googleAd: 44204, naverAd: 5863, metaSource: "stg_ads_daily", googleSource: "stg_ads_daily", naverSearchSource: "stg_ads_daily", quality: "MISSING_NAVER" },
-        { day: 4, revenue: 3322027, imweb: 1517356, naver: 0, meta: 554335, googleAd: 43950, naverAd: 10818, metaSource: "stg_ads_daily", googleSource: "stg_ads_daily", naverSearchSource: "stg_ads_daily", quality: "MISSING_NAVER" },
-        { day: 5, revenue: 3910451, imweb: 1589781, naver: 0, meta: 602908, googleAd: 38750, naverAd: 16423, metaSource: "stg_ads_daily", googleSource: "stg_ads_daily", naverSearchSource: "stg_ads_daily", quality: "MISSING_NAVER" },
-        { day: 6, revenue: 6672023, imweb: 1834759, naver: 960746.8, meta: 584543, googleAd: 41178, naverAd: 18580, metaSource: "stg_ads_daily", googleSource: "stg_ads_daily", naverSearchSource: "stg_ads_daily", quality: "MATCH_CHECK" }
+        { day: 1, revenue: 2791994, selfRevenueApi: 1581444, naverRevenueApi: 1210550, imweb: 549207, naver: 0, meta: 501087, googleAd: 76586, naverAd: 10671, metaSource: "stg_ads_daily", googleSource: "stg_ads_daily", naverSearchSource: "stg_ads_daily", quality: "MISSING_NAVER" },
+        { day: 2, revenue: 3488390, selfRevenueApi: 2011130, naverRevenueApi: 1477260, imweb: 925310, naver: 0, meta: 460939, googleAd: 47956, naverAd: 9111, metaSource: "stg_ads_daily", googleSource: "stg_ads_daily", naverSearchSource: "stg_ads_daily", quality: "MISSING_NAVER" },
+        { day: 3, revenue: 2940670, selfRevenueApi: 1829900, naverRevenueApi: 1058950, imweb: 642469, naver: 0, meta: 598525, googleAd: 44204, naverAd: 5863, metaSource: "stg_ads_daily", googleSource: "stg_ads_daily", naverSearchSource: "stg_ads_daily", quality: "MISSING_NAVER" },
+        { day: 4, revenue: 5845637, selfRevenueApi: 3419147, naverRevenueApi: 2426490, imweb: 1517356, naver: 0, meta: 554335, googleAd: 43950, naverAd: 10818, metaSource: "stg_ads_daily", googleSource: "stg_ads_daily", naverSearchSource: "stg_ads_daily", quality: "MISSING_NAVER" },
+        { day: 5, revenue: 5261361, selfRevenueApi: 4043471, naverRevenueApi: 1217890, imweb: 1589781, naver: 0, meta: 602908, googleAd: 38750, naverAd: 16423, metaSource: "stg_ads_daily", googleSource: "stg_ads_daily", naverSearchSource: "stg_ads_daily", quality: "MISSING_NAVER" },
+        { day: 6, revenue: 6896313, selfRevenueApi: 4361733, naverRevenueApi: 2534580, imweb: 1834759, naver: 960746.8, meta: 584543, googleAd: 41178, naverAd: 18580, metaSource: "stg_ads_daily", googleSource: "stg_ads_daily", naverSearchSource: "stg_ads_daily", quality: "MATCH_CHECK" }
       ]
     };
     const categoryRowsByMonth = {
@@ -757,7 +757,9 @@ mtd_achievement_rate =
           dailyNet: commerceContribution - adSpend
         };
       });
-      const revenue = enrichedRows.reduce((sum, row) => sum + row.revenue, 0);
+      const revenue = enrichedRows.reduce((sum, row) => sum + Number(row.revenue || 0), 0);
+      const selfRevenueApi = enrichedRows.reduce((sum, row) => sum + Number(row.selfRevenueApi || 0), 0);
+      const naverRevenueApi = enrichedRows.reduce((sum, row) => sum + Number(row.naverRevenueApi || 0), 0);
       const imwebContribution = enrichedRows.reduce((sum, row) => sum + row.imweb, 0);
       const naverContribution = enrichedRows.reduce((sum, row) => sum + row.naver, 0);
       const commerceContribution = imwebContribution + naverContribution;
@@ -766,6 +768,7 @@ mtd_achievement_rate =
       const googleAdsSpend = enrichedRows.reduce((sum, row) => sum + row.googleAd, 0);
       const naverSearchAdSpend = enrichedRows.reduce((sum, row) => sum + row.naverSearchAd, 0);
       const totalVariableCost = revenue - commerceContribution;
+      const hasApiRevenue = enrichedRows.some(row => row.selfRevenueApi != null || row.naverRevenueApi != null);
       const mtdNet = enrichedRows.reduce((sum, row) => sum + row.dailyNet, 0);
       const sourceCounts = enrichedRows.reduce((counts, row) => {
         ["metaSource", "googleSource", "naverSearchSource"].forEach(key => {
@@ -782,6 +785,9 @@ mtd_achievement_rate =
       return {
         rows: enrichedRows,
         revenue,
+        selfRevenueApi,
+        naverRevenueApi,
+        hasApiRevenue,
         imwebContribution,
         naverContribution,
         commerceContribution,
@@ -874,6 +880,9 @@ mtd_achievement_rate =
       const {
         rows: enrichedRows,
         revenue,
+        selfRevenueApi,
+        naverRevenueApi,
+        hasApiRevenue,
         imwebContribution,
         naverContribution,
         commerceContribution,
@@ -941,7 +950,9 @@ mtd_achievement_rate =
         .map(([quality, count]) => `${quality} ${count}일`)
         .join(" · ");
       document.getElementById("dataSourceNote").textContent = hasRows
-        ? `${monthMeta.label} ${monthMeta.firstDate} ~ ${monthMeta.lastDate} 확정 데이터입니다. 광고비 원천: ${sourceSummary}. 품질상태: ${qualitySummary}.`
+        ? (hasApiRevenue
+          ? `${monthMeta.label} ${monthMeta.firstDate} ~ ${monthMeta.lastDate} 기준, 매출은 자사몰 API ${won(selfRevenueApi)} + 네이버 API ${won(naverRevenueApi)} = ${won(revenue)}를 사용합니다. 공헌이익·광고비·순수익은 Supabase 기준입니다. 광고비 원천: ${sourceSummary}. 품질상태: ${qualitySummary}.`
+          : `${monthMeta.label} ${monthMeta.firstDate} ~ ${monthMeta.lastDate} 확정 데이터입니다. 매출·공헌이익·광고비·순수익은 Supabase 기준입니다. 광고비 원천: ${sourceSummary}. 품질상태: ${qualitySummary}.`)
         : `${monthMeta.label}은 아직 확정 데이터가 없습니다. ${monthMeta.emptyState}`;
       document.getElementById("bridgeProfit").textContent = asText(hasRows ? mtdNet : null);
       document.getElementById("bridgeProfit").className = "value " + (!hasRows ? "" : (mtdNet >= 0 ? "good" : "bad"));
