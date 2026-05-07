@@ -284,12 +284,12 @@
               <div class="formula-row"><span>└ Google Ads 광고비</span><strong id="fGoogleAdsSpend">₩0</strong></div>
               <div class="formula-row"><span>└ Naver SearchAd 광고비</span><strong id="fNaverSearchAdSpend">₩0</strong></div>
               <div class="formula-row"><span>= 고정비 전 순수익</span><strong id="fNetProfit">₩0</strong></div>
-              <div class="formula-row"><span>- 월 고정비 전체</span><strong id="fMtdTarget">₩0</strong></div>
-              <div class="formula-row"><span>= 고정비 차감 후 이익</span><strong id="fAfterFixed">₩0</strong></div>
+              <div class="formula-row"><span id="fMtdTargetLabel">- 누적 BEP 목표</span><strong id="fMtdTarget">₩0</strong></div>
+              <div class="formula-row"><span>= 월 고정비 전체 차감 후 이익</span><strong id="fAfterFixed">₩0</strong></div>
               <div class="formula-row"><span>MTD 순수익률</span><strong id="fNetRate">0.0%</strong></div>
               <div class="formula-row"><span>월간 BEP 목표</span><strong id="fMonthlyBep">₩0</strong></div>
             </div>
-            <div class="note">MTD는 이번 달 1일부터 데이터 기준일까지의 누적값입니다. 게이지는 순수익률이 아니라 BEP 목표 대비 달성률입니다.</div>
+            <div class="note">게이지는 이번 달 1일부터 기준일까지의 고정비 전 순수익을, 같은 기간의 일할 BEP 목표와 비교한 값입니다. 최종 이익은 아래의 월 고정비 전체 차감 값을 따로 보여줍니다.</div>
           </div>
         </div>
 
@@ -547,7 +547,7 @@ mtd_achievement_rate =
         label: "2026년 5월",
         daysInMonth: 31,
         fixedCost: 19694879,
-        quality: "MATCH_CHECK 1일 · MISSING_NAVER 5일",
+        quality: "MATCH_CHECK 5일 · OK 1일",
         emptyState: "5월 데이터는 5월 1일부터 별도 월로 적재되며, 현재 최신 D+1 확정행은 5월 6일까지입니다.",
         closeNote: "5월 손익은 5월 1일부터 독립 월로 누적합니다. 4월 데이터와 합산하지 않습니다."
       }
@@ -598,11 +598,11 @@ mtd_achievement_rate =
         { day: 30, revenue: 1995520, imweb: 811391, naver: 0, meta: 457304, googleAd: 36947, naverAd: 7005, metaSource: "stg_ads_daily", googleSource: "stg_ads_daily", naverSearchSource: "stg_ads_daily", quality: "MISSING_NAVER" }
       ],
       "2026-05": [
-        { day: 1, revenue: 2791994, selfRevenueApi: 1581444, naverRevenueApi: 1210550, imweb: 549207, naver: 0, meta: 501087, googleAd: 76586, naverAd: 10671, metaSource: "stg_ads_daily", googleSource: "stg_ads_daily", naverSearchSource: "stg_ads_daily", quality: "MISSING_NAVER" },
-        { day: 2, revenue: 3488390, selfRevenueApi: 2011130, naverRevenueApi: 1477260, imweb: 925310, naver: 0, meta: 460939, googleAd: 47956, naverAd: 9111, metaSource: "stg_ads_daily", googleSource: "stg_ads_daily", naverSearchSource: "stg_ads_daily", quality: "MISSING_NAVER" },
-        { day: 3, revenue: 2940670, selfRevenueApi: 1881720, naverRevenueApi: 1058950, imweb: 642469, naver: 0, meta: 598525, googleAd: 44204, naverAd: 5863, metaSource: "stg_ads_daily", googleSource: "stg_ads_daily", naverSearchSource: "stg_ads_daily", quality: "MISSING_NAVER" },
-        { day: 4, revenue: 5845637, selfRevenueApi: 3419147, naverRevenueApi: 2426490, imweb: 1517356, naver: 0, meta: 554335, googleAd: 43950, naverAd: 10818, metaSource: "stg_ads_daily", googleSource: "stg_ads_daily", naverSearchSource: "stg_ads_daily", quality: "MISSING_NAVER" },
-        { day: 5, revenue: 5261361, selfRevenueApi: 4043471, naverRevenueApi: 1217890, imweb: 1589781, naver: 0, meta: 602908, googleAd: 38750, naverAd: 16423, metaSource: "stg_ads_daily", googleSource: "stg_ads_daily", naverSearchSource: "stg_ads_daily", quality: "MISSING_NAVER" },
+        { day: 1, revenue: 2791994, selfRevenueApi: 1581444, naverRevenueApi: 1210550, imweb: 549207, naver: 418266.6, meta: 501087, googleAd: 76586, naverAd: 10671, metaSource: "stg_ads_daily", googleSource: "stg_ads_daily", naverSearchSource: "stg_ads_daily", quality: "MATCH_CHECK" },
+        { day: 2, revenue: 3488390, selfRevenueApi: 2011130, naverRevenueApi: 1477260, imweb: 925310, naver: 557522.32, meta: 460939, googleAd: 47956, naverAd: 9111, metaSource: "stg_ads_daily", googleSource: "stg_ads_daily", naverSearchSource: "stg_ads_daily", quality: "MATCH_CHECK" },
+        { day: 3, revenue: 2940670, selfRevenueApi: 1881720, naverRevenueApi: 1058950, imweb: 642469, naver: 357516.4, meta: 598525, googleAd: 44204, naverAd: 5863, metaSource: "stg_ads_daily", googleSource: "stg_ads_daily", naverSearchSource: "stg_ads_daily", quality: "OK" },
+        { day: 4, revenue: 5845637, selfRevenueApi: 3419147, naverRevenueApi: 2426490, imweb: 1517356, naver: 899638.88, meta: 554335, googleAd: 43950, naverAd: 10818, metaSource: "stg_ads_daily", googleSource: "stg_ads_daily", naverSearchSource: "stg_ads_daily", quality: "MATCH_CHECK" },
+        { day: 5, revenue: 5261361, selfRevenueApi: 4043471, naverRevenueApi: 1217890, imweb: 1589781, naver: 397034.64, meta: 602908, googleAd: 38750, naverAd: 16423, metaSource: "stg_ads_daily", googleSource: "stg_ads_daily", naverSearchSource: "stg_ads_daily", quality: "MATCH_CHECK" },
         { day: 6, revenue: 6896313, selfRevenueApi: 4361733, naverRevenueApi: 2534580, imweb: 1834759, naver: 960746.8, meta: 584543, googleAd: 41178, naverAd: 18580, metaSource: "stg_ads_daily", googleSource: "stg_ads_daily", naverSearchSource: "stg_ads_daily", quality: "MATCH_CHECK" }
       ]
     };
@@ -917,6 +917,7 @@ mtd_achievement_rate =
       document.getElementById("fGoogleAdsSpend").textContent = asText(hasRows ? googleAdsSpend : null);
       document.getElementById("fNaverSearchAdSpend").textContent = asText(hasRows ? naverSearchAdSpend : null);
       document.getElementById("fNetProfit").textContent = asText(hasRows ? mtdNet : null);
+      document.getElementById("fMtdTargetLabel").textContent = `${effectiveDay}일 누적 BEP 목표`;
       document.getElementById("fMtdTarget").textContent = won(mtdTarget);
       document.getElementById("fAfterFixed").textContent = asText(hasRows ? afterFixedProfit : null);
       document.getElementById("fAfterFixed").className = !hasRows ? "" : (afterFixedProfit >= 0 ? "good" : "bad");
