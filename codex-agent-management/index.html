@@ -319,6 +319,25 @@
       font-weight: 800;
     }
 
+    .skill-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 10px;
+    }
+
+    .skill-list code {
+      display: inline-flex;
+      align-items: center;
+      min-height: 26px;
+      background: white;
+      border: 1px solid var(--line);
+    }
+
+    .compact {
+      font-size: 13px;
+    }
+
     footer {
       margin-top: 22px;
       color: var(--muted);
@@ -459,7 +478,163 @@
       </section>
 
       <section>
-        <h2>3. 광고 성장 플로우</h2>
+        <h2>3. 오케스트레이터 전용 묶음</h2>
+        <p>
+          오케스트레이터는 여러 하위 스킬을 고르고 실행 순서와 경계를 정하는 관제탑입니다.
+          단일 작업이 명확하면 실행 스킬을 바로 쓰고, 여러 업무가 섞이면 아래 관제탑을 먼저 고릅니다.
+        </p>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>영역</th>
+                <th>오케스트레이터</th>
+                <th>언제 먼저 부르나</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>수익/손익</td>
+                <td><code>yundiet-profit-orchestrator</code></td>
+                <td>자사몰, 네이버, 광고, 월마감이 섞인 AGP 순이익/통합 손익 요청</td>
+              </tr>
+              <tr>
+                <td>퍼포먼스 마케팅</td>
+                <td><code>performance-marketing-orchestrator</code></td>
+                <td>광고 분석, 예산, 셋팅, 액션 플랜을 한 번에 정리할 때</td>
+              </tr>
+              <tr>
+                <td>성장 소재</td>
+                <td><code>growth-creative-performance-orchestrator</code></td>
+                <td>성과 좋은 소재를 신규 카피/이미지 제작으로 연결할 때</td>
+              </tr>
+              <tr>
+                <td>광고 이미지</td>
+                <td><code>ad-image-planning-orchestrator</code></td>
+                <td>광고 이미지 기획, 카피, 연출, 프롬프트까지 한 번에 만들 때</td>
+              </tr>
+              <tr>
+                <td>광고 영상</td>
+                <td><code>ad-video-production-orchestrator</code></td>
+                <td>벤치마킹 영상에서 스토리보드, TTS, 이미지/영상 프롬프트까지 만들 때</td>
+              </tr>
+              <tr>
+                <td>상세페이지</td>
+                <td><code>detail-page-orchestrator</code></td>
+                <td>상세페이지 시장조사, 카피, 스토리, 이미지 기획, QA를 연결할 때</td>
+              </tr>
+              <tr>
+                <td>인플루언서</td>
+                <td><code>influencer-recruiting-orchestrator</code></td>
+                <td>인스타/틱톡/유튜브 후보 수집, 선별, DM 흐름을 관리할 때</td>
+              </tr>
+              <tr>
+                <td>인스타 브라우저 수집</td>
+                <td><code>instagram-recruiting-browser-orchestrator</code></td>
+                <td>로그인/브라우저 기반 인스타 후보 수집 흐름을 관리할 때</td>
+              </tr>
+              <tr>
+                <td>생산/발주</td>
+                <td><code>danbaekbap-production-orchestrator</code></td>
+                <td>단백밥 재고, 생산수량, 원재료, 발주 판단이 섞일 때</td>
+              </tr>
+              <tr>
+                <td>신제품</td>
+                <td><code>new-product-planning</code></td>
+                <td>신제품 아이디어를 시장조사, 제품기획, 가격/영양 검토로 확장할 때</td>
+              </tr>
+              <tr>
+                <td>Codex 운영</td>
+                <td><code>codex-agent-management-dashboard</code></td>
+                <td>이 관리 대시보드와 에이전트 운영 지도를 갱신/배포할 때</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section>
+        <h2>4. 스킬 파일 작업 카테고리</h2>
+        <p>
+          스킬 파일은 목적별로 묶어서 찾습니다. 아래 목록은 현재 확인된 전역 스킬 기준이며,
+          새 스킬이 생기면 먼저 해당 카테고리에 추가합니다.
+        </p>
+        <div class="grid">
+          <div class="tool">
+            <strong>광고 이미지/카피 제작</strong>
+            <p class="compact">광고 이미지 기획, 카피, 장면, 배경, 그래픽 요소, 최종 프롬프트.</p>
+            <div class="skill-list">
+              <code>ad-image-planning-orchestrator</code><code>ad-image-creative-director</code><code>yundiet-ad-crm-copywriter</code><code>ad-scene-planning-agent</code><code>ad-image-retouch-planning-agent</code><code>ad-background-production-agent</code><code>ad-graphic-elements-director</code><code>ad-illustration-final-agent</code><code>product-food-photo-retouch</code><code>gpt-web-image-production-runner</code><code>ad-copy-gpt-web-image-orchestrator</code>
+            </div>
+          </div>
+          <div class="tool">
+            <strong>광고 영상 제작</strong>
+            <p class="compact">벤치마킹, 스토리보드, TTS, 컷별 이미지, AI 영상 프롬프트.</p>
+            <div class="skill-list">
+              <code>ad-video-production-orchestrator</code><code>ad-video-benchmark-analysis-agent</code><code>ad-video-storyboard-director</code><code>ad-video-tts-script-agent</code><code>ad-video-scene-image-prompt-agent</code><code>ad-video-ai-prompt-agent</code>
+            </div>
+          </div>
+          <div class="tool">
+            <strong>상세페이지/상품기획</strong>
+            <p class="compact">상세페이지 생성, 분석, 카피, 이미지 기획, QA, 신제품 기획.</p>
+            <div class="skill-list">
+              <code>detail-page-orchestrator</code><code>detail-page-generation</code><code>detail-page-analysis</code><code>detail-page-copywriter</code><code>detail-page-storybuilder</code><code>detail-page-image-planning</code><code>detail-page-image-prompt-agent</code><code>detail-page-qa</code><code>detail-page-versioning</code><code>detail-page-ad-creative</code><code>new-product-planning</code>
+            </div>
+          </div>
+          <div class="tool">
+            <strong>수익/회계/재무</strong>
+            <p class="compact">AGP 순이익, 자사몰/네이버 수익, 월마감, 상품매출, 재무 판단.</p>
+            <div class="skill-list">
+              <code>yundiet-profit-orchestrator</code><code>imweb-profit-analysis</code><code>naver-profit-analysis</code><code>yundiet-monthly-accounting-close-agent</code><code>yundiet-monthly-product-sales</code><code>yundiet-finance-strategy-agent</code><code>stock-quant-veteran-agent</code>
+            </div>
+          </div>
+          <div class="tool">
+            <strong>광고 분석/셋팅/예산</strong>
+            <p class="compact">Meta/Google 분석, 예산관리, 셋팅, 경쟁사 광고 리서치.</p>
+            <div class="skill-list">
+              <code>performance-marketing-orchestrator</code><code>growth-creative-performance-orchestrator</code><code>yundiet-ad-analysis-agent</code><code>yundiet-google-ads-analysis-agent</code><code>yundiet-meta-budget-management-agent</code><code>yundiet-meta-setting-agent</code><code>google-ads-setting-agent</code><code>meta-ad-library-performance-research</code><code>kwak-marketing-agent</code>
+            </div>
+          </div>
+          <div class="tool">
+            <strong>CRM/CS/채널 운영</strong>
+            <p class="compact">카카오 채널, CRM 메시지, 자사몰 쿠폰, 고객 상담.</p>
+            <div class="skill-list">
+              <code>imweb-crm-marketing-analysis-agent</code><code>imweb-today-coupon-agent</code><code>kakao-channel-marketing-agent</code><code>kakao-channel-crm-message-agent</code><code>kakao-channel-friend-group-add-agent</code><code>yundiet-kakao-cs</code><code>kakaotalk-vendor-ops</code>
+            </div>
+          </div>
+          <div class="tool">
+            <strong>인플루언서/제휴 모집</strong>
+            <p class="compact">인스타, 틱톡, 유튜브, 브랜드커넥트 후보 수집과 선별.</p>
+            <div class="skill-list">
+              <code>influencer-recruiting-orchestrator</code><code>instagram-sponsorship-recruiting-agent</code><code>instagram-recruiting-browser-orchestrator</code><code>instagram-account-analysis</code><code>instagram-scraper</code><code>influencer-screener</code><code>influencer-dm</code><code>groupbuy-influencer-recruiting</code><code>tiktok-influencer-recruiting</code><code>youtube-influencer-recruiting</code><code>brandconnect-affiliate-create-agent</code>
+            </div>
+          </div>
+          <div class="tool">
+            <strong>재고/발주/생산/노무</strong>
+            <p class="compact">EZ Admin, EzAuto, 단백밥 생산, 노무/급여/지원사업.</p>
+            <div class="skill-list">
+              <code>danbaekbap-production-orchestrator</code><code>ezadmin-inventory-management</code><code>ezadmin-order-management</code><code>ezauto-auto-order</code><code>naver-smartstore-settlement-withdrawal-agent</code><code>labor-payroll-agent</code>
+            </div>
+          </div>
+          <div class="tool">
+            <strong>Codex 운영/브라우저/보안</strong>
+            <p class="compact">에이전트 관리, 지식 라우팅, 브라우저 연결, 보안, Slack handoff.</p>
+            <div class="skill-list">
+              <code>codex-agent-management-dashboard</code><code>codex-knowledge-router</code><code>harness-optimizer</code><code>diagnose-engineering</code><code>diagnose-engineering-agent</code><code>chrome-extension-agent</code><code>security-management-agent</code><code>slack-desktop-handoff-agent</code><code>codex-voice-reader-agent</code>
+            </div>
+          </div>
+          <div class="tool">
+            <strong>기타/레거시</strong>
+            <p class="compact">운영 중이지만 목적 확인 또는 정리 후보인 스킬.</p>
+            <div class="skill-list">
+              <code>ad-creative-archive-orchestrator</code><code>influencer-recruiting-legacy</code>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <h2>5. 광고 성장 플로우</h2>
         <div class="flow">
           <div class="lane">
             <h3>광고 총괄</h3>
@@ -502,7 +677,7 @@
       </section>
 
       <section>
-        <h2>4. 데이터와 업무 시스템 권한</h2>
+        <h2>6. 데이터와 업무 시스템 권한</h2>
         <div class="grid three">
           <div class="tool">
             <strong>Supabase</strong>
@@ -532,7 +707,7 @@
       </section>
 
       <section>
-        <h2>5. API와 조회 문서</h2>
+        <h2>7. API와 조회 문서</h2>
         <div class="table-wrap">
           <table>
             <thead>
@@ -569,7 +744,7 @@
       </section>
 
       <section>
-        <h2>6. Slack 외출모드와 Git 운영</h2>
+        <h2>8. Slack 외출모드와 Git 운영</h2>
         <div class="grid">
           <div class="tool">
             <strong>Slack 외출모드</strong>
@@ -591,7 +766,7 @@
       </section>
 
       <section>
-        <h2>7. 추천 사용 순서</h2>
+        <h2>9. 추천 사용 순서</h2>
         <ol class="steps">
           <li>업무가 단일 작업인지, 여러 에이전트가 필요한 복합 작업인지 먼저 나눕니다.</li>
           <li>복합 작업이면 수익/마케팅/지식 라우터 중 맞는 관제탑을 먼저 부릅니다.</li>
