@@ -281,7 +281,7 @@
               <div class="formula-row"><span>= 자사몰+네이버 순이익 합산</span><strong id="fCommerceContribution">₩0</strong></div>
               <div class="formula-row"><span>- 총 광고비</span><strong id="fTotalAdSpend">₩0</strong></div>
               <div class="formula-row"><span>└ Meta 광고비</span><strong id="fMetaAdSpend">₩0</strong></div>
-              <div class="formula-row"><span>└ Google Ads 광고비</span><strong id="fGoogleAdsSpend">₩0</strong></div>
+              <div class="formula-row"><span>└ Google Ads 광고비 (일시 제외)</span><strong id="fGoogleAdsSpend">₩0</strong></div>
               <div class="formula-row"><span>└ Naver SearchAd 광고비</span><strong id="fNaverSearchAdSpend">₩0</strong></div>
               <div class="formula-row"><span>- 매출기준 운영 변동비 12%</span><strong id="fOperatingVariableCost">₩0</strong></div>
               <div class="formula-row"><span>= 고정비 전 순수익</span><strong id="fNetProfit">₩0</strong></div>
@@ -349,7 +349,7 @@
           <div class="bridge-step">
             <div class="label">- 총 광고비</div>
             <div class="value bad" id="bridgeAds">₩0</div>
-            <div class="bridge-op" id="bridgeAdsNote">Meta + Google Ads + Naver SearchAd 매일 차감</div>
+            <div class="bridge-op" id="bridgeAdsNote">Meta + Naver SearchAd 매일 차감 · Google Ads는 사용자 승인으로 일시 제외</div>
           </div>
           <div class="bridge-step">
             <div class="label">= 고정비 전 순수익</div>
@@ -396,7 +396,7 @@
 
       <section class="card">
         <h2>일별 순수익 / 1일 BEP 달성률</h2>
-        <div class="note">각 막대는 `자사몰 순이익 + 네이버 순이익 - Meta/Google Ads/Naver SearchAd 광고비 - 매출기준 운영 변동비 12%`입니다. 오른쪽 %는 그날의 BEP 순이익 목표 대비 달성률입니다.</div>
+        <div class="note">각 막대는 `자사몰 순이익 + 네이버 순이익 - Meta/Naver SearchAd 광고비 - 매출기준 운영 변동비 12%`입니다. Google Ads는 사용자 승인에 따라 일시 제외했습니다. 오른쪽 %는 그날의 BEP 순이익 목표 대비 달성률입니다.</div>
         <div class="profit-bars" id="dailyProfitBars"></div>
       </section>
 
@@ -418,8 +418,8 @@
         </div>
         <div class="card">
           <div class="label">차감 광고비</div>
-          <div class="value violet">Meta + Google + Naver</div>
-          <div class="note">`stg_ads_daily`의 `meta`, `google_ads`, `naver_searchad` 지출 합산. Google Ads는 API `metrics.cost_micros / 1,000,000`, 네이버는 SearchAd `salesAmt` 기준.</div>
+          <div class="value violet">Meta + Naver</div>
+          <div class="note">`stg_ads_daily`의 `meta`, `naver_searchad` 지출 합산. Google Ads는 사용자 승인에 따라 이번 AGP 조회에서 일시 제외했습니다. 네이버는 SearchAd `salesAmt` 기준.</div>
         </div>
         <div class="card">
           <div class="label">데이터 품질</div>
@@ -461,8 +461,8 @@
   imweb_contribution
   + naver_contribution
   - meta_ad_spend
-  - google_ads_spend
   - naver_searchad_spend
+  - google_ads_spend_excluded_by_user_override
 
 mtd_achievement_rate =
   mtd_net_profit / mtd_bep_target_profit</pre>
@@ -570,8 +570,8 @@ mtd_achievement_rate =
         label: "2026년 5월",
         daysInMonth: 31,
         fixedCost: 18827126,
-        quality: "MATCH_CHECK 13일 · OK 4일",
-        emptyState: "5월 데이터는 5월 1일부터 별도 월로 적재되며, 현재 최신 D+1 확정행은 5월 17일까지입니다.",
+        quality: "MATCH_CHECK 13일 · OK 4일 · Google Ads 제외 18일",
+        emptyState: "5월 데이터는 5월 1일부터 별도 월로 적재되며, 현재 최신 D+1 확정행은 5월 18일까지입니다. Google Ads는 사용자 승인으로 일시 제외했습니다.",
         closeNote: "5월 손익은 5월 1일부터 독립 월로 누적합니다. 4월 데이터와 합산하지 않습니다."
       }
     };
@@ -621,23 +621,24 @@ mtd_achievement_rate =
         { day: 30, revenue: 2911600, selfRevenueApi: 2209100, naverRevenueApi: 702500, imweb: 811391, naver: 226477.00, meta: 457304, googleAd: 36947, naverAd: 7005, metaSource: "stg_ads_daily", googleSource: "stg_ads_daily", naverSearchSource: "stg_ads_daily", quality: "OK" }
       ],
       "2026-05": [
-        { day: 1, revenue: 2791994, selfRevenueApi: 1581444, naverRevenueApi: 1210550, imweb: 549207, naver: 418266.6, meta: 501087, googleAd: 76586, naverAd: 10671, metaSource: "stg_ads_daily", googleSource: "stg_ads_daily", naverSearchSource: "stg_ads_daily", quality: "MATCH_CHECK" },
-        { day: 2, revenue: 3428890, selfRevenueApi: 2011130, naverRevenueApi: 1417760, imweb: 925310, naver: 557522.32, meta: 460939, googleAd: 47956, naverAd: 9111, metaSource: "stg_ads_daily", googleSource: "stg_ads_daily", naverSearchSource: "stg_ads_daily", quality: "MATCH_CHECK" },
-        { day: 3, revenue: 2888850, selfRevenueApi: 1829900, naverRevenueApi: 1058950, imweb: 642469, naver: 357516.4, meta: 598525, googleAd: 44204, naverAd: 5863, metaSource: "stg_ads_daily", googleSource: "stg_ads_daily", naverSearchSource: "stg_ads_daily", quality: "OK" },
-        { day: 4, revenue: 5678617, selfRevenueApi: 3322027, naverRevenueApi: 2356590, imweb: 1517356, naver: 899638.88, meta: 554335, googleAd: 43950, naverAd: 10818, metaSource: "stg_ads_daily", googleSource: "stg_ads_daily", naverSearchSource: "stg_ads_daily", quality: "MATCH_CHECK" },
-        { day: 5, revenue: 4894221, selfRevenueApi: 3910451, naverRevenueApi: 983770, imweb: 1589781, naver: 397034.64, meta: 602908, googleAd: 38750, naverAd: 16423, metaSource: "stg_ads_daily", googleSource: "stg_ads_daily", naverSearchSource: "stg_ads_daily", quality: "MATCH_CHECK" },
-        { day: 6, revenue: 6672023, selfRevenueApi: 4229623, naverRevenueApi: 2442400, imweb: 1834759, naver: 960746.8, meta: 584543, googleAd: 41178, naverAd: 18580, metaSource: "stg_ads_daily", googleSource: "stg_ads_daily", naverSearchSource: "stg_ads_daily", quality: "MATCH_CHECK" },
-        { day: 7, revenue: 5811083, selfRevenueApi: 4107743, naverRevenueApi: 1703340, imweb: 1724056, naver: 576533.88, meta: 505974, googleAd: 27156, naverAd: 17047, metaSource: "stg_ads_daily", googleSource: "stg_ads_daily", naverSearchSource: "stg_ads_daily", quality: "MATCH_CHECK" },
-        { day: 8, revenue: 3795977, selfRevenueApi: 2022247, naverRevenueApi: 1773730, imweb: 724181, naver: 655457.36, meta: 423228, googleAd: 17899, naverAd: 9774, metaSource: "stg_ads_daily", googleSource: "stg_ads_daily", naverSearchSource: "stg_ads_daily", quality: "OK" },
-        { day: 9, revenue: 3650389, selfRevenueApi: 2406039, naverRevenueApi: 1244350, imweb: 974961, naver: 456881.2, meta: 377112, googleAd: 16093, naverAd: 11221, metaSource: "stg_ads_daily", googleSource: "stg_ads_daily", naverSearchSource: "stg_ads_daily", quality: "MATCH_CHECK" },
-        { day: 10, revenue: 4771857, selfRevenueApi: 3193457, naverRevenueApi: 1578400, imweb: 1236640, naver: 514225.8, meta: 536818, googleAd: 12361, naverAd: 11324, metaSource: "stg_ads_daily", googleSource: "stg_ads_daily", naverSearchSource: "stg_ads_daily", quality: "OK" },
-        { day: 11, revenue: 7580732, selfRevenueApi: 3948182, naverRevenueApi: 3632550, imweb: 1556858, naver: 1361903.6, meta: 494063, googleAd: 15233, naverAd: 12928, metaSource: "stg_ads_daily", googleSource: "stg_ads_daily", naverSearchSource: "stg_ads_daily", quality: "MATCH_CHECK" },
-        { day: 12, revenue: 6441450, selfRevenueApi: 4615310, naverRevenueApi: 1826140, imweb: 1943399, naver: 683714.48, meta: 569956, googleAd: 14655, naverAd: 6553, metaSource: "stg_ads_daily", googleSource: "stg_ads_daily", naverSearchSource: "stg_ads_daily", quality: "MATCH_CHECK" },
-        { day: 13, revenue: 6081867, selfRevenueApi: 4114657, naverRevenueApi: 1967210, imweb: 1677368, naver: 710201.72, meta: 494741, googleAd: 10809, naverAd: 16405, metaSource: "stg_ads_daily", googleSource: "stg_ads_daily", naverSearchSource: "stg_ads_daily", quality: "MATCH_CHECK" },
-        { day: 14, revenue: 3968475, selfRevenueApi: 2973925, naverRevenueApi: 994550, imweb: 1300268, naver: 341965.6, meta: 488431, googleAd: 11530, naverAd: 12192, metaSource: "stg_ads_daily", googleSource: "stg_ads_daily", naverSearchSource: "stg_ads_daily", quality: "MATCH_CHECK" },
-        { day: 15, revenue: 4128120, selfRevenueApi: 2102470, naverRevenueApi: 2025650, imweb: 877595, naver: 1113520.8, meta: 425809, googleAd: 15502, naverAd: 8136, metaSource: "stg_ads_daily", googleSource: "stg_ads_daily", naverSearchSource: "stg_ads_daily", quality: "MATCH_CHECK" },
-        { day: 16, revenue: 2171622, selfRevenueApi: 1522452, naverRevenueApi: 649170, imweb: 625337, naver: 212689.44, meta: 455508, googleAd: 19754, naverAd: 7950, metaSource: "stg_ads_daily", googleSource: "stg_ads_daily", naverSearchSource: "stg_ads_daily", quality: "OK" },
-        { day: 17, revenue: 4297657, selfRevenueApi: 2477317, naverRevenueApi: 1820340, imweb: 1050758, naver: 685126.88, meta: 538399, googleAd: 14465, naverAd: 9667, metaSource: "stg_ads_daily", googleSource: "stg_ads_daily", naverSearchSource: "stg_ads_daily", quality: "MATCH_CHECK" }
+        { day: 1, revenue: 2791994, selfRevenueApi: 1581444, naverRevenueApi: 1210550, imweb: 549207, naver: 418266.60, meta: 501087, googleAd: 0, naverAd: 10671, metaSource: "stg_ads_daily", googleSource: "excluded_user_override", naverSearchSource: "stg_ads_daily", quality: "MATCH_CHECK" },
+        { day: 2, revenue: 3428890, selfRevenueApi: 2011130, naverRevenueApi: 1417760, imweb: 925310, naver: 557522.32, meta: 460939, googleAd: 0, naverAd: 9111, metaSource: "stg_ads_daily", googleSource: "excluded_user_override", naverSearchSource: "stg_ads_daily", quality: "MATCH_CHECK" },
+        { day: 3, revenue: 2888850, selfRevenueApi: 1829900, naverRevenueApi: 1058950, imweb: 642469, naver: 357516.40, meta: 598525, googleAd: 0, naverAd: 5863, metaSource: "stg_ads_daily", googleSource: "excluded_user_override", naverSearchSource: "stg_ads_daily", quality: "OK" },
+        { day: 4, revenue: 5678617, selfRevenueApi: 3322027, naverRevenueApi: 2356590, imweb: 1517356, naver: 899638.88, meta: 554335, googleAd: 0, naverAd: 10818, metaSource: "stg_ads_daily", googleSource: "excluded_user_override", naverSearchSource: "stg_ads_daily", quality: "MATCH_CHECK" },
+        { day: 5, revenue: 4894221, selfRevenueApi: 3910451, naverRevenueApi: 983770, imweb: 1589781, naver: 397034.64, meta: 602908, googleAd: 0, naverAd: 16423, metaSource: "stg_ads_daily", googleSource: "excluded_user_override", naverSearchSource: "stg_ads_daily", quality: "MATCH_CHECK" },
+        { day: 6, revenue: 6672023, selfRevenueApi: 4229623, naverRevenueApi: 2442400, imweb: 1834759, naver: 960746.80, meta: 584543, googleAd: 0, naverAd: 18580, metaSource: "stg_ads_daily", googleSource: "excluded_user_override", naverSearchSource: "stg_ads_daily", quality: "MATCH_CHECK" },
+        { day: 7, revenue: 5811083, selfRevenueApi: 4107743, naverRevenueApi: 1703340, imweb: 1724056, naver: 576533.88, meta: 505974, googleAd: 0, naverAd: 17047, metaSource: "stg_ads_daily", googleSource: "excluded_user_override", naverSearchSource: "stg_ads_daily", quality: "MATCH_CHECK" },
+        { day: 8, revenue: 3795977, selfRevenueApi: 2022247, naverRevenueApi: 1773730, imweb: 724181, naver: 655457.36, meta: 423228, googleAd: 0, naverAd: 9774, metaSource: "stg_ads_daily", googleSource: "excluded_user_override", naverSearchSource: "stg_ads_daily", quality: "OK" },
+        { day: 9, revenue: 3650389, selfRevenueApi: 2406039, naverRevenueApi: 1244350, imweb: 974961, naver: 456881.20, meta: 377112, googleAd: 0, naverAd: 11221, metaSource: "stg_ads_daily", googleSource: "excluded_user_override", naverSearchSource: "stg_ads_daily", quality: "MATCH_CHECK" },
+        { day: 10, revenue: 4771857, selfRevenueApi: 3193457, naverRevenueApi: 1578400, imweb: 1236640, naver: 514225.80, meta: 536818, googleAd: 0, naverAd: 11324, metaSource: "stg_ads_daily", googleSource: "excluded_user_override", naverSearchSource: "stg_ads_daily", quality: "OK" },
+        { day: 11, revenue: 7580732, selfRevenueApi: 3948182, naverRevenueApi: 3632550, imweb: 1556858, naver: 1361903.60, meta: 494063, googleAd: 0, naverAd: 12928, metaSource: "stg_ads_daily", googleSource: "excluded_user_override", naverSearchSource: "stg_ads_daily", quality: "MATCH_CHECK" },
+        { day: 12, revenue: 6441450, selfRevenueApi: 4615310, naverRevenueApi: 1826140, imweb: 1943399, naver: 683714.48, meta: 569956, googleAd: 0, naverAd: 6553, metaSource: "stg_ads_daily", googleSource: "excluded_user_override", naverSearchSource: "stg_ads_daily", quality: "MATCH_CHECK" },
+        { day: 13, revenue: 6081867, selfRevenueApi: 4114657, naverRevenueApi: 1967210, imweb: 1677368, naver: 710201.72, meta: 494741, googleAd: 0, naverAd: 16405, metaSource: "stg_ads_daily", googleSource: "excluded_user_override", naverSearchSource: "stg_ads_daily", quality: "MATCH_CHECK" },
+        { day: 14, revenue: 3968475, selfRevenueApi: 2973925, naverRevenueApi: 994550, imweb: 1300268, naver: 341965.60, meta: 488431, googleAd: 0, naverAd: 12192, metaSource: "stg_ads_daily", googleSource: "excluded_user_override", naverSearchSource: "stg_ads_daily", quality: "MATCH_CHECK" },
+        { day: 15, revenue: 4128120, selfRevenueApi: 2102470, naverRevenueApi: 2025650, imweb: 877595, naver: 1113520.80, meta: 425809, googleAd: 0, naverAd: 8136, metaSource: "stg_ads_daily", googleSource: "excluded_user_override", naverSearchSource: "stg_ads_daily", quality: "MATCH_CHECK" },
+        { day: 16, revenue: 2171622, selfRevenueApi: 1522452, naverRevenueApi: 649170, imweb: 625337, naver: 212689.44, meta: 455508, googleAd: 0, naverAd: 7950, metaSource: "stg_ads_daily", googleSource: "excluded_user_override", naverSearchSource: "stg_ads_daily", quality: "OK" },
+        { day: 17, revenue: 4297657, selfRevenueApi: 2477317, naverRevenueApi: 1820340, imweb: 1050758, naver: 685126.88, meta: 538399, googleAd: 0, naverAd: 9667, metaSource: "stg_ads_daily", googleSource: "excluded_user_override", naverSearchSource: "stg_ads_daily", quality: "MATCH_CHECK" },
+        { day: 18, revenue: 6426428, selfRevenueApi: 3097188, naverRevenueApi: 3329240, imweb: 1251430, naver: 1230834.68, meta: 587753, googleAd: 0, naverAd: 0, metaSource: "stg_ads_daily", googleSource: "excluded_user_override", naverSearchSource: "stg_ads_daily", quality: "GOOGLE_EXCLUDED_BY_USER" }
       ]
     };
     const categoryRowsByMonth = {
