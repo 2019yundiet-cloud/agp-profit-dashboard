@@ -437,6 +437,12 @@
                 <td>공식 AGP 대시보드와 로컬 산출물을 구분합니다.</td>
               </tr>
               <tr>
+                <td>정산출금, 입금 예정, CashFlow Pro 정산 업데이트</td>
+                <td><code>settlement-cashflow-orchestrator</code></td>
+                <td>네이버 출금 가능 금액과 토스 입금 예정 확인 후 현금흐름 보고서 업데이트</td>
+                <td>정산 확인은 read-only 기본이며, 최종 출금·신청·제출은 명시 승인 후 실행합니다.</td>
+              </tr>
+              <tr>
                 <td>채널별 수익분석 + 대시보드 제작</td>
                 <td><code>ad-profit-analysis-agent</code></td>
                 <td>광고 전환 기준 채널별 수익과 대시보드 생성</td>
@@ -447,6 +453,12 @@
                 <td><code>performance-marketing-orchestrator</code></td>
                 <td>광고 분석, 예산, 셋팅, 액션 플랜 라우팅</td>
                 <td>광고 생성·예산 변경은 승인 후 실행합니다.</td>
+              </tr>
+              <tr>
+                <td>네이버 쇼핑커넥터 오케스트레이션</td>
+                <td><code>naver-brandconnect-orchestration</code></td>
+                <td>쇼핑커넥터 기획과 브랜드커넥트 모집형 캠페인 등록 에이전트를 조율</td>
+                <td>현재 위치 확인이 필요한 운영 후보입니다.</td>
               </tr>
               <tr>
                 <td>Codex 에이전트 관리 대시보드 갱신/배포</td>
@@ -465,6 +477,12 @@
                 <td><code>imweb-crm-marketing-analysis-agent</code></td>
                 <td>자사몰 CRM/마케팅 데이터를 운영 대시보드로 정리</td>
                 <td>고객 발송은 승인 후 진행합니다.</td>
+              </tr>
+              <tr>
+                <td>카카오 채널 CRM 마케팅, 친구그룹 타겟팅, 메시지 예약 준비</td>
+                <td><code>kakao-channel-marketing-agent</code></td>
+                <td>친구그룹 생성과 CRM 메시지 작성·타겟팅·예약 준비를 통합 조율</td>
+                <td>테스트발송·등록·외부 발송은 현재 턴 명시 승인 전까지 멈춥니다.</td>
               </tr>
               <tr>
                 <td>Slack 외출모드, Slack handoff</td>
@@ -529,6 +547,11 @@
                 <td>인스타/틱톡/유튜브 후보 수집, 선별, DM 흐름을 관리할 때</td>
               </tr>
               <tr>
+                <td>네이버 쇼핑커넥터</td>
+                <td><code>naver-brandconnect-orchestration</code></td>
+                <td>쇼핑커넥터 캠페인 기획과 브랜드커넥트 모집형 등록 실행을 묶을 때</td>
+              </tr>
+              <tr>
                 <td>인스타 브라우저 수집</td>
                 <td><code>instagram-recruiting-browser-orchestrator</code></td>
                 <td>로그인/브라우저 기반 인스타 후보 수집 흐름을 관리할 때</td>
@@ -583,9 +606,9 @@
           </div>
           <div class="tool">
             <strong>수익/회계/재무</strong>
-            <p class="compact">AGP 순이익, 자사몰/네이버 수익, 월마감, 상품매출, 재무 판단.</p>
+            <p class="compact">AGP 순이익, 정산출금, 자사몰/네이버 수익, 월마감, 상품매출, 재무 판단.</p>
             <div class="skill-list">
-              <code>yundiet-profit-orchestrator</code><code>imweb-profit-analysis</code><code>naver-profit-analysis</code><code>yundiet-monthly-accounting-close-agent</code><code>yundiet-monthly-product-sales</code><code>yundiet-finance-strategy-agent</code><code>stock-quant-veteran-agent</code>
+              <code>yundiet-profit-orchestrator</code><code>settlement-cashflow-orchestrator</code><code>imweb-profit-analysis</code><code>naver-profit-analysis</code><code>yundiet-monthly-accounting-close-agent</code><code>yundiet-monthly-product-sales</code><code>yundiet-finance-strategy-agent</code><code>stock-quant-veteran-agent</code>
             </div>
           </div>
           <div class="tool">
@@ -596,7 +619,7 @@
             </div>
           </div>
           <div class="tool">
-            <strong>CRM/CS/채널 운영</strong>
+            <strong>CRM 마케팅/CS/채널 운영</strong>
             <p class="compact">카카오 채널, CRM 메시지, 자사몰 쿠폰, 고객 상담.</p>
             <div class="skill-list">
               <code>imweb-crm-marketing-analysis-agent</code><code>imweb-today-coupon-agent</code><code>kakao-channel-marketing-agent</code><code>kakao-channel-crm-message-agent</code><code>kakao-channel-friend-group-add-agent</code><code>yundiet-kakao-cs</code><code>kakaotalk-vendor-ops</code>
@@ -604,9 +627,9 @@
           </div>
           <div class="tool">
             <strong>인플루언서/제휴 모집</strong>
-            <p class="compact">인스타, 틱톡, 유튜브, 브랜드커넥트 후보 수집과 선별.</p>
+            <p class="compact">인스타, 틱톡, 유튜브, 브랜드커넥트, 쇼핑커넥터 후보 수집과 선별.</p>
             <div class="skill-list">
-              <code>influencer-recruiting-orchestrator</code><code>instagram-sponsorship-recruiting-agent</code><code>instagram-recruiting-browser-orchestrator</code><code>instagram-account-analysis</code><code>instagram-scraper</code><code>influencer-screener</code><code>influencer-dm</code><code>groupbuy-influencer-recruiting</code><code>tiktok-influencer-recruiting</code><code>youtube-influencer-recruiting</code><code>brandconnect-affiliate-create-agent</code>
+              <code>influencer-recruiting-orchestrator</code><code>instagram-sponsorship-recruiting-agent</code><code>instagram-recruiting-browser-orchestrator</code><code>instagram-account-analysis</code><code>instagram-scraper</code><code>influencer-screener</code><code>influencer-dm</code><code>groupbuy-influencer-recruiting</code><code>tiktok-influencer-recruiting</code><code>youtube-influencer-recruiting</code><code>naver-brandconnect-orchestration</code><code>brandconnect-affiliate-create-agent</code>
             </div>
           </div>
           <div class="tool">
@@ -700,8 +723,8 @@
             <p>광고비, 전환, 유입, 예산 구조를 확인하고 수익 분석에 연결합니다.</p>
           </div>
           <div class="tool">
-            <strong>Naver / Imweb / EZ Admin / KakaoTalk</strong>
-            <p>주문, 매출, 정산, 검색광고, 출고·재고, 발주, 거래처 커뮤니케이션에 사용합니다.</p>
+            <strong>Naver / Toss / Imweb / EZ Admin / KakaoTalk</strong>
+            <p>주문, 매출, 정산·입금 예정, 검색광고, 출고·재고, 발주, 거래처 커뮤니케이션에 사용합니다.</p>
           </div>
         </div>
       </section>
