@@ -519,6 +519,25 @@ mtd_achievement_rate =
         ["외주 서비스 · 세무법인청년", 200000, 1.0],
         ["외주 서비스 · 경리 (2026년 7월까지)", 800000, 4.0],
         ["외주 서비스 · 노무자문 (2026년 5월까지)", 275000, 1.4]
+      ],
+      "2026-06": [
+        ["인건비 (준호+보미)", 8180046, 41.0],
+        ["금융 (대출이자)", 4000000, 20.0],
+        ["차량 (리스 3대·유지비 포함)", 3000000, 15.0],
+        ["복지 (복리후생 카드비)", 1270000, 6.4],
+        ["사스 서비스 · 경리나라", 75900, 0.4],
+        ["사스 서비스 · 커넥트파킹", 110000, 0.6],
+        ["사스 서비스 · Adobe", 39600, 0.2],
+        ["사스 서비스 · 구글플레이", 29000, 0.1],
+        ["사스 서비스 · Claude", 170000, 0.9],
+        ["사스 서비스 · OpenAI", 600000, 3.0],
+        ["사스 서비스 · 네이버플러스", 4900, 0.0],
+        ["사스 서비스 · 네이버페이 Plus", 14800, 0.1],
+        ["사스 서비스 · 와이즐리 멤버십", 2990, 0.0],
+        ["사스 서비스 · 정기과금_나이스", 54890, 0.3],
+        ["외주 서비스 · 세무법인청년", 200000, 1.0],
+        ["외주 서비스 · 경리 (2026년 7월까지)", 800000, 4.0],
+        ["외주 서비스 · 노무자문", 275000, 1.4]
       ]
     };
     const variableCosts = [
@@ -574,6 +593,14 @@ mtd_achievement_rate =
         quality: "MATCH_CHECK 31일",
         emptyState: "5월 최신 D+1 확정행은 5월 31일까지입니다.",
         closeNote: "5월 손익은 5월 1일부터 독립 월로 누적합니다. 4월 데이터와 합산하지 않습니다."
+      },
+      "2026-06": {
+        label: "2026년 6월",
+        daysInMonth: 30,
+        fixedCost: 18827126,
+        quality: "MATCH_CHECK 1일",
+        emptyState: "6월 최신 D+1 확정행은 6월 1일까지입니다.",
+        closeNote: "6월 손익은 6월 1일부터 독립 월로 누적합니다. 5월 데이터와 합산하지 않습니다."
       }
     };
     const dailyRowsByMonth = {
@@ -653,6 +680,9 @@ mtd_achievement_rate =
         { day: 29, revenue: 2901078, selfRevenueApi: 2265558, naverRevenueApi: 635520, imweb: 1210026, naver: 332782.64, meta: 416105, googleAd: 11479, naverAd: 7499, imwebDeliveryFee: 176700, naverDeliveryFee: 51300, totalDeliveryFee: 228000, metaSource: "stg_ads_daily", googleSource: "stg_ads_daily", naverSearchSource: "stg_ads_daily", quality: "MATCH_CHECK" },
         { day: 30, revenue: 2083466, selfRevenueApi: 1372906, naverRevenueApi: 710560, imweb: 594966, naver: 616641.92, meta: 406898, googleAd: 7551, naverAd: 1837, imwebDeliveryFee: 102600, naverDeliveryFee: 45600, totalDeliveryFee: 148200, metaSource: "stg_ads_daily", googleSource: "stg_ads_daily", naverSearchSource: "stg_ads_daily", quality: "MATCH_CHECK" },
         { day: 31, revenue: 3979437, selfRevenueApi: 2574317, naverRevenueApi: 1405120, imweb: 1259636, naver: 1206971.84, meta: 537474, googleAd: 8367, naverAd: 6815, imwebDeliveryFee: 165300, naverDeliveryFee: 102600, totalDeliveryFee: 267900, metaSource: "stg_ads_daily", googleSource: "stg_ads_daily", naverSearchSource: "stg_ads_daily", quality: "MATCH_CHECK" }
+      ],
+      "2026-06": [
+        { day: 1, revenue: 8309094, selfRevenueApi: 5262564, naverRevenueApi: 3046530, imweb: 2304143, naver: 1148425.96, meta: 584076, googleAd: 15185, naverAd: 17708, imwebDeliveryFee: 381900, naverDeliveryFee: 222300, totalDeliveryFee: 604200, metaSource: "stg_ads_daily", googleSource: "stg_ads_daily", naverSearchSource: "stg_ads_daily", quality: "MATCH_CHECK" }
       ]
     };
     const categoryRowsByMonth = {
