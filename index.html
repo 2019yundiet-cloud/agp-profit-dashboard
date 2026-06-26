@@ -160,6 +160,58 @@
       color: var(--ink);
     }
     select { appearance: none; }
+    button {
+      font: inherit;
+      letter-spacing: 0;
+    }
+    .section-heading {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 10px;
+    }
+    .section-heading h2 { margin-bottom: 0; }
+    .data-view-controls {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 8px;
+      margin-top: 12px;
+    }
+    .data-view-button {
+      min-height: 42px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--soft);
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 800;
+    }
+    .data-view-button.active {
+      border-color: var(--blue);
+      background: #edf4ff;
+      color: var(--blue);
+      box-shadow: inset 0 0 0 1px rgba(40, 95, 159, 0.18);
+    }
+    .data-view-panel { display: none; margin-top: 12px; }
+    .data-view-panel.active { display: block; }
+    .data-table-scroll {
+      width: 100%;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    .data-table {
+      min-width: 820px;
+    }
+    .weekday-cell {
+      min-width: 138px;
+      line-height: 1.5;
+    }
+    .weekday-cell strong { display: block; color: var(--ink); }
+    .weekday-cell span { display: block; color: var(--muted); font-size: 12px; }
+    .muted-cell { color: var(--muted); }
     table { width: 100%; border-collapse: collapse; font-size: 13px; }
     th, td { padding: 10px 8px; border-bottom: 1px solid var(--line); text-align: right; }
     th:first-child, td:first-child { text-align: left; }
@@ -288,6 +340,7 @@
       /* grids: 2-column on mobile instead of long 1-column stacks */
       .kpis, .bridge, .compare-grid, .inputs, .mini { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 10px !important; }
       .hero, .two, .three { grid-template-columns: 1fr !important; }
+      .data-view-controls { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
       .bar-row { grid-template-columns: 1fr !important; gap: 6px !important; }
       .profit-bar, .revenue-bar { grid-template-columns: 1fr !important; gap: 5px !important; }
       /* tables: self-scrolling + touch-friendly cells */
@@ -426,10 +479,54 @@
         <div class="note" id="compareNote">선택한 월과 직전 월을 같은 기준일 기준으로 비교합니다.</div>
       </section>
 
-      <section class="card">
-        <h2>일별 매출 / 1일~기준일 누적 매출</h2>
-        <div class="note" id="dailyRevenueNote">자사몰 API 결제매출과 네이버 API 결제매출을 합산해 일별 매출과 기준일까지의 누적 매출을 함께 봅니다.</div>
-        <div class="revenue-bars" id="dailyRevenueBars"></div>
+      <section class="card" id="dailyDataExplorer">
+        <div class="section-heading">
+          <h2>일별·요일별·주차별 데이터 표</h2>
+          <span class="badge" id="dataViewBadge">데이터 표 준비 중</span>
+        </div>
+        <div class="data-view-controls" role="tablist" aria-label="순수익 대시보드 데이터 표 선택">
+          <button class="data-view-button active" type="button" data-view="daily-sales" role="tab" aria-pressed="true">일별 매출</button>
+          <button class="data-view-button" type="button" data-view="daily-profit" role="tab" aria-pressed="false">일별 순수익</button>
+          <button class="data-view-button" type="button" data-view="weekday-comparison" role="tab" aria-pressed="false">요일별 비교</button>
+          <button class="data-view-button" type="button" data-view="weekly-comparison" role="tab" aria-pressed="false">주차별 비교</button>
+        </div>
+        <div class="note" id="dataViewNote">표를 선택하면 같은 일별 원천 데이터를 매출, 순수익, 요일, 주차 기준으로 다시 묶어 보여줍니다.</div>
+
+        <div class="data-view-panel active" data-panel="daily-sales">
+          <div class="data-table-scroll">
+            <table class="data-table">
+              <thead><tr><th>날짜</th><th>요일</th><th>자사몰 매출</th><th>네이버 매출</th><th>일 매출</th><th>누적 매출</th></tr></thead>
+              <tbody id="dailySalesRows"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="data-view-panel" data-panel="daily-profit">
+          <div class="data-table-scroll">
+            <table class="data-table">
+              <thead><tr><th>날짜</th><th>요일</th><th>일 매출</th><th>자사몰+네이버 순이익</th><th>총 광고비</th><th>운영 변동비 12%</th><th>일 순수익</th><th>일 BEP 달성률</th></tr></thead>
+              <tbody id="dailyProfitRows"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="data-view-panel" data-panel="weekday-comparison">
+          <div class="data-table-scroll">
+            <table class="data-table">
+              <thead id="weekdayComparisonHead"></thead>
+              <tbody id="weekdayComparisonRows"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="data-view-panel" data-panel="weekly-comparison">
+          <div class="data-table-scroll">
+            <table class="data-table">
+              <thead><tr><th>주차</th><th>기간</th><th>데이터 일수</th><th>매출</th><th>일평균 매출</th><th>순수익</th><th>순이익률</th><th>전주 대비 매출</th><th>전주 대비 순수익</th></tr></thead>
+              <tbody id="weeklyComparisonRows"></tbody>
+            </table>
+          </div>
+        </div>
       </section>
 
       <section class="grid two">
@@ -449,12 +546,6 @@
           </table>
           <div class="note">Supabase 주문 품목 기준 상위 제품입니다. 앞으로 5월·6월 데이터가 쌓이면 같은 선택 월에서 조회됩니다.</div>
         </div>
-      </section>
-
-      <section class="card">
-        <h2>일별 순수익 / 1일 BEP 달성률</h2>
-        <div class="note">각 막대는 `자사몰 순이익 + 네이버 순이익 - Meta/Google Ads/Naver SearchAd 광고비 - 매출기준 운영 변동비 12%`입니다. 오른쪽 %는 그날의 BEP 순이익 목표 대비 달성률입니다.</div>
-        <div class="profit-bars" id="dailyProfitBars"></div>
       </section>
 
       <section class="grid kpis">
@@ -627,6 +718,16 @@ mtd_achievement_rate =
     const percent = n => (n * 100).toFixed(1) + "%";
     const read = id => Number(document.getElementById(id).value || 0);
     const noDataText = "미적재";
+    const weekdayLabels = ["일", "월", "화", "수", "목", "금", "토"];
+    const weekdayDisplayOrder = [1, 2, 3, 4, 5, 6, 0];
+    const dataViewLabels = {
+      "daily-sales": "일별 매출",
+      "daily-profit": "일별 순수익",
+      "weekday-comparison": "요일별 비교",
+      "weekly-comparison": "주차별 비교"
+    };
+    const dataViewNotes = {};
+    let activeDataView = "daily-sales";
     const monthConfig = {
           "2026-04": {
                 "label": "2026년 4월",
@@ -648,8 +749,8 @@ mtd_achievement_rate =
                 "label": "2026년 6월",
                 "daysInMonth": 30,
                 "fixedCost": 18552126,
-                "quality": "MATCH_CHECK 23일 · OK 1일",
-                "emptyState": "2026년 6월 최신 D+1 확정행은 24일까지입니다.",
+                "quality": "MATCH_CHECK 24일 · OK 1일",
+                "emptyState": "2026년 6월 최신 D+1 확정행은 25일까지입니다.",
                 "closeNote": "2026년 6월 손익은 2026-06-01부터 독립 월로 누적합니다. 2026년 5월 데이터와 합산하지 않습니다."
           }
     };
@@ -2188,6 +2289,24 @@ mtd_achievement_rate =
                       "googleSource": "stg_ads_daily",
                       "naverSearchSource": "stg_ads_daily",
                       "quality": "MATCH_CHECK"
+                },
+                {
+                      "day": 25,
+                      "revenue": 3868326,
+                      "selfRevenueApi": 2231376,
+                      "naverRevenueApi": 1636950,
+                      "imweb": 849080,
+                      "naver": 572916.4,
+                      "meta": 453025,
+                      "googleAd": 12565,
+                      "naverAd": 5690,
+                      "imwebDeliveryFee": 204600,
+                      "naverDeliveryFee": 130200,
+                      "totalDeliveryFee": 334800,
+                      "metaSource": "stg_ads_daily",
+                      "googleSource": "stg_ads_daily",
+                      "naverSearchSource": "stg_ads_daily",
+                      "quality": "MATCH_CHECK"
                 }
           ]
     };
@@ -2483,6 +2602,201 @@ mtd_achievement_rate =
       document.getElementById("productProfitRows").innerHTML = renderRows(productRowsByMonth[monthKey]);
     }
 
+    function getDateMeta(monthKey, day) {
+      const [year, month] = monthKey.split("-").map(Number);
+      const date = new Date(year, month - 1, day, 12);
+      const weekdayIndex = date.getDay();
+      return {
+        label: `${month}월 ${day}일`,
+        weekday: weekdayLabels[weekdayIndex],
+        weekdayIndex
+      };
+    }
+
+    function getWeekIndex(day) {
+      return Math.floor((Number(day || 1) - 1) / 7) + 1;
+    }
+
+    function getWeekRange(monthMeta, weekIndex, queryDay) {
+      const start = (weekIndex - 1) * 7 + 1;
+      const fullEnd = Math.min(weekIndex * 7, monthMeta.daysInMonth);
+      const end = Math.min(fullEnd, queryDay);
+      return {
+        start,
+        end,
+        label: `${start}~${end}일${end < fullEnd ? " (현재)" : ""}`
+      };
+    }
+
+    function summarizeMetricRows(rows) {
+      return rows.reduce((summary, row) => {
+        summary.count += 1;
+        summary.revenue += Number(row.revenue || 0);
+        summary.commerceContribution += Number(row.commerceContribution || 0);
+        summary.adSpend += Number(row.adSpend || 0);
+        summary.operatingVariableCost += Number(row.operatingVariableCost || 0);
+        summary.dailyNet += Number(row.dailyNet || 0);
+        return summary;
+      }, {
+        count: 0,
+        revenue: 0,
+        commerceContribution: 0,
+        adSpend: 0,
+        operatingVariableCost: 0,
+        dailyNet: 0
+      });
+    }
+
+    function formatDelta(currentValue, previousValue) {
+      if (previousValue == null) return `<span class="muted-cell">비교 없음</span>`;
+      const diff = currentValue - previousValue;
+      const rateText = previousValue
+        ? ` · ${diff >= 0 ? "+" : ""}${percent(diff / Math.abs(previousValue))}`
+        : " · 전주 0원";
+      return `<span class="${diff >= 0 ? "good" : "bad"}">${diff >= 0 ? "+" : ""}${won(diff)}${rateText}</span>`;
+    }
+
+    function switchDataView(nextView) {
+      activeDataView = dataViewLabels[nextView] ? nextView : "daily-sales";
+      document.querySelectorAll(".data-view-button").forEach(button => {
+        const isActive = button.dataset.view === activeDataView;
+        button.classList.toggle("active", isActive);
+        button.setAttribute("aria-pressed", isActive ? "true" : "false");
+      });
+      document.querySelectorAll(".data-view-panel").forEach(panel => {
+        panel.classList.toggle("active", panel.dataset.panel === activeDataView);
+      });
+      const note = dataViewNotes[activeDataView];
+      if (note) document.getElementById("dataViewNote").textContent = note;
+    }
+
+    function renderDataViews(monthMeta, queryDay, summary, dailyTarget) {
+      const rows = summary.rows || [];
+      const hasRows = rows.length > 0;
+      const effectiveDay = hasRows ? rows[rows.length - 1].day : queryDay;
+      document.getElementById("dataViewBadge").textContent = hasRows
+        ? `${monthMeta.label} 1~${effectiveDay}일`
+        : `${monthMeta.label} 데이터 대기`;
+      dataViewNotes["daily-sales"] = hasRows
+        ? `${monthMeta.label} 1일~${effectiveDay}일 일 매출과 누적 매출입니다.`
+        : `${monthMeta.label}은 아직 확정 매출 데이터가 없습니다. ${monthMeta.emptyState}`;
+      dataViewNotes["daily-profit"] = hasRows
+        ? "일 순수익은 자사몰+네이버 순이익에서 광고비와 매출기준 운영 변동비 12%를 차감한 값입니다."
+        : `${monthMeta.label}은 아직 확정 순수익 데이터가 없습니다. ${monthMeta.emptyState}`;
+      dataViewNotes["weekday-comparison"] = hasRows
+        ? "같은 요일끼리 주차별 매출과 순수익을 비교합니다. 예: 월요일은 1주차 월요일, 2주차 월요일, 3주차 월요일 순서로 봅니다."
+        : `${monthMeta.label}은 아직 요일 비교 데이터가 없습니다.`;
+      dataViewNotes["weekly-comparison"] = hasRows
+        ? "1~7일, 8~14일, 15~21일처럼 달력 일자 기준으로 주차를 묶어 매출과 순수익을 비교합니다."
+        : `${monthMeta.label}은 아직 주차 비교 데이터가 없습니다.`;
+
+      if (!hasRows) {
+        document.getElementById("dailySalesRows").innerHTML = `<tr><td colspan="6">${monthMeta.emptyState}</td></tr>`;
+        document.getElementById("dailyProfitRows").innerHTML = `<tr><td colspan="8">${monthMeta.emptyState}</td></tr>`;
+        document.getElementById("weekdayComparisonHead").innerHTML = "<tr><th>요일</th><th>비교 데이터</th></tr>";
+        document.getElementById("weekdayComparisonRows").innerHTML = `<tr><td colspan="2">${monthMeta.emptyState}</td></tr>`;
+        document.getElementById("weeklyComparisonRows").innerHTML = `<tr><td colspan="9">${monthMeta.emptyState}</td></tr>`;
+        switchDataView(activeDataView);
+        return;
+      }
+
+      document.getElementById("dailySalesRows").innerHTML = rows.map(row => {
+        const meta = getDateMeta(monthMeta.key, row.day);
+        const selfRevenue = Number(row.selfRevenueApi || 0);
+        const naverRevenue = Number(row.naverRevenueApi || 0);
+        const hasSplitRevenue = selfRevenue + naverRevenue > 0;
+        return `
+          <tr>
+            <td>${meta.label}</td>
+            <td>${meta.weekday}</td>
+            <td>${hasSplitRevenue ? won(selfRevenue) : noDataText}</td>
+            <td>${hasSplitRevenue ? won(naverRevenue) : noDataText}</td>
+            <td>${won(row.revenue)}</td>
+            <td>${won(row.cumulativeRevenue)}</td>
+          </tr>
+        `;
+      }).join("");
+
+      document.getElementById("dailyProfitRows").innerHTML = rows.map(row => {
+        const meta = getDateMeta(monthMeta.key, row.day);
+        const dailyBepRate = dailyTarget > 0 ? row.dailyNet / dailyTarget : 0;
+        return `
+          <tr>
+            <td>${meta.label}</td>
+            <td>${meta.weekday}</td>
+            <td>${won(row.revenue)}</td>
+            <td>${won(row.commerceContribution)}</td>
+            <td>${won(row.adSpend)}</td>
+            <td>${won(row.operatingVariableCost)}</td>
+            <td class="${row.dailyNet >= 0 ? "good" : "bad"}">${won(row.dailyNet)}</td>
+            <td>${percent(dailyBepRate)}</td>
+          </tr>
+        `;
+      }).join("");
+
+      const weekIndexes = Array.from(new Set(rows.map(row => getWeekIndex(row.day)))).sort((a, b) => a - b);
+      const weekdayRowMap = new Map();
+      rows.forEach(row => {
+        const meta = getDateMeta(monthMeta.key, row.day);
+        weekdayRowMap.set(`${meta.weekdayIndex}-${getWeekIndex(row.day)}`, { row, meta });
+      });
+      document.getElementById("weekdayComparisonHead").innerHTML = `
+        <tr>
+          <th>요일</th>
+          ${weekIndexes.map(weekIndex => {
+            const range = getWeekRange(monthMeta, weekIndex, queryDay);
+            return `<th>${weekIndex}주차<br><span class="muted-cell">${range.label}</span></th>`;
+          }).join("")}
+        </tr>
+      `;
+      document.getElementById("weekdayComparisonRows").innerHTML = weekdayDisplayOrder.map(weekdayIndex => `
+        <tr>
+          <td>${weekdayLabels[weekdayIndex]}</td>
+          ${weekIndexes.map(weekIndex => {
+            const item = weekdayRowMap.get(`${weekdayIndex}-${weekIndex}`);
+            if (!item) return `<td class="muted-cell">-</td>`;
+            return `
+              <td class="weekday-cell">
+                <strong>${item.meta.label}</strong>
+                <span>매출 ${won(item.row.revenue)}</span>
+                <span class="${item.row.dailyNet >= 0 ? "good" : "bad"}">순수익 ${won(item.row.dailyNet)}</span>
+              </td>
+            `;
+          }).join("")}
+        </tr>
+      `).join("");
+
+      const weeklyRows = weekIndexes.map(weekIndex => {
+        const range = getWeekRange(monthMeta, weekIndex, queryDay);
+        const weekRows = rows.filter(row => getWeekIndex(row.day) === weekIndex);
+        return {
+          weekIndex,
+          range,
+          ...summarizeMetricRows(weekRows)
+        };
+      });
+      document.getElementById("weeklyComparisonRows").innerHTML = weeklyRows.map((week, index) => {
+        const previous = index > 0 ? weeklyRows[index - 1] : null;
+        const dailyAverageRevenue = week.count > 0 ? week.revenue / week.count : 0;
+        const netRate = week.revenue > 0 ? week.dailyNet / week.revenue : 0;
+        return `
+          <tr>
+            <td>${week.weekIndex}주차</td>
+            <td>${week.range.label}</td>
+            <td>${week.count}일</td>
+            <td>${won(week.revenue)}</td>
+            <td>${won(dailyAverageRevenue)}</td>
+            <td class="${week.dailyNet >= 0 ? "good" : "bad"}">${won(week.dailyNet)}</td>
+            <td>${percent(netRate)}</td>
+            <td>${formatDelta(week.revenue, previous?.revenue)}</td>
+            <td>${formatDelta(week.dailyNet, previous?.dailyNet)}</td>
+          </tr>
+        `;
+      }).join("");
+
+      switchDataView(activeDataView);
+    }
+
     function updateGauge() {
       const monthKey = document.getElementById("monthSelect").value;
       const monthMeta = monthByKey[monthKey] || monthOptions[monthOptions.length - 1];
@@ -2611,47 +2925,7 @@ mtd_achievement_rate =
         : "조회 월별 최신 폐장행까지만 노출합니다. 데이터가 없는 월은 적재 대기 상태로 표시합니다.";
       renderComparison(monthKey, queryDay, summary, fixedCost);
       renderProductTables(monthKey);
-      const maxDailyRevenue = hasRows
-        ? Math.max(...enrichedRows.map(row => Math.abs(Number(row.revenue || 0))), 1)
-        : 1;
-      document.getElementById("dailyRevenueNote").textContent = hasRows
-        ? `${monthMeta.label} 1일~${effectiveDay}일 누적 매출 ${won(revenue)}입니다. 기준일 매출은 ${won(selectedDayRevenue)}이고, 각 행의 오른쪽에는 해당일까지 쌓인 누적 매출을 표시합니다.`
-        : `${monthMeta.label}은 아직 확정 매출 데이터가 없습니다. ${monthMeta.emptyState}`;
-      document.getElementById("dailyRevenueBars").innerHTML = hasRows ? enrichedRows.map(row => {
-        const width = Math.max(Math.min((Math.abs(Number(row.revenue || 0)) / maxDailyRevenue) * 100, 100), 2);
-        const label = `${row.day}일`;
-        const selfRevenue = Number(row.selfRevenueApi || 0);
-        const naverRevenue = Number(row.naverRevenueApi || 0);
-        const basisNote = selfRevenue + naverRevenue > 0
-          ? `자사몰 ${won(selfRevenue)} · 네이버 ${won(naverRevenue)}`
-          : "매출 원천 합계";
-        return `
-          <div class="revenue-bar">
-            <div>${label}</div>
-            <div class="profit-track" title="${basisNote}">
-              <div class="revenue-fill" style="width:${width}%"></div>
-            </div>
-            <div>${won(row.revenue)}</div>
-            <div class="revenue-cumulative">누적 ${won(row.cumulativeRevenue)}</div>
-          </div>
-        `;
-      }).join("") : `<div class="note">${monthMeta.emptyState}</div>`;
-      document.getElementById("dailyProfitBars").innerHTML = hasRows ? enrichedRows.map(row => {
-        const dailyBepRate = dailyTarget > 0 ? row.dailyNet / dailyTarget : 0;
-        const width = Math.max(Math.min(Math.abs(dailyBepRate) * 100, 160), 2);
-        const cls = row.dailyNet < 0 ? "profit-fill loss" : "profit-fill";
-        const label = `${row.day}일`;
-        return `
-          <div class="profit-bar">
-            <div>${label}</div>
-            <div class="profit-track" title="Meta ${won(row.metaAd)} (${row.metaSource || "missing"}) · Google Ads ${won(row.googleAd)} (${row.googleSource || "missing"}) · Naver SearchAd ${won(row.naverSearchAd)} (${row.naverSearchSource || "missing"}) 차감 후">
-              <div class="${cls}" style="width:${width}%"></div>
-            </div>
-            <div>${won(row.dailyNet)}</div>
-            <div>${percent(dailyBepRate)}</div>
-          </div>
-        `;
-      }).join("") : `<div class="note">${monthMeta.emptyState}</div>`;
+      renderDataViews(monthMeta, queryDay, summary, dailyTarget);
       updateUrlState(monthKey, queryDay);
     }
 
@@ -2668,6 +2942,9 @@ mtd_achievement_rate =
 
     ["queryDayInput", "daysInput", "fixedInput"].forEach(id => {
       document.getElementById(id).addEventListener("input", updateGauge);
+    });
+    document.querySelectorAll(".data-view-button").forEach(button => {
+      button.addEventListener("click", () => switchDataView(button.dataset.view));
     });
     updateGauge();
   </script>
