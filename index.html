@@ -684,6 +684,24 @@ mtd_achievement_rate =
         ["사스 서비스 · 정기과금_나이스", 54890, 0.3],
         ["외주 서비스 · 세무법인청년", 200000, 1.0],
         ["외주 서비스 · 경리 (2026년 7월까지)", 800000, 4.0]
+      ],
+      "2026-07": [
+        ["인건비 (준호+보미)", 8180046, 41.0],
+        ["금융 (대출이자)", 4000000, 20.0],
+        ["차량 (리스 3대·유지비 포함)", 3000000, 15.0],
+        ["복지 (복리후생 카드비)", 1270000, 6.4],
+        ["사스 서비스 · 경리나라", 75900, 0.4],
+        ["사스 서비스 · 커넥트파킹", 110000, 0.6],
+        ["사스 서비스 · Adobe", 39600, 0.2],
+        ["사스 서비스 · 구글플레이", 29000, 0.1],
+        ["사스 서비스 · Claude", 170000, 0.9],
+        ["사스 서비스 · OpenAI", 600000, 3.0],
+        ["사스 서비스 · 네이버플러스", 4900, 0.0],
+        ["사스 서비스 · 네이버페이 Plus", 14800, 0.1],
+        ["사스 서비스 · 와이즐리 멤버십", 2990, 0.0],
+        ["사스 서비스 · 정기과금_나이스", 54890, 0.3],
+        ["외주 서비스 · 세무법인청년", 200000, 1.0],
+        ["외주 서비스 · 경리 (2026년 7월까지)", 800000, 4.0]
       ]
     };
     const variableCosts = [
@@ -752,6 +770,14 @@ mtd_achievement_rate =
                     "quality": "MATCH_CHECK 29일 · OK 1일",
                     "emptyState": "2026년 6월 최신 D+1 확정행은 30일까지입니다.",
                     "closeNote": "2026년 6월 손익은 2026-06-01부터 독립 월로 누적합니다. 2026년 5월 데이터와 합산하지 않습니다."
+          },
+          "2026-07": {
+                    "label": "2026년 7월",
+                    "daysInMonth": 31,
+                    "fixedCost": 18552126,
+                    "quality": "MATCH_CHECK 1일",
+                    "emptyState": "2026년 7월 최신 D+1 확정행은 1일까지입니다.",
+                    "closeNote": "2026년 7월 손익은 2026-07-01부터 독립 월로 누적합니다. 2026년 6월 데이터와 합산하지 않습니다."
           }
 };
     const dailyRowsByMonth = {
@@ -2393,6 +2419,26 @@ mtd_achievement_rate =
                               "imwebDeliveryFee": 241800,
                               "naverDeliveryFee": 130200,
                               "totalDeliveryFee": 372000,
+                              "metaSource": "stg_ads_daily",
+                              "googleSource": "stg_ads_daily",
+                              "naverSearchSource": "stg_ads_daily",
+                              "quality": "MATCH_CHECK"
+                    }
+          ],
+          "2026-07": [
+                    {
+                              "day": 1,
+                              "revenue": 7206359,
+                              "selfRevenueApi": 4102359,
+                              "naverRevenueApi": 3104000,
+                              "imweb": 1581494,
+                              "naver": 1769889,
+                              "meta": 485627,
+                              "googleAd": 17120,
+                              "naverAd": 5714,
+                              "imwebDeliveryFee": 297600,
+                              "naverDeliveryFee": 248000,
+                              "totalDeliveryFee": 545600,
                               "metaSource": "stg_ads_daily",
                               "googleSource": "stg_ads_daily",
                               "naverSearchSource": "stg_ads_daily",
