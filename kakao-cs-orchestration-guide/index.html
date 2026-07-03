@@ -1,0 +1,1098 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>카카오 상담 오케스트레이션 구축 가이드</title>
+  <style>
+    :root {
+      --ink: #18212f;
+      --muted: #607086;
+      --line: #d8e0ea;
+      --paper: #f7f9fc;
+      --panel: #ffffff;
+      --accent: #0f766e;
+      --accent-soft: #e3f4f2;
+      --warn: #9a5b00;
+      --warn-soft: #fff4d9;
+      --danger: #a23737;
+      --danger-soft: #fae7e7;
+      --code: #132033;
+      --code-text: #e8eef8;
+      --green: #1f7a4d;
+      --blue: #235c9d;
+      --shadow: 0 14px 34px rgba(25, 39, 63, 0.08);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--paper);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans KR", "Apple SD Gothic Neo", Arial, sans-serif;
+      line-height: 1.68;
+    }
+
+    a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      border-bottom: 1px solid rgba(216, 224, 234, 0.85);
+      background: rgba(247, 249, 252, 0.94);
+      backdrop-filter: blur(12px);
+    }
+
+    .topbar-inner {
+      width: min(1120px, calc(100vw - 36px));
+      margin: 0 auto;
+      min-height: 58px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+    }
+
+    .brand {
+      font-weight: 800;
+      letter-spacing: 0;
+      white-space: nowrap;
+    }
+
+    .nav {
+      display: flex;
+      gap: 16px;
+      align-items: center;
+      overflow-x: auto;
+      font-size: 14px;
+      color: var(--muted);
+    }
+
+    .nav a {
+      color: var(--muted);
+      white-space: nowrap;
+    }
+
+    .hero {
+      background: #fff;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .hero-inner {
+      width: min(1120px, calc(100vw - 36px));
+      margin: 0 auto;
+      padding: 52px 0 42px;
+      display: grid;
+      grid-template-columns: 1.35fr 0.85fr;
+      gap: 32px;
+      align-items: end;
+    }
+
+    .eyebrow {
+      margin: 0 0 12px;
+      color: var(--accent);
+      font-weight: 800;
+      font-size: 14px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(30px, 5vw, 56px);
+      line-height: 1.08;
+      letter-spacing: 0;
+    }
+
+    .lead {
+      margin: 18px 0 0;
+      color: var(--muted);
+      font-size: 18px;
+      max-width: 740px;
+    }
+
+    .meta-panel {
+      background: var(--accent-soft);
+      border: 1px solid #bfe1dd;
+      border-radius: 8px;
+      padding: 18px;
+      box-shadow: var(--shadow);
+    }
+
+    .meta-panel h2 {
+      margin-top: 0;
+      font-size: 16px;
+    }
+
+    .meta-list {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      display: grid;
+      gap: 10px;
+      color: #23413e;
+      font-size: 14px;
+    }
+
+    .wrap {
+      width: min(1120px, calc(100vw - 36px));
+      margin: 0 auto;
+      padding: 36px 0 70px;
+      display: grid;
+      grid-template-columns: 260px 1fr;
+      gap: 28px;
+    }
+
+    .toc {
+      position: sticky;
+      top: 82px;
+      align-self: start;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 18px;
+      box-shadow: var(--shadow);
+    }
+
+    .toc h2 {
+      margin: 0 0 12px;
+      font-size: 14px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .toc ol {
+      margin: 0;
+      padding-left: 20px;
+      display: grid;
+      gap: 9px;
+      font-size: 14px;
+    }
+
+    main {
+      display: grid;
+      gap: 20px;
+    }
+
+    section {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 28px;
+      box-shadow: var(--shadow);
+    }
+
+    h2 {
+      margin: 0 0 16px;
+      font-size: 26px;
+      line-height: 1.25;
+      letter-spacing: 0;
+    }
+
+    h3 {
+      margin: 26px 0 10px;
+      font-size: 19px;
+      letter-spacing: 0;
+    }
+
+    p {
+      margin: 0 0 14px;
+    }
+
+    ul,
+    ol {
+      margin-top: 10px;
+      margin-bottom: 18px;
+      padding-left: 22px;
+    }
+
+    li {
+      margin: 6px 0;
+    }
+
+    .note,
+    .warning,
+    .danger {
+      border-radius: 8px;
+      padding: 14px 16px;
+      margin: 16px 0;
+      border: 1px solid;
+    }
+
+    .note {
+      background: var(--accent-soft);
+      border-color: #bfe1dd;
+    }
+
+    .warning {
+      background: var(--warn-soft);
+      border-color: #f0cf85;
+      color: #563700;
+    }
+
+    .danger {
+      background: var(--danger-soft);
+      border-color: #e6b5b5;
+      color: #672222;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+      margin: 16px 0 8px;
+    }
+
+    .mini {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 16px;
+      background: #fbfcfe;
+    }
+
+    .mini h3 {
+      margin-top: 0;
+      font-size: 16px;
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      min-height: 24px;
+      border-radius: 999px;
+      padding: 2px 10px;
+      background: #eef3f8;
+      color: #35455a;
+      font-size: 12px;
+      font-weight: 700;
+      margin: 2px 4px 2px 0;
+    }
+
+    .tag.good {
+      background: #e5f4ec;
+      color: var(--green);
+    }
+
+    .tag.warn {
+      background: var(--warn-soft);
+      color: var(--warn);
+    }
+
+    .tag.stop {
+      background: var(--danger-soft);
+      color: var(--danger);
+    }
+
+    .flow {
+      display: grid;
+      gap: 10px;
+      margin: 18px 0;
+    }
+
+    .flow-step {
+      display: grid;
+      grid-template-columns: 42px 1fr;
+      gap: 12px;
+      align-items: start;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 14px;
+      background: #fbfcfe;
+    }
+
+    .num {
+      width: 34px;
+      height: 34px;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      background: var(--accent);
+      color: #fff;
+      font-weight: 800;
+    }
+
+    .flow-step strong {
+      display: block;
+      margin-bottom: 3px;
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      margin: 16px 0;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 720px;
+      background: #fff;
+    }
+
+    th,
+    td {
+      padding: 12px 13px;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+      vertical-align: top;
+      font-size: 14px;
+    }
+
+    th {
+      background: #eef3f8;
+      color: #2c394b;
+    }
+
+    tr:last-child td {
+      border-bottom: 0;
+    }
+
+    .codebox {
+      margin: 16px 0;
+      border-radius: 8px;
+      overflow: hidden;
+      border: 1px solid #263850;
+      background: var(--code);
+    }
+
+    .code-head {
+      min-height: 38px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 8px 12px;
+      border-bottom: 1px solid #263850;
+      background: #0f1a2a;
+      color: #b6c3d5;
+      font-size: 13px;
+    }
+
+    button.copy {
+      border: 1px solid #3f5370;
+      border-radius: 6px;
+      background: #18283d;
+      color: #e8eef8;
+      padding: 5px 9px;
+      font: inherit;
+      cursor: pointer;
+    }
+
+    button.copy:hover {
+      background: #223653;
+    }
+
+    pre {
+      margin: 0;
+      padding: 16px;
+      overflow-x: auto;
+      color: var(--code-text);
+      font-size: 13px;
+      line-height: 1.58;
+      tab-size: 2;
+    }
+
+    code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+    }
+
+    .inline-code {
+      padding: 2px 5px;
+      border-radius: 5px;
+      background: #eef3f8;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      font-size: 0.92em;
+    }
+
+    .checklist {
+      display: grid;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .check {
+      display: grid;
+      grid-template-columns: 22px 1fr;
+      gap: 10px;
+      align-items: start;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fbfcfe;
+    }
+
+    .box {
+      width: 18px;
+      height: 18px;
+      border: 2px solid var(--accent);
+      border-radius: 4px;
+      margin-top: 3px;
+    }
+
+    footer {
+      width: min(1120px, calc(100vw - 36px));
+      margin: 0 auto;
+      padding: 0 0 50px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    @media (max-width: 900px) {
+      .hero-inner,
+      .wrap {
+        grid-template-columns: 1fr;
+      }
+
+      .toc {
+        position: static;
+      }
+
+      .grid {
+        grid-template-columns: 1fr;
+      }
+
+      .topbar-inner {
+        align-items: start;
+        flex-direction: column;
+        padding: 12px 0;
+      }
+    }
+
+    @media print {
+      .topbar,
+      .toc,
+      button.copy {
+        display: none;
+      }
+
+      body {
+        background: #fff;
+      }
+
+      .hero,
+      section,
+      .meta-panel {
+        box-shadow: none;
+      }
+
+      .wrap,
+      .hero-inner {
+        width: 100%;
+        display: block;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">카카오 상담 오케스트레이션 구축 가이드</div>
+      <nav class="nav" aria-label="문서 이동">
+        <a href="#overview">개요</a>
+        <a href="#setup">설정</a>
+        <a href="#rules">규칙</a>
+        <a href="#polling">폴링</a>
+        <a href="#reply">답장</a>
+        <a href="#quality">검증</a>
+      </nav>
+    </div>
+  </header>
+
+  <div class="hero">
+    <div class="hero-inner">
+      <div>
+        <p class="eyebrow">Guide for building a Kakao Business CS agent</p>
+        <h1>카카오 상담을 안전하게 읽고, 분류하고, 답장 초안을 만드는 오케스트레이션</h1>
+        <p class="lead">
+          이 문서는 지인이 같은 구조를 만들 수 있도록 정리한 구현 가이드입니다.
+          카카오 비즈 상담 목록을 주기적으로 확인하고, 새 문의를 분류하고,
+          답장 초안 또는 승인된 답변을 만들고, 사람이 봐야 하는 케이스를 넘기는 방법을 설명합니다.
+        </p>
+      </div>
+      <aside class="meta-panel">
+        <h2>문서 범위</h2>
+        <ul class="meta-list">
+          <li><strong>포함:</strong> 로그인 설정 위치, 상담 스캔, 폴링 루프, 답장 정책, 중복 방지, 승인 규칙</li>
+          <li><strong>제외:</strong> 이지어드민에서 주문을 조회하는 상세 절차</li>
+          <li><strong>원칙:</strong> 비밀번호와 고객 원문은 코드, 프롬프트, 로그에 저장하지 않음</li>
+          <li><strong>업데이트:</strong> 2026-07-03 KST</li>
+        </ul>
+      </aside>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <aside class="toc">
+      <h2>목차</h2>
+      <ol>
+        <li><a href="#overview">전체 구조</a></li>
+        <li><a href="#setup">로그인과 환경설정</a></li>
+        <li><a href="#rules">상담 규칙</a></li>
+        <li><a href="#polling">확인 루프와 폴링</a></li>
+        <li><a href="#reply">답장 처리</a></li>
+        <li><a href="#state">상태 저장</a></li>
+        <li><a href="#quality">검증과 운영 게이트</a></li>
+        <li><a href="#checklist">구축 체크리스트</a></li>
+      </ol>
+    </aside>
+
+    <main>
+      <section id="overview">
+        <h2>1. 전체 구조</h2>
+        <p>
+          이 오케스트레이션은 하나의 거대한 자동응답 봇이 아니라, 작은 역할을 가진 단계들을 순서대로 묶은 구조입니다.
+          핵심은 상담 목록을 읽는 단계와 고객에게 보내는 단계 사이에 <span class="inline-code">분류</span>,
+          <span class="inline-code">안전 규칙</span>, <span class="inline-code">사람 승인</span>을 넣는 것입니다.
+        </p>
+
+        <div class="flow">
+          <div class="flow-step">
+            <div class="num">1</div>
+            <div><strong>세션 확인</strong>카카오 비즈 상담 화면에 로그인되어 있는지 확인합니다. 로그인, 2차 인증, 본인확인 화면이면 자동화를 멈춥니다.</div>
+          </div>
+          <div class="flow-step">
+            <div class="num">2</div>
+            <div><strong>상담 목록 스캔</strong>읽지 않은 상담, 새 메시지, 최근 변경된 상담만 가져옵니다. 광고, 채널추가, 시스템 자동 메시지는 제외합니다.</div>
+          </div>
+          <div class="flow-step">
+            <div class="num">3</div>
+            <div><strong>히스토리 분석</strong>오늘 타임라인, 담당자 응대 여부, 고객 추가 메시지, 이미지 수신 여부, 강성 신호를 계산합니다.</div>
+          </div>
+          <div class="flow-step">
+            <div class="num">4</div>
+            <div><strong>문의 유형 분류</strong>단순 문의, 배송 관련 문의, 파손/누락/오배송, 환불/취소, 식품안전, 강성 고객, 판단불가로 나눕니다.</div>
+          </div>
+          <div class="flow-step">
+            <div class="num">5</div>
+            <div><strong>답장 초안 또는 응대</strong>자동 발송을 기본값으로 두지 말고, 처음에는 초안 모드로 운영합니다. 발송은 현재 화면과 메시지 내용을 확인한 뒤 실행합니다.</div>
+          </div>
+          <div class="flow-step">
+            <div class="num">6</div>
+            <div><strong>기록과 에스컬레이션</strong>사람 확인이 필요한 건은 내부 기록과 알림으로 넘기고, 고객에게 임의 결론을 말하지 않습니다.</div>
+          </div>
+        </div>
+
+        <div class="note">
+          주문 조회나 배송 사실 확인이 필요한 경우에는 내부 주문 시스템 또는 담당자 확인 단계로 넘기면 됩니다.
+          이 문서는 그 내부 시스템을 어떻게 조회하는지는 다루지 않습니다.
+        </div>
+      </section>
+
+      <section id="setup">
+        <h2>2. 로그인과 환경설정</h2>
+        <p>
+          로그인 정보는 코드 안에 직접 적지 않습니다. 개발 초기에는 <span class="inline-code">.env</span> 파일,
+          운영 단계에서는 OS Keychain, 1Password, AWS Secrets Manager 같은 안전한 저장소를 권장합니다.
+          프롬프트, HTML 문서, 로그, 데이터베이스에는 비밀번호를 남기지 않습니다.
+        </p>
+
+        <h3>필수 설정값</h3>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>키</th>
+                <th>예시</th>
+                <th>용도</th>
+                <th>주의</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>KAKAO_BIZ_URL</code></td>
+                <td><code>https://business.kakao.com/{channel_id}/chats</code></td>
+                <td>상담 목록 진입 URL</td>
+                <td>채널 ID가 맞는지 사람이 확인</td>
+              </tr>
+              <tr>
+                <td><code>KAKAO_LOGIN_ID</code></td>
+                <td><code>your-login-id</code></td>
+                <td>로그인 계정</td>
+                <td>로그에는 출력 금지</td>
+              </tr>
+              <tr>
+                <td><code>KAKAO_LOGIN_PASSWORD</code></td>
+                <td><code>secure-placeholder</code></td>
+                <td>초기 로그인 보조</td>
+                <td>가능하면 브라우저 저장 세션과 Keychain 사용</td>
+              </tr>
+              <tr>
+                <td><code>CS_MODE</code></td>
+                <td><code>draft</code> 또는 <code>assist</code></td>
+                <td>초안만 만들지, 제한적으로 발송할지 결정</td>
+                <td>처음 1-2주는 <code>draft</code> 권장</td>
+              </tr>
+              <tr>
+                <td><code>POLL_ACTIVE_SECONDS</code></td>
+                <td><code>180</code></td>
+                <td>운영시간 중 상담 확인 간격</td>
+                <td>너무 짧으면 계정/브라우저에 부담</td>
+              </tr>
+              <tr>
+                <td><code>POLL_IDLE_SECONDS</code></td>
+                <td><code>600</code></td>
+                <td>비운영시간 확인 간격</td>
+                <td>야간 자동 발송은 제한</td>
+              </tr>
+              <tr>
+                <td><code>INTERNAL_ALERT_WEBHOOK</code></td>
+                <td><code>https://hooks.example/...</code></td>
+                <td>담당자 확인 필요 알림</td>
+                <td>Webhook URL은 비밀값으로 취급</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="codebox">
+          <div class="code-head"><span>.env.example</span><button class="copy" type="button">복사</button></div>
+          <pre><code>KAKAO_BIZ_URL=https://business.kakao.com/YOUR_CHANNEL_ID/chats
+KAKAO_LOGIN_ID=your-login-id
+KAKAO_LOGIN_PASSWORD=replace-with-secure-store-value
+
+CS_MODE=draft
+POLL_ACTIVE_SECONDS=180
+POLL_IDLE_SECONDS=600
+IMMEDIATE_WATCH_SECONDS=120
+IMMEDIATE_WATCH_INTERVAL_SECONDS=20
+
+INTERNAL_ALERT_WEBHOOK=replace-with-secure-store-value
+STATE_DB_PATH=./data/kakao-cs-state.sqlite3
+RUN_LOG_DIR=./runs</code></pre>
+        </div>
+
+        <div class="warning">
+          2차 인증, CAPTCHA, 본인확인, 비밀번호 재입력 화면이 보이면 자동화가 직접 처리하면 안 됩니다.
+          이 경우 상태를 <span class="inline-code">blocked_login_required</span>로 기록하고 사람이 브라우저에서 세션을 복구해야 합니다.
+        </div>
+      </section>
+
+      <section id="rules">
+        <h2>3. 상담 규칙 설계</h2>
+        <p>
+          좋은 CS 오케스트레이션은 답변 문장을 잘 쓰는 것보다 먼저 멈춰야 할 상황을 정확히 압니다.
+          아래 규칙은 최소 기준입니다.
+        </p>
+
+        <div class="grid">
+          <div class="mini">
+            <h3>자동 응대 가능</h3>
+            <span class="tag good">상품 보관법</span>
+            <span class="tag good">조리법</span>
+            <span class="tag good">영양 정보</span>
+            <span class="tag good">배송 정보 수집</span>
+            <p>사실 확인이 단순하거나, 고객에게 필요한 정보를 요청하는 단계입니다.</p>
+          </div>
+          <div class="mini">
+            <h3>초안만 권장</h3>
+            <span class="tag warn">환불</span>
+            <span class="tag warn">취소</span>
+            <span class="tag warn">파손</span>
+            <span class="tag warn">오배송</span>
+            <p>내부 확인이 필요하거나 고객 불만으로 이어질 수 있는 단계입니다.</p>
+          </div>
+          <div class="mini">
+            <h3>고객 답변 중지</h3>
+            <span class="tag stop">식품안전</span>
+            <span class="tag stop">강성 고객</span>
+            <span class="tag stop">담당자 응대 중</span>
+            <p>바로 담당자 알림으로 넘기고 AI가 추가 답변하지 않습니다.</p>
+          </div>
+          <div class="mini">
+            <h3>항상 제외</h3>
+            <span class="tag">광고</span>
+            <span class="tag">채널추가</span>
+            <span class="tag">시스템 메시지</span>
+            <p>고객 문의로 분류하지 않고 처리 대상에서 제외합니다.</p>
+          </div>
+        </div>
+
+        <h3>규칙 파일 예시</h3>
+        <div class="codebox">
+          <div class="code-head"><span>rules.yaml</span><button class="copy" type="button">복사</button></div>
+          <pre><code>mode: draft
+timezone: Asia/Seoul
+business_hours:
+  weekday_start: "10:00"
+  weekday_end: "16:00"
+
+ignore_message_types:
+  - channel_added
+  - auto_reply
+  - advertisement
+  - system_notice
+
+hard_stop_rules:
+  food_safety:
+    keywords: ["배탈", "설사", "구토", "상함", "곰팡이", "이물질", "벌레", "식중독"]
+    customer_reply: false
+    internal_alert: true
+  angry_customer:
+    keywords: ["책임자", "사장", "본사", "고소", "신고"]
+    profanity_or_threat: true
+    customer_reply: "one_empathy_message_only"
+    internal_alert: true
+  manager_active:
+    customer_reply: false
+    internal_alert: true
+
+info_required:
+  simple_question: ["name_optional"]
+  delivery_or_order_related: ["name", "phone", "message_summary"]
+  damaged_or_wrong_item: ["name", "phone", "photo_or_description"]
+
+send_policy:
+  default: draft_only
+  allow_auto_send_for:
+    - information_collection
+    - simple_product_info
+  require_human_approval_for:
+    - refund
+    - cancellation
+    - damage
+    - wrong_delivery
+    - food_safety
+    - angry_customer
+    - any_order_conclusion</code></pre>
+        </div>
+
+        <div class="danger">
+          고객에게 결론을 말하기 전에 내부 사실 확인이 필요한 유형이 있습니다.
+          주문, 환불, 취소, 보상, 재출고, 식품안전은 자동 결론을 내리지 않는 편이 안전합니다.
+        </div>
+      </section>
+
+      <section id="polling">
+        <h2>4. 확인 루프와 폴링 기준</h2>
+        <p>
+          상담 확인은 무조건 빠를수록 좋은 것이 아닙니다. 계정 안정성, 담당자 개입 가능성,
+          중복 답변 방지를 함께 고려해야 합니다.
+        </p>
+
+        <h3>권장 간격</h3>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>상황</th>
+                <th>간격</th>
+                <th>이유</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>평일 운영시간</td>
+                <td>3분</td>
+                <td>응답 속도와 브라우저 부담의 균형</td>
+              </tr>
+              <tr>
+                <td>주말 또는 비운영시간</td>
+                <td>5-10분</td>
+                <td>단순 정보는 대응하되 민감 건은 담당자 확인으로 넘김</td>
+              </tr>
+              <tr>
+                <td>방금 답장한 직후</td>
+                <td>20초 간격, 최대 2분</td>
+                <td>고객이 바로 이름/연락처를 답할 수 있으므로 짧게 추가 감시</td>
+              </tr>
+              <tr>
+                <td>로그인 오류 후</td>
+                <td>자동 재시도 금지</td>
+                <td>2차 인증과 보안 화면은 사람이 복구</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>폴링 루프 의사코드</h3>
+        <div class="codebox">
+          <div class="code-head"><span>polling-loop.pseudo</span><button class="copy" type="button">복사</button></div>
+          <pre><code>while true:
+  run_id = create_run(mode="read_or_preview")
+
+  session = check_kakao_session()
+  if session.status in ["login_required", "captcha", "two_factor_required"]:
+    record_blocker(run_id, session.status)
+    notify_internal("카카오 로그인 복구 필요")
+    sleep(POLL_IDLE_SECONDS)
+    continue
+
+  conversations = scan_unread_conversations()
+  candidates = filter_out_system_messages(conversations)
+
+  for chat in candidates:
+    if already_processed(chat.last_message_key):
+      continue
+
+    history = read_recent_history(chat.id, days=3)
+    state = analyze_history(history)
+
+    decision = classify_case(history, state, rules)
+    draft = build_reply_or_handoff(decision, history)
+
+    if decision.action == "stop_customer_reply":
+      record_internal_case(chat, decision, draft)
+      mark_processed(chat.last_message_key)
+      continue
+
+    if CS_MODE == "draft":
+      save_draft(chat, draft)
+      notify_internal_if_needed(chat, decision)
+    else:
+      send_result = send_with_preflight(chat, draft)
+      verify_sent_message(chat, send_result)
+
+    mark_processed(chat.last_message_key)
+
+  if any_reply_sent_or_draft_created:
+    watch_immediate_replies(max_seconds=120, every_seconds=20)
+
+  sleep(next_poll_interval())</code></pre>
+        </div>
+
+        <p>
+          루프는 반드시 <span class="inline-code">last_message_key</span> 같은 중복 방지 키를 가져야 합니다.
+          같은 메시지를 여러 번 처리하면 고객에게 중복 답변이 나가거나 내부 알림이 반복됩니다.
+        </p>
+      </section>
+
+      <section id="reply">
+        <h2>5. 답장 처리 방법</h2>
+        <p>
+          답장은 크게 세 종류로 나눕니다. 첫째, 고객에게 추가 정보를 요청하는 답장.
+          둘째, 단순 정보 안내. 셋째, 담당자에게 넘기는 내부 메시지입니다.
+        </p>
+
+        <h3>발송 전 체크</h3>
+        <div class="checklist">
+          <div class="check"><span class="box"></span><span>현재 열린 상담방 URL 또는 chat id가 답장 대상과 일치하는지 확인합니다.</span></div>
+          <div class="check"><span class="box"></span><span>담당자가 오늘 이미 응대한 흔적이 있으면 고객 답변을 멈춥니다.</span></div>
+          <div class="check"><span class="box"></span><span>식품안전, 강성 고객, 환불/취소 결론, 보상 약속이 포함되어 있으면 사람 승인을 받습니다.</span></div>
+          <div class="check"><span class="box"></span><span>고객명, 연락처, 주문정보 같은 개인정보를 다른 상담과 섞지 않았는지 확인합니다.</span></div>
+          <div class="check"><span class="box"></span><span>깨진 문자, 제어 문자, 과한 이모지, 확정되지 않은 날짜 표현을 제거합니다.</span></div>
+        </div>
+
+        <h3>정보 요청 답장 템플릿</h3>
+        <div class="codebox">
+          <div class="code-head"><span>reply-template.txt</span><button class="copy" type="button">복사</button></div>
+          <pre><code>안녕하세요 고객님.
+확인을 도와드리기 위해 아래 정보를 남겨주세요.
+
+1. 성함
+2. 연락처
+3. 문의 내용
+
+확인 후 안내드리겠습니다.
+
+다른 문의사항 있으시면 편하게 말씀해 주세요 :)</code></pre>
+        </div>
+
+        <h3>사람 확인 필요 내부 알림 템플릿</h3>
+        <div class="codebox">
+          <div class="code-head"><span>internal-handoff.txt</span><button class="copy" type="button">복사</button></div>
+          <pre><code>[카카오 상담 확인 필요]
+상담방: {chat_url_or_chat_id}
+문의유형: {case_type}
+고객정보 수집: {collected_fields}
+AI 판단: {summary}
+차단 사유: {food_safety | angry_customer | manager_active | needs_order_confirmation | needs_human_decision}
+권장 다음 조치: {safe_next_action}
+
+주의: 고객 원문 전체와 민감정보는 내부 기록 규칙에 따라 최소화합니다.</code></pre>
+        </div>
+
+        <div class="note">
+          처음 구축할 때는 모든 고객-facing 메시지를 <span class="inline-code">draft_only</span>로 두는 것이 좋습니다.
+          1-2주 동안 사람이 검수하면서 어떤 유형이 안전한지 확인한 뒤, 단순 정보 안내부터 자동 발송을 열어갑니다.
+        </div>
+      </section>
+
+      <section id="state">
+        <h2>6. 상태 저장과 중복 방지</h2>
+        <p>
+          오케스트레이션은 기억력이 있어야 합니다. 다만 고객 원문 전체, 비밀번호, 세션 토큰은 저장하지 않습니다.
+          저장해야 하는 것은 처리 상태, 최소 요약, 중복 방지 키, 차단 사유입니다.
+        </p>
+
+        <div class="codebox">
+          <div class="code-head"><span>state-schema.sql</span><button class="copy" type="button">복사</button></div>
+          <pre><code>create table if not exists cs_runs (
+  id text primary key,
+  started_at text not null,
+  finished_at text,
+  mode text not null,
+  status text not null,
+  blocker text,
+  evidence_summary text
+);
+
+create table if not exists cs_items (
+  id text primary key,
+  run_id text not null,
+  chat_id text not null,
+  last_message_key text not null,
+  case_type text not null,
+  action text not null,
+  status text not null,
+  collected_fields text,
+  safe_summary text,
+  next_action text,
+  created_at text not null,
+  unique(chat_id, last_message_key)
+);
+
+create table if not exists cs_drafts (
+  id text primary key,
+  item_id text not null,
+  draft_text text not null,
+  approval_status text not null default 'pending',
+  sent_at text,
+  verification text
+);</code></pre>
+        </div>
+
+        <h3>상태값 기준</h3>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>상태</th>
+                <th>뜻</th>
+                <th>다음 행동</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>completed_draft</code></td>
+                <td>초안 생성 완료, 발송은 하지 않음</td>
+                <td>사람 검수</td>
+              </tr>
+              <tr>
+                <td><code>completed_sent</code></td>
+                <td>승인된 답변 발송 후 화면 검증 완료</td>
+                <td>다음 폴링 대기</td>
+              </tr>
+              <tr>
+                <td><code>blocked_login_required</code></td>
+                <td>로그인/2차 인증/본인확인 필요</td>
+                <td>사람이 브라우저 세션 복구</td>
+              </tr>
+              <tr>
+                <td><code>blocked_human_required</code></td>
+                <td>민감 케이스라 AI 답변 중지</td>
+                <td>담당자 확인</td>
+              </tr>
+              <tr>
+                <td><code>rework_required</code></td>
+                <td>초안 또는 기록이 검증 기준을 통과하지 못함</td>
+                <td>규칙 또는 프롬프트 수정</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="quality">
+        <h2>7. 검증과 운영 게이트</h2>
+        <p>
+          오케스트레이션은 “돌아갔다”가 아니라 “증거가 있다”로 끝나야 합니다.
+          특히 고객 답변, 내부 알림, 상담 종료 같은 작업은 실행 전 승인과 실행 후 검증이 필요합니다.
+        </p>
+
+        <h3>실행 전 계약</h3>
+        <div class="codebox">
+          <div class="code-head"><span>work-order.json</span><button class="copy" type="button">복사</button></div>
+          <pre><code>{
+  "run_id": "20260703-090000-kakao-cs",
+  "mode": "preview",
+  "required_outcome": "새 카카오 상담을 읽고 안전한 답장 초안을 만든다",
+  "required_evidence": [
+    "카카오 상담 목록 visible 상태",
+    "chat_id 또는 상담 URL",
+    "분류 결과",
+    "답장 초안 또는 차단 사유",
+    "사람 승인 필요 여부"
+  ],
+  "forbidden_actions": [
+    "승인 없는 고객 메시지 발송",
+    "로그인 정보 출력",
+    "고객 원문 전체 저장",
+    "식품안전/강성 고객 자동 답변",
+    "상담 종료 또는 삭제"
+  ]
+}</code></pre>
+        </div>
+
+        <h3>완료 판정</h3>
+        <div class="checklist">
+          <div class="check"><span class="box"></span><span>상담 화면과 채널이 현재 실행에서 확인되었습니다.</span></div>
+          <div class="check"><span class="box"></span><span>각 상담마다 분류, 차단 여부, 다음 행동이 기록되었습니다.</span></div>
+          <div class="check"><span class="box"></span><span>고객에게 실제 발송한 경우, 발송 후 화면에서 메시지 존재를 확인했습니다.</span></div>
+          <div class="check"><span class="box"></span><span>초안 모드인 경우 <span class="inline-code">not_executed_yet</span>가 명확히 기록되었습니다.</span></div>
+          <div class="check"><span class="box"></span><span>막힌 경우 <span class="inline-code">blocked</span> 또는 <span class="inline-code">rework_required</span>로 끝냈고 성공으로 보고하지 않았습니다.</span></div>
+        </div>
+      </section>
+
+      <section id="checklist">
+        <h2>8. 구축 체크리스트</h2>
+        <div class="checklist">
+          <div class="check"><span class="box"></span><span>카카오 비즈 상담 URL과 채널 ID를 확인했다.</span></div>
+          <div class="check"><span class="box"></span><span>로그인 정보는 <span class="inline-code">.env</span> 또는 비밀 저장소에만 넣고 코드에 하드코딩하지 않았다.</span></div>
+          <div class="check"><span class="box"></span><span>처음 운영 모드는 <span class="inline-code">draft_only</span>로 설정했다.</span></div>
+          <div class="check"><span class="box"></span><span>식품안전, 강성 고객, 담당자 응대 중 케이스는 자동 답변 금지로 설정했다.</span></div>
+          <div class="check"><span class="box"></span><span>폴링 간격, 즉시 응답 감시 시간, 재시도 제한을 정했다.</span></div>
+          <div class="check"><span class="box"></span><span>상담별 중복 방지 키를 저장한다.</span></div>
+          <div class="check"><span class="box"></span><span>고객 원문 전체와 개인정보를 장기 저장하지 않는다.</span></div>
+          <div class="check"><span class="box"></span><span>발송 전 미리보기, 발송 승인, 발송 후 검증 단계를 분리했다.</span></div>
+          <div class="check"><span class="box"></span><span>로그인/2차 인증/본인확인 화면에서는 자동화를 중지한다.</span></div>
+          <div class="check"><span class="box"></span><span>1회 수동 드라이런으로 상담 목록 읽기, 분류, 초안 생성, 내부 알림까지 검증했다.</span></div>
+        </div>
+
+        <div class="warning">
+          자동 발송을 열기 전에는 최소한 단순 문의, 정보 수집 메시지, 내부 알림 세 가지 케이스를 각각 실제 화면에서 검증해야 합니다.
+          검증되지 않은 자동 발송은 운영 리스크가 큽니다.
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <footer>
+    이 문서는 공유용 구현 가이드입니다. 실제 계정, 비밀번호, 고객 원문, 주문 원문, 세션 토큰은 포함하지 않았습니다.
+  </footer>
+
+  <script>
+    document.querySelectorAll(".codebox").forEach((box) => {
+      const button = box.querySelector("button.copy");
+      const code = box.querySelector("code");
+      if (!button || !code) return;
+      button.addEventListener("click", async () => {
+        try {
+          await navigator.clipboard.writeText(code.innerText);
+          const original = button.innerText;
+          button.innerText = "복사됨";
+          setTimeout(() => {
+            button.innerText = original;
+          }, 1200);
+        } catch (error) {
+          button.innerText = "복사 실패";
+        }
+      });
+    });
+  </script>
+</body>
+</html>
