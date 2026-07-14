@@ -214,6 +214,41 @@
     .weekday-cell strong { display: block; color: var(--ink); }
     .weekday-cell span { display: block; color: var(--muted); font-size: 12px; }
     .muted-cell { color: var(--muted); }
+    tr[data-day] { cursor: pointer; }
+    tr[data-day]:hover td { background: #f4f7fb; }
+    tr[data-day].open td { background: #edf4ff; }
+    tr[data-day] td:first-child::after {
+      content: " ▾";
+      color: var(--muted);
+      font-size: 10px;
+    }
+    tr[data-day].open td:first-child::after { content: " ▴"; }
+    .day-detail-row > td {
+      background: var(--soft);
+      padding: 14px 12px 18px;
+      text-align: left;
+    }
+    .day-detail-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 10px;
+    }
+    .day-detail-head strong { font-size: 14px; }
+    .day-detail-head span { color: var(--muted); font-size: 12px; }
+    .day-detail h4 {
+      margin: 14px 0 6px;
+      font-size: 12px;
+      color: var(--muted);
+      letter-spacing: 0.02em;
+    }
+    .day-detail h4:first-of-type { margin-top: 0; }
+    .day-detail table { font-size: 12px; min-width: 640px; }
+    .day-detail th, .day-detail td { padding: 7px 6px; }
+    .day-detail .total-row td { font-weight: 800; border-top: 2px solid var(--line); }
+    .day-detail .note { margin-top: 10px; }
     table { width: 100%; border-collapse: collapse; font-size: 13px; }
     th, td { padding: 10px 8px; border-bottom: 1px solid var(--line); text-align: right; }
     th:first-child, td:first-child { text-align: left; }
@@ -507,7 +542,7 @@
         <div class="data-view-panel" data-panel="daily-profit">
           <div class="data-table-scroll">
             <table class="data-table">
-              <thead><tr><th>날짜</th><th>요일</th><th>일 매출</th><th>자사몰+네이버 순이익</th><th>총 광고비</th><th>운영 변동비 12%</th><th>일 순수익</th><th>일 BEP 달성률</th></tr></thead>
+              <thead><tr><th>날짜</th><th>요일</th><th>일 매출</th><th>자사몰+네이버 순이익</th><th>주문 순이익률</th><th>총 광고비</th><th>운영 변동비 12%</th><th>일 순수익</th><th>일 BEP 달성률</th></tr></thead>
               <tbody id="dailyProfitRows"></tbody>
             </table>
           </div>
@@ -735,6 +770,9 @@ mtd_achievement_rate =
       ["블랙알리오 소스 40g", 231],
       ["양념치킨 소스 40g", 225]
     ];
+    // 일별 상세 드릴다운 데이터 (Supabase mart_daily_profit_gauge_source + imweb_profit_daily_summary + vw_naver_commerce_profit_daily + fact_order_item 기준)
+    // products 행: [카테고리, 수량, 구매자수, 매출, 원가, 자사몰매출, 네이버매출]
+    const dailyDetailByMonth = {"2026-07":{"1":{"imweb":{"pay":4102359,"fee":164095,"dfee":297600,"cogs":1797099,"contrib":1843565,"orders":48,"buyers":47,"first":26,"repeat":21},"naver":{"pay":3104000,"fee":211072,"dfee":248000,"cogs":1462921,"contrib":1182007,"orders":40,"buyers":40,"first":20,"repeat":20},"ads":{"meta":485668,"google":17120,"naver":5714},"products":[["단백밥",1003,72,5217236,3027870,3139526,2077710],["소스",414,52,949402,109218,376920,572482],["순수단백",20,2,88223,0,88223,0],["닭가슴살",116,5,217226,112320,217226,0],["함박스테이크",140,7,441470,210000,184680,256790],["밸런시",7,2,64034,0,64034,0],["기타",7,3,20895,0,20895,0],["부가옵션",8,5,28773,880,10855,17918]],"notes":[]},"2":{"imweb":{"pay":4929643,"fee":197184,"dfee":347200,"cogs":1619411,"contrib":2765848,"orders":56,"buyers":56,"first":34,"repeat":22},"naver":{"pay":1737240,"fee":118132,"dfee":148800,"cogs":907313,"contrib":562995,"orders":24,"buyers":24,"first":11,"repeat":13},"ads":{"meta":446724,"google":14521,"naver":8998},"products":[["단백밥",766,58,4343910,2312621,3266650,1077260],["소스",403,48,776963,107751,308893,468070],["순수단백",180,9,581912,94400,581912,0],["닭가슴살",243,14,551578,241410,410158,141420],["함박스테이크",77,5,162471,115500,111981,50490],["밸런시",10,2,126201,0,126201,0],["기타",2,1,123848,0,123848,0]],"notes":["일부 신제품(순수단백 100g 라인 등)은 원가 미등록으로 품목 원가가 과소 표시될 수 있습니다."]},"3":{"imweb":{"pay":3311249,"fee":132451,"dfee":266600,"cogs":1304389,"contrib":1607809,"orders":43,"buyers":43,"first":21,"repeat":22},"naver":{"pay":1760410,"fee":119708,"dfee":136400,"cogs":643584,"contrib":860718,"orders":22,"buyers":22,"first":11,"repeat":11},"ads":{"meta":410654,"google":16788,"naver":1202},"products":[["단백밥",561,47,3139894,1683975,2334289,805605],["소스",314,41,1078287,205398,398282,680005],["순수단백",89,7,307982,48370,233532,74450],["닭가슴살",126,4,292288,147420,217838,74450],["함박스테이크",14,2,17182,21000,17182,0],["밸런시",10,3,80319,0,80319,0],["기타",4,2,26850,0,26850,0],["부가옵션",2,2,2957,220,2957,0]],"notes":["일부 신제품(순수단백 100g 라인 등)은 원가 미등록으로 품목 원가가 과소 표시될 수 있습니다."]},"4":{"imweb":{"pay":1456926,"fee":58279,"dfee":117800,"cogs":708084,"contrib":572763,"orders":19,"buyers":19,"first":11,"repeat":8},"naver":{"pay":727500,"fee":49470,"dfee":68200,"cogs":310333,"contrib":299497,"orders":11,"buyers":11,"first":5,"repeat":6},"ads":{"meta":336972,"google":17143,"naver":0},"products":[["단백밥",306,25,1650250,919291,1276182,374068],["소스",144,19,181886,37608,77834,104052],["순수단백",34,2,72143,23600,72143,0],["닭가슴살",7,1,13321,8190,13321,0],["함박스테이크",49,3,248901,73500,13321,235580],["부가옵션",1,1,4125,110,4125,0]],"notes":["일부 신제품(순수단백 100g 라인 등)은 원가 미등록으로 품목 원가가 과소 표시될 수 있습니다."]},"5":{"imweb":{"pay":2499089,"fee":99967,"dfee":229400,"cogs":1179644,"contrib":990078,"orders":36,"buyers":36,"first":21,"repeat":15},"naver":{"pay":1077130,"fee":73245,"dfee":68200,"cogs":504183,"contrib":431502,"orders":11,"buyers":11,"first":7,"repeat":4},"ads":{"meta":408482,"google":12935,"naver":0},"products":[["단백밥",526,41,2881646,1582945,2118154,763492],["소스",238,33,370537,60972,109027,261510],["순수단백",60,1,114980,70800,114980,0],["닭가슴살",40,2,71043,31200,29868,41175],["함박스테이크",49,3,84828,73500,84828,0],["부가옵션",4,3,16745,440,5792,10953]],"notes":["일부 신제품(순수단백 100g 라인 등)은 원가 미등록으로 품목 원가가 과소 표시될 수 있습니다."]},"6":{"imweb":{"pay":4025750,"fee":161029,"dfee":341000,"cogs":1612945,"contrib":1910776,"orders":55,"buyers":55,"first":26,"repeat":29},"naver":{"pay":2222090,"fee":151102,"dfee":198400,"cogs":1042213,"contrib":830375,"orders":32,"buyers":32,"first":18,"repeat":14},"ads":{"meta":411592,"google":12945,"naver":0},"products":[["단백밥",844,70,4358118,2518897,2830851,1527267],["소스",441,54,1052287,114849,480980,571307],["순수단백",40,3,115302,23600,115302,0],["닭가슴살",94,3,162229,106080,162229,0],["함박스테이크",119,6,294961,178500,294961,0],["밸런시",9,4,42407,0,42407,0],["기타",6,5,96483,0,96483,0],["부가옵션",2,2,5543,220,2537,3006]],"notes":["일부 신제품(순수단백 100g 라인 등)은 원가 미등록으로 품목 원가가 과소 표시될 수 있습니다."]},"7":{"imweb":{"pay":3507939,"fee":140316,"dfee":297600,"cogs":1565360,"contrib":1504663,"orders":48,"buyers":48,"first":21,"repeat":27},"naver":{"pay":2494280,"fee":169611,"dfee":217000,"cogs":1200126,"contrib":907543,"orders":35,"buyers":35,"first":22,"repeat":13},"ads":{"meta":373318,"google":11035,"naver":5740},"products":[["단백밥",858,69,4344058,2564103,2829184,1514874],["소스",411,50,816911,108837,229523,587388],["순수단백",90,6,172720,35400,172720,0],["닭가슴살",162,6,250515,170040,115874,134641],["함박스테이크",70,3,177084,105000,125594,51490],["밸런시",5,1,17940,0,17940,0],["부가옵션",8,4,36491,880,17104,19387]],"notes":["일부 신제품(순수단백 100g 라인 등)은 원가 미등록으로 품목 원가가 과소 표시될 수 있습니다."]},"8":{"imweb":{"pay":3551941,"fee":142078,"dfee":303800,"cogs":1784338,"contrib":1321725,"orders":49,"buyers":49,"first":21,"repeat":28},"naver":{"pay":1609300,"fee":109432,"dfee":136400,"cogs":822050,"contrib":541418,"orders":22,"buyers":22,"first":10,"repeat":12},"ads":{"meta":326910,"google":12210,"naver":7189},"products":[["단백밥",471,47,2539087,747895,1420010,1119077],["소스",207,41,1856853,16665,1625600,231253],["순수단백",9,7,413084,0,413084,0],["닭가슴살",28,1,63320,32760,0,63320],["함박스테이크",59,3,153270,84000,17670,135600],["밸런시",2,1,12100,0,12100,0],["기타",1,1,36440,0,36440,0],["부가옵션",1,1,60050,110,0,60050]],"notes":["자사몰 품목별 금액·수량은 이 날 아이템 피드 이슈로 참고용입니다 (채널 합계·원가·순이익은 이지어드민 매칭 기준으로 정확)."]},"9":{"imweb":{"pay":2953375,"fee":118134,"dfee":223200,"cogs":1254824,"contrib":1357217,"orders":36,"buyers":36,"first":20,"repeat":16},"naver":{"pay":1750400,"fee":119027,"dfee":142600,"cogs":878203,"contrib":610570,"orders":23,"buyers":23,"first":12,"repeat":11},"ads":{"meta":335304,"google":12980,"naver":4376},"products":[["단백밥",656,48,3430503,1978191,2296722,1133781],["소스",300,35,575242,78888,95877,479365],["순수단백",44,4,148202,0,148202,0],["닭가슴살",170,5,346575,159900,285375,61200],["함박스테이크",70,3,142490,105000,74690,67800],["밸런시",10,3,-29293,0,-29293,0],["기타",1,1,81800,0,81800,0],["부가옵션",2,2,4356,220,2,4354]],"notes":[]},"10":{"imweb":{"pay":3021690,"fee":120867,"dfee":229400,"cogs":1493190,"contrib":1178233,"orders":37,"buyers":37,"first":22,"repeat":15},"naver":{"pay":2114910,"fee":143814,"dfee":173600,"cogs":1014793,"contrib":782703,"orders":28,"buyers":28,"first":8,"repeat":20},"ads":{"meta":335318,"google":13532,"naver":4144},"products":[["단백밥",500,47,2731114,936025,1225895,1505219],["소스",271,38,1938075,28968,1566600,371475],["순수단백",5,3,119060,0,119060,0],["닭가슴살",10,1,30782,7800,0,30782],["함박스테이크",28,1,92034,42000,0,92034],["밸런시",2,1,59900,0,59900,0],["기타",3,2,42200,0,42200,0]],"notes":["자사몰 품목별 금액·수량은 이 날 아이템 피드 이슈로 참고용입니다 (채널 합계·원가·순이익은 이지어드민 매칭 기준으로 정확)."]},"11":{"imweb":{"pay":1617962,"fee":64718,"dfee":130200,"cogs":748814,"contrib":674230,"orders":21,"buyers":21,"first":11,"repeat":10},"naver":{"pay":490970,"fee":33386,"dfee":43400,"cogs":237463,"contrib":176721,"orders":7,"buyers":7,"first":4,"repeat":3},"ads":{"meta":318103,"google":16432,"naver":0},"products":[["단백밥",155,17,796910,219004,514760,282150],["소스",105,19,962800,9114,815180,147620],["순수단백",6,4,243130,0,243130,0],["닭가슴살",40,1,61200,31200,0,61200],["함박스테이크",5,3,29450,0,29450,0],["밸런시",2,1,14400,0,14400,0]],"notes":["자사몰 품목별 금액·수량은 이 날 아이템 피드 이슈로 참고용입니다 (채널 합계·원가·순이익은 이지어드민 매칭 기준으로 정확)."]},"12":{"imweb":{"pay":3733342,"fee":149334,"dfee":260400,"cogs":1819394,"contrib":1504214,"orders":42,"buyers":42,"first":24,"repeat":18},"naver":{"pay":1120680,"fee":76206,"dfee":99200,"cogs":556270,"contrib":389004,"orders":16,"buyers":16,"first":9,"repeat":7},"ads":{"meta":427477,"google":14194,"naver":0},"products":[["단백밥",443,40,2388436,480059,1691070,697366],["소스",191,33,1619709,17721,1375850,243859],["순수단백",16,9,629263,0,629263,0],["닭가슴살",14,1,33164,16380,0,33164],["함박스테이크",32,4,91360,42000,23560,67800],["밸런시",2,1,39900,0,39900,0],["기타",2,1,5800,0,5800,0],["부가옵션",6,4,4642,110,750,3892]],"notes":["자사몰 품목별 금액·수량은 이 날 아이템 피드 이슈로 참고용입니다 (채널 합계·원가·순이익은 이지어드민 매칭 기준으로 정확)."]},"13":{"imweb":{"pay":4421283,"fee":176851,"dfee":356400,"cogs":2230308,"contrib":1657724,"orders":54,"buyers":54,"first":23,"repeat":31},"naver":{"pay":1324910,"fee":90094,"dfee":124000,"cogs":566877,"contrib":543939,"orders":20,"buyers":20,"first":11,"repeat":9},"ads":{"meta":461885,"google":14219,"naver":3011},"products":[["단백밥",693,59,3995482,2084391,3242537,752945],["소스",300,33,441530,77214,197506,244024],["순수단백",31,3,91424,49590,91424,0],["닭가슴살",91,4,308600,95550,178250,130350],["함박스테이크",105,5,380064,157500,380064,0],["밸런시",32,2,106411,230280,106411,0],["기타",7,4,218649,98950,218649,0],["부가옵션",7,2,10334,3710,6442,3892]],"notes":[]}}};
     const won = n => "₩" + Math.round(n).toLocaleString("ko-KR");
     const percent = n => (n * 100).toFixed(1) + "%";
     const read = id => Number(document.getElementById(id).value || 0);
@@ -3033,10 +3071,10 @@ mtd_achievement_rate =
         ? `${monthMeta.label} 1~${effectiveDay}일`
         : `${monthMeta.label} 데이터 대기`;
       dataViewNotes["daily-sales"] = hasRows
-        ? `${monthMeta.label} 1일~${effectiveDay}일 일 매출과 누적 매출입니다.`
+        ? `${monthMeta.label} 1일~${effectiveDay}일 일 매출과 누적 매출입니다. 날짜 행을 누르면 그 날의 매출·원가·수수료·배송비·광고비 상세 분해를 볼 수 있습니다.`
         : `${monthMeta.label}은 아직 확정 매출 데이터가 없습니다. ${monthMeta.emptyState}`;
       dataViewNotes["daily-profit"] = hasRows
-        ? "일 순수익은 자사몰+네이버 순이익에서 광고비와 매출기준 운영 변동비 12%를 차감한 값입니다."
+        ? "일 순수익은 자사몰+네이버 순이익에서 광고비와 매출기준 운영 변동비 12%를 차감한 값입니다. 주문 순이익률(=주문 순이익÷매출)이 날마다 다른 것이 순수익 편차의 주원인이며, 날짜 행을 누르면 근거 데이터를 상세 표로 확인할 수 있습니다."
         : `${monthMeta.label}은 아직 확정 순수익 데이터가 없습니다. ${monthMeta.emptyState}`;
       dataViewNotes["weekday-comparison"] = hasRows
         ? "같은 요일끼리 주차별 매출과 순수익을 비교합니다. 예: 월요일은 1주차 월요일, 2주차 월요일, 3주차 월요일 순서로 봅니다."
@@ -3047,7 +3085,7 @@ mtd_achievement_rate =
 
       if (!hasRows) {
         document.getElementById("dailySalesRows").innerHTML = `<tr><td colspan="6">${monthMeta.emptyState}</td></tr>`;
-        document.getElementById("dailyProfitRows").innerHTML = `<tr><td colspan="8">${monthMeta.emptyState}</td></tr>`;
+        document.getElementById("dailyProfitRows").innerHTML = `<tr><td colspan="9">${monthMeta.emptyState}</td></tr>`;
         document.getElementById("weekdayComparisonHead").innerHTML = "<tr><th>요일</th><th>비교 데이터</th></tr>";
         document.getElementById("weekdayComparisonRows").innerHTML = `<tr><td colspan="2">${monthMeta.emptyState}</td></tr>`;
         document.getElementById("weeklyComparisonRows").innerHTML = `<tr><td colspan="9">${monthMeta.emptyState}</td></tr>`;
@@ -3061,7 +3099,7 @@ mtd_achievement_rate =
         const naverRevenue = Number(row.naverRevenueApi || 0);
         const hasSplitRevenue = selfRevenue + naverRevenue > 0;
         return `
-          <tr>
+          <tr data-day="${row.day}" title="누르면 ${meta.label} 상세 분석을 펼칩니다">
             <td>${meta.label}</td>
             <td>${meta.weekday}</td>
             <td>${hasSplitRevenue ? won(selfRevenue) : noDataText}</td>
@@ -3075,12 +3113,14 @@ mtd_achievement_rate =
       document.getElementById("dailyProfitRows").innerHTML = rows.map(row => {
         const meta = getDateMeta(monthMeta.key, row.day);
         const dailyBepRate = dailyTarget > 0 ? row.dailyNet / dailyTarget : 0;
+        const contributionRate = row.revenue > 0 ? row.commerceContribution / row.revenue : 0;
         return `
-          <tr>
+          <tr data-day="${row.day}" title="누르면 ${meta.label} 상세 분석을 펼칩니다">
             <td>${meta.label}</td>
             <td>${meta.weekday}</td>
             <td>${won(row.revenue)}</td>
             <td>${won(row.commerceContribution)}</td>
+            <td class="${contributionRate >= 0.42 ? "good" : contributionRate < 0.38 ? "bad" : ""}">${percent(contributionRate)}</td>
             <td>${won(row.adSpend)}</td>
             <td>${won(row.operatingVariableCost)}</td>
             <td class="${row.dailyNet >= 0 ? "good" : "bad"}">${won(row.dailyNet)}</td>
@@ -3151,6 +3191,129 @@ mtd_achievement_rate =
 
       switchDataView(activeDataView);
     }
+
+    function buildDayDetailHtml(monthKey, day) {
+      const monthMeta = monthByKey[monthKey];
+      const monthLabel = monthMeta ? monthMeta.label : monthKey;
+      const detail = (dailyDetailByMonth[monthKey] || {})[day];
+      if (!detail) {
+        return `<div class="day-detail"><div class="note">${monthLabel} ${day}일의 상세 드릴다운 데이터는 아직 적재되지 않았습니다. (현재 2026년 7월 확정일까지 제공)</div></div>`;
+      }
+      const iw = detail.imweb;
+      const nv = detail.naver;
+      const ads = detail.ads;
+      const pay = iw.pay + nv.pay;
+      const cogs = iw.cogs + nv.cogs;
+      const fee = iw.fee + nv.fee;
+      const dfee = iw.dfee + nv.dfee;
+      const contrib = iw.contrib + nv.contrib;
+      const adTotal = ads.meta + ads.google + ads.naver;
+      const opv = pay * operatingVariableRate;
+      const net = contrib - adTotal - opv;
+      const boxes = iw.orders + nv.orders;
+      const buyers = iw.buyers + nv.buyers;
+      const rate = value => pay > 0 ? percent(value / pay) : "-";
+      const channelRow = (name, ch, feeLabel) => {
+        const chRate = ch.pay > 0 ? percent(ch.contrib / ch.pay) : "-";
+        return `
+          <tr>
+            <td>${name}</td>
+            <td>${won(ch.pay)}</td>
+            <td>${ch.orders}건</td>
+            <td>${ch.buyers}명 (신규 ${ch.first} · 재구매 ${ch.repeat})</td>
+            <td>${won(ch.orders > 0 ? ch.pay / ch.orders : 0)}</td>
+            <td>${won(ch.fee)}<span class="muted-cell"> (${feeLabel})</span></td>
+            <td>${won(ch.dfee)}</td>
+            <td>${won(ch.cogs)}</td>
+            <td class="${ch.contrib >= 0 ? "good" : "bad"}">${won(ch.contrib)}</td>
+            <td>${chRate}</td>
+          </tr>
+        `;
+      };
+      const productRows = detail.products.map(([cat, qty, catBuyers, amt, catCogs, iAmt, nAmt]) => {
+        const margin = amt - catCogs;
+        return `
+          <tr>
+            <td>${cat}</td>
+            <td>${qty.toLocaleString("ko-KR")}개</td>
+            <td>${catBuyers}명</td>
+            <td>${won(amt)}</td>
+            <td>${won(iAmt)}</td>
+            <td>${won(nAmt)}</td>
+            <td>${won(qty > 0 ? amt / qty : 0)}</td>
+            <td>${won(catCogs)}</td>
+            <td class="${margin >= 0 ? "good" : "bad"}">${won(margin)}</td>
+            <td>${amt > 0 ? percent(margin / amt) : "-"}</td>
+          </tr>
+        `;
+      }).join("");
+      const noteHtml = (detail.notes || []).map(note => `<div class="note">※ ${note}</div>`).join("");
+      return `
+        <div class="day-detail">
+          <div class="day-detail-head">
+            <strong>${monthLabel} ${day}일 순수익 상세 분석</strong>
+            <span>일 순수익 ${won(net)} · 매출 대비 ${rate(net)} · 총 ${boxes}건 / 구매자 ${buyers}명</span>
+          </div>
+          <h4>① 손익 분해 — 매출에서 순수익까지</h4>
+          <div class="data-table-scroll">
+            <table>
+              <thead><tr><th>항목</th><th>금액</th><th>매출 대비</th><th>내용</th></tr></thead>
+              <tbody>
+                <tr><td>총매출 (결제액)</td><td>${won(pay)}</td><td>100.0%</td><td>자사몰 ${won(iw.pay)} + 네이버 ${won(nv.pay)}</td></tr>
+                <tr><td>− 제품 원가</td><td>${won(cogs)}</td><td>${rate(cogs)}</td><td>이지어드민 SKU 매칭 원가 (자사몰 ${won(iw.cogs)} · 네이버 ${won(nv.cogs)})</td></tr>
+                <tr><td>− 채널 수수료</td><td>${won(fee)}</td><td>${rate(fee)}</td><td>자사몰 4.0% ${won(iw.fee)} · 네이버 6.8% ${won(nv.fee)}</td></tr>
+                <tr><td>− 택배·물류비</td><td>${won(dfee)}</td><td>${rate(dfee)}</td><td>박스당 6,200원 × ${boxes}박스 (자사몰 ${iw.orders} · 네이버 ${nv.orders})</td></tr>
+                <tr class="total-row"><td>= 주문 순이익</td><td class="${contrib >= 0 ? "good" : "bad"}">${won(contrib)}</td><td>${rate(contrib)}</td><td>자사몰 ${won(iw.contrib)} + 네이버 ${won(nv.contrib)}</td></tr>
+                <tr><td>− 광고비</td><td>${won(adTotal)}</td><td>${rate(adTotal)}</td><td>메타 ${won(ads.meta)} · 구글 ${won(ads.google)} · 네이버 검색 ${won(ads.naver)}</td></tr>
+                <tr><td>− 운영 변동비 12%</td><td>${won(opv)}</td><td>12.0%</td><td>부가세 10% + 기타 마케팅·물류 2% (매출 기준)</td></tr>
+                <tr class="total-row"><td>= 일 순수익 (고정비 전)</td><td class="${net >= 0 ? "good" : "bad"}">${won(net)}</td><td>${rate(net)}</td><td>대시보드 일 순수익과 동일</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <h4>② 채널별 상세</h4>
+          <div class="data-table-scroll">
+            <table>
+              <thead><tr><th>채널</th><th>결제액</th><th>주문수</th><th>구매자수</th><th>평균 주문단가</th><th>수수료</th><th>택배·물류비</th><th>제품 원가</th><th>주문 순이익</th><th>순이익률</th></tr></thead>
+              <tbody>
+                ${channelRow("자사몰", iw, "4.0%")}
+                ${channelRow("네이버", nv, "6.8%")}
+              </tbody>
+            </table>
+          </div>
+          <h4>③ 제품 카테고리별 구매 상세</h4>
+          <div class="data-table-scroll">
+            <table>
+              <thead><tr><th>카테고리</th><th>수량</th><th>구매자수</th><th>매출</th><th>자사몰</th><th>네이버</th><th>평균 판매가</th><th>원가</th><th>마진</th><th>마진율</th></tr></thead>
+              <tbody>${productRows}</tbody>
+            </table>
+          </div>
+          <div class="note">구매자수는 채널·카테고리 기준 집계라 한 명이 여러 카테고리를 구매하면 중복 포함됩니다. 제품 마진은 원가만 차감한 값이고, 수수료·배송비·광고비는 ①의 일 단위에서 차감됩니다.</div>
+          ${noteHtml}
+        </div>
+      `;
+    }
+
+    function toggleDayDetail(tr) {
+      const next = tr.nextElementSibling;
+      const wasOpen = next && next.classList.contains("day-detail-row");
+      const tbody = tr.parentElement;
+      tbody.querySelectorAll(".day-detail-row").forEach(el => el.remove());
+      tbody.querySelectorAll("tr[data-day].open").forEach(el => el.classList.remove("open"));
+      if (wasOpen) return;
+      const monthKey = document.getElementById("monthSelect").value;
+      const detailTr = document.createElement("tr");
+      detailTr.className = "day-detail-row";
+      detailTr.innerHTML = `<td colspan="${tr.children.length}">${buildDayDetailHtml(monthKey, Number(tr.dataset.day))}</td>`;
+      tr.after(detailTr);
+      tr.classList.add("open");
+    }
+
+    ["dailySalesRows", "dailyProfitRows"].forEach(id => {
+      document.getElementById(id).addEventListener("click", event => {
+        const tr = event.target.closest("tr[data-day]");
+        if (tr) toggleDayDetail(tr);
+      });
+    });
 
     function updateGauge() {
       const monthKey = document.getElementById("monthSelect").value;
