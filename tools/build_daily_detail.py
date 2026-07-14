@@ -13,6 +13,10 @@ index.html의 `const dailyDetailByMonth = ...;` 라인을 갱신한다.
 
 검증: 채널별 contrib == pay - fee - dfee - cogs (±2원). 불일치 시 실패 종료.
 
+타임존 규약: 웨어하우스(fact_order.paid_datetime)는 날짜 정오(KST)로 정규화 저장되고
+vw_naver_commerce_profit_daily도 UTC `::date` 절단을 쓰므로 이 스크립트도 같은 규약을 따른다.
+파이프라인이 실제 시각을 저장하도록 바뀌면 뷰와 함께 KST 변환으로 일괄 수정할 것.
+
 사용:
   DATABASE_URL=... python3 tools/build_daily_detail.py --month 2026-07 [--html index.html] [--dry-run]
 """
