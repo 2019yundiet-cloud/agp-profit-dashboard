@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="data-generated-at" content="2026-07-14T15:33:25+09:00">
+  <meta name="data-generated-at" content="2026-07-14T23:25:59+09:00">
   <meta name="data-basis-date" content="2026-07-13">
   <title>AGP 순이익 달성률 대시보드</title>
   <style>
@@ -396,7 +396,7 @@
         <div>
           <h1>AGP 순이익 달성률 대시보드</h1>
           <div class="sub">매출은 자사몰·네이버 운영 API 기준, 자사몰/네이버 순이익 합산·광고비는 Supabase 기준, AGP 공식 순수익은 운영 변동비 12%를 추가 차감합니다.</div>
-          <div class="sub" id="dataGeneratedAt">데이터 생성 2026. 07. 14. 15:33 KST · 기준 2026-07-13</div>
+          <div class="sub" id="dataGeneratedAt">데이터 생성 2026. 07. 14. 23:25 KST · 기준 2026-07-13</div>
         </div>
         <span class="badge" id="latestClosedBadge">D+1 확정 데이터 · 최신 폐장행 확인 중</span>
       </div>
@@ -440,7 +440,7 @@
             <label><div class="label">조회 월</div><select id="monthSelect"></select></label>
             <label><div class="label">데이터 기준일</div><input id="queryDayInput" type="number" value="29" min="1" max="31" step="1"></label>
             <label><div class="label">월 일수</div><input id="daysInput" type="number" value="30" min="28" max="31" step="1"></label>
-            <label><div class="label">월 고정비</div><input id="fixedInput" type="number" value="18952126" min="0" step="100000" readonly></label>
+            <label><div class="label">월 고정비</div><input id="fixedInput" type="number" value="19742141" min="0" step="100000" readonly></label>
             <label><div class="label">일별 광고비</div><input value="매일 차감" disabled></label>
             <label><div class="label">데이터 확정</div><input value="D+1 조회" disabled></label>
           </div>
@@ -589,7 +589,7 @@
       <section class="grid kpis">
         <div class="card">
           <div class="label">월 고정비</div>
-          <div class="value" id="fixedCostInfoValue">₩18,952,126</div>
+          <div class="value" id="fixedCostInfoValue">₩19,742,141</div>
           <div class="note" id="fixedCostInfoNote">선택한 월의 세부 고정비 항목 합계입니다.</div>
         </div>
         <div class="card">
@@ -724,9 +724,9 @@ mtd_achievement_rate =
         ["외주 서비스 · 경리 (2026년 7월까지)", 800000, 4.0]
       ],
       "2026-07": [
-        ["인건비 (준호+보미)", 8180046, 41.0],
-        ["금융 (대출이자)", 4400000, 23.2],
-        ["차량 (리스 3대·유지비 포함)", 3000000, 15.0],
+        ["인건비 (준호+보미)", 8180046, 41.4],
+        ["금융 (대출 원금·이자)", 5190015, 26.3],
+        ["차량 (리스 3대·유지비 포함)", 3000000, 15.2],
         ["복지 (복리후생 카드비)", 1270000, 6.4],
         ["사스 서비스 · 경리나라", 75900, 0.4],
         ["사스 서비스 · 커넥트파킹", 110000, 0.6],
@@ -739,7 +739,7 @@ mtd_achievement_rate =
         ["사스 서비스 · 와이즐리 멤버십", 2990, 0.0],
         ["사스 서비스 · 정기과금_나이스", 54890, 0.3],
         ["외주 서비스 · 세무법인청년", 200000, 1.0],
-        ["외주 서비스 · 경리 (2026년 7월까지)", 800000, 4.0]
+        ["외주 서비스 · 경리 (2026년 7월까지)", 800000, 4.1]
       ]
     };
     const variableCosts = [
@@ -815,7 +815,7 @@ mtd_achievement_rate =
           "2026-07": {
                     "label": "2026년 7월",
                     "daysInMonth": 31,
-                    "fixedCost": 18952126,
+                    "fixedCost": 19742141,
                     "quality": "MATCH_CHECK 12일 · OK 1일",
                     "emptyState": "2026년 7월 최신 D+1 확정행은 13일까지입니다.",
                     "closeNote": "2026년 7월 손익은 2026-07-01부터 독립 월로 누적합니다. 2026년 6월 데이터와 합산하지 않습니다."
