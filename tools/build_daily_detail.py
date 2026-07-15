@@ -8,8 +8,9 @@ index.html의 `const dailyDetailByMonth = ...;` 라인을 갱신한다.
   - mart_daily_profit_gauge_source  : 결제액·공헌이익·광고비 분해·배송비
   - imweb_profit_daily_summary      : 자사몰 수수료(4%)·원가·원가 미등록 마커
   - vw_naver_commerce_profit_daily  : 네이버 원가 (수수료는 결제액 6.8%로 산출)
-  - fact_order                      : 채널별 주문·구매자·신규/재구매
-  - fact_order_item                 : 제품 카테고리별 수량·구매자·금액·원가
+  - fact_order                      : 채널별 주문·구매자·신규/재구매·결제액
+  - stg_ezadmin_order_match         : 실제 출고 SKU·수량
+  - stg_cost_master_sku             : 판매일 기준 SKU 원가
 
 검증: 채널별 contrib == pay - fee - dfee - cogs (±2원). 불일치 시 실패 종료.
 
@@ -32,11 +33,18 @@ import psycopg2
 
 NAVER_FEE_RATE = 0.068
 CATEGORY_ORDER = ["단백밥", "소스", "순수단백", "닭가슴살", "함박스테이크", "밸런시", "기타", "부가옵션"]
+SOURCE_SYSTEMS = ("ga4_self_store", "naver_commerce")
+BALANCY_SET_COST_SKUS = (
+    "밸런시 마라 280g",
+    "밸런시 시그니처 280g",
+    "밸런시 커리 280g",
+    "밸런시 토마토 280g",
+)
 
 # build_category_profit_dashboard.py의 매핑과 동일한 우선순위 (부가옵션 → 밸런시 → 소스 → 함박 → 순수단백 → 닭가슴살 → 단백밥 → 기타)
 CATEGORY_CASE_SQL = """
     case
-      when nm like '%아이스팩%' or nm like '%공동현관%' or nm like '%배송메모%' or nm like '%1회 배송%' or nm like '%배송방법%' then '부가옵션'
+      when nm like '%아이스팩%' or nm like '%드라이아이스%' or nm like '%공동현관%' or nm like '%배송메모%' or nm like '%1회 배송%' or nm like '%배송방법%' then '부가옵션'
       when nm like '%밸런시%' or nm like '%곡물볶음밥%' then '밸런시'
       when nm like '%소스%' or nm like '%드레싱%' then '소스'
       when nm like '%함박스테이크%' and nm not like '%도시락%' and nm not like '%순수단백%' then '함박스테이크'
@@ -102,20 +110,58 @@ def build_month_detail(conn, month):
 
     cat_sql = CATEGORY_CASE_SQL.replace("%", "%%")  # psycopg2 paramstyle에서 LIKE % 이스케이프
     products = fetch_all(cur, f"""
-        with items as (
+        with costed_matching as (
           select extract(day from fo.paid_datetime)::int d,
                  case when fo.source_system = 'naver_commerce' then 'n' else 'i' end ch,
-                 fo.internal_customer_id,
-                 concat_ws(' ', coalesce(oi.product_name_raw, ''), coalesce(oi.option_name_raw, '')) nm,
-                 oi.qty, coalesce(oi.item_net_amount, 0) amt, coalesce(oi.item_cogs_amount, 0) cogs
-          from fact_order fo join fact_order_item oi on oi.internal_order_id = fo.internal_order_id
-          where fo.is_valid_purchase and fo.paid_datetime >= %s and fo.paid_datetime < {end_sql}
+                 fo.source_system, fo.source_order_id, fo.internal_customer_id,
+                 coalesce(fo.net_payment_amount, fo.payment_amount, 0)::numeric order_revenue,
+                 sem.matched_sku_name nm, sem.matched_qty::numeric qty,
+                 case
+                   when sem.source_system = 'ga4_self_store'
+                    and sem.matched_sku_name = any(%s)
+                   then coalesce(cm.cogs, 0) / 4
+                   else coalesce(cm.cogs, 0)
+                 end::numeric unit_cost
+          from stg_ezadmin_order_match sem
+          join fact_order fo
+            on fo.source_system = sem.source_system
+           and fo.source_order_id = sem.source_order_id
+          left join lateral (
+            select cost.cogs
+            from stg_cost_master_sku cost
+            where cost.normalized_sku_name = regexp_replace(
+                      lower(sem.matched_sku_name), '[^a-z0-9가-힣]+', '', 'g'
+                  )
+              and coalesce(cost.effective_start_date, date '1900-01-01') <= fo.paid_datetime::date
+            order by coalesce(cost.effective_start_date, date '1900-01-01') desc
+            limit 1
+          ) cm on true
+          where fo.is_valid_purchase
+            and sem.source_system = any(%s)
+            and sem.match_status = 'matched'
+            and coalesce(sem.matched_sku_name, '') <> ''
+            and sem.matched_qty > 0
+            and sem.report_date >= %s and sem.report_date < {end_sql}
+            and fo.paid_datetime >= %s and fo.paid_datetime < {end_sql}
+        ), order_lines as (
+          select d, ch, source_system, source_order_id, internal_customer_id,
+                 order_revenue, nm, sum(qty)::numeric qty, max(unit_cost)::numeric unit_cost
+          from costed_matching
+          group by 1, 2, 3, 4, 5, 6, 7
+        ), weighted as (
+          select *, qty * unit_cost as line_cogs,
+                 sum(qty * unit_cost) over (partition by source_system, source_order_id) as order_cogs
+          from order_lines
+        ), items as (
+          select d, ch, internal_customer_id, nm, qty, line_cogs cogs,
+                 case when order_cogs > 0 then order_revenue * line_cogs / order_cogs else 0 end amt
+          from weighted
         )
         select d, ch, {cat_sql} category,
                sum(qty)::int qty, count(distinct internal_customer_id)::int buyers,
                round(sum(amt))::bigint amt, round(sum(cogs))::bigint cogs
         from items group by 1, 2, 3
-    """, (start, start))
+    """, (list(BALANCY_SET_COST_SKUS), list(SOURCE_SYSTEMS), start, start, start, start))
 
     out = {}
     errors = []
@@ -141,11 +187,6 @@ def build_month_detail(conn, month):
 
         # 데이터 품질 노트
         notes = []
-        imweb_items = [p for p in products if p["d"] == d and p["ch"] == "i"]
-        imweb_item_amt = sum(p["amt"] for p in imweb_items)
-        imweb_item_cogs = sum(p["cogs"] for p in imweb_items)
-        if g["ipay"] and (imweb_item_cogs == 0 or abs(imweb_item_amt - g["ipay"]) > g["ipay"] * 0.05):
-            notes.append("자사몰 품목별 금액·수량은 이 날 아이템 피드 이슈로 참고용입니다 (채널 합계·원가·순이익은 이지어드민 매칭 기준으로 정확).")
         if iw.get("cost_gap"):
             notes.append("일부 SKU가 원가 미등록 상태로 계산돼 품목 원가가 과소 표시될 수 있습니다.")
 
@@ -164,6 +205,18 @@ def build_month_detail(conn, month):
             calc = ch["pay"] - ch["fee"] - ch["dfee"] - ch["cogs"]
             if abs(calc - ch["contrib"]) > 2:
                 errors.append(f"{month}-{d:02d} {ch_name}: 검증 실패 계산 {calc} != 공헌이익 {ch['contrib']}")
+        for product_ch, official_ch, label in (("i", detail["imweb"], "imweb"), ("n", detail["naver"], "naver")):
+            channel_products = [p for p in products if p["d"] == d and p["ch"] == product_ch]
+            product_revenue = sum(p["amt"] for p in channel_products)
+            product_cogs = sum(p["cogs"] for p in channel_products)
+            if abs(product_revenue - official_ch["pay"]) > 6:
+                errors.append(
+                    f"{month}-{d:02d} {label}: 출고 SKU 배부매출 {product_revenue} != 결제액 {official_ch['pay']}"
+                )
+            if abs(product_cogs - official_ch["cogs"]) > 2:
+                errors.append(
+                    f"{month}-{d:02d} {label}: 출고 SKU 원가 {product_cogs} != 공식 채널원가 {official_ch['cogs']}"
+                )
         out[str(d)] = detail
 
     if errors:
