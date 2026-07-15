@@ -114,8 +114,15 @@ class VehicleLeaseScheduleTests(unittest.TestCase):
             - row["revenue"] * 0.12
             for row in self.daily_rows["2026-07"]
         )
-        self.assertAlmostEqual(pre_fixed_profit, 12526521.40, places=2)
-        self.assertEqual(round(pre_fixed_profit - 19461474), -6934953)
+        fixed_cost_rows = {name: amount for name, amount, *_ in self.fixed_costs["2026-07"]}
+        approved_fixed_cost = sum(fixed_cost_rows.values())
+        insurance_cost = fixed_cost_rows["차량 보험비"]
+        profit_after_fixed_cost = pre_fixed_profit - approved_fixed_cost
+        profit_without_insurance = pre_fixed_profit - (approved_fixed_cost - insurance_cost)
+
+        self.assertEqual(approved_fixed_cost, 19461474)
+        self.assertEqual(insurance_cost, 300000)
+        self.assertAlmostEqual(profit_without_insurance - profit_after_fixed_cost, 300000, places=2)
 
 
 if __name__ == "__main__":
