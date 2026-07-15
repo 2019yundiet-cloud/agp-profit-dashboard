@@ -22,6 +22,12 @@ class DailyDetailContractTests(unittest.TestCase):
         self.assertIn("밸런시 마라 280g", BALANCY_SET_COST_SKUS)
         self.assertIn("밸런시 시그니처 280g", BALANCY_SET_COST_SKUS)
 
+    def test_visible_generated_at_is_bound_to_the_meta_timestamp(self):
+        html = Path(__file__).resolve().parent.parent.joinpath("index.html").read_text(encoding="utf-8")
+        self.assertIn('meta[name="data-generated-at"]', html)
+        self.assertIn("function renderGeneratedAt()", html)
+        self.assertIn("renderGeneratedAt();", html)
+
 
 if __name__ == "__main__":
     unittest.main()
