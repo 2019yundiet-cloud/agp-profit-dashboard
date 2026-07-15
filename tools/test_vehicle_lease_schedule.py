@@ -50,7 +50,9 @@ class VehicleLeaseScheduleTests(unittest.TestCase):
         cls.html = HTML_PATH.read_text(encoding="utf-8")
         cls.fixed_costs = extract_json_const(cls.html, "fixedCostsByMonth")
         cls.lease_schedule = extract_json_const(cls.html, "vehicleLeaseSchedule")
+        cls.insurance_schedule = extract_json_const(cls.html, "vehicleInsuranceSchedule")
         cls.month_config = extract_json_const(cls.html, "monthConfig")
+        cls.daily_rows = extract_json_const(cls.html, "dailyRowsByMonth")
 
     def test_june_and_july_use_the_owner_approved_vehicle_rows(self):
         expected = {
@@ -62,7 +64,7 @@ class VehicleLeaseScheduleTests(unittest.TestCase):
             actual = {
                 name: amount
                 for name, amount, *_ in self.fixed_costs[month]
-                if name.startswith("차량")
+                if name.startswith("차량 리스")
             }
             self.assertEqual(actual, expected)
 
@@ -77,15 +79,43 @@ class VehicleLeaseScheduleTests(unittest.TestCase):
         self.assertEqual(sum(amount for _, amount in september_period["rows"]), 2037045)
         self.assertIn(["차량 리스 · BMW (윤준호 차량)", 598705], september_period["rows"])
 
+    def test_vehicle_insurance_is_separate_and_effective_from_june(self):
+        self.assertEqual(
+            self.insurance_schedule,
+            [
+                {
+                    "effectiveFrom": "2026-06",
+                    "effectiveTo": None,
+                    "rows": [["차량 보험비", 300000]],
+                }
+            ],
+        )
+        for month in ("2026-06", "2026-07"):
+            rows = {name: amount for name, amount, *_ in self.fixed_costs[month]}
+            self.assertEqual(rows["차량 보험비"], 300000)
+
     def test_monthly_fixed_cost_totals_are_recalculated(self):
-        expected = {"2026-06": 17971459, "2026-07": 19161474}
+        expected = {"2026-06": 18271459, "2026-07": 19461474}
         for month, total in expected.items():
             self.assertEqual(sum(row[1] for row in self.fixed_costs[month]), total)
             self.assertEqual(self.month_config[month]["fixedCost"], total)
 
     def test_july_visible_defaults_match_the_itemized_total(self):
-        self.assertIn('id="fixedInput" type="number" value="19161474"', self.html)
-        self.assertIn('id="fixedCostInfoValue">₩19,161,474', self.html)
+        self.assertIn('id="fixedInput" type="number" value="19461474"', self.html)
+        self.assertIn('id="fixedCostInfoValue">₩19,461,474', self.html)
+
+    def test_july_net_profit_decreases_by_the_insurance_cost(self):
+        pre_fixed_profit = sum(
+            row["imweb"]
+            + row["naver"]
+            - row["meta"]
+            - row["googleAd"]
+            - row["naverAd"]
+            - row["revenue"] * 0.12
+            for row in self.daily_rows["2026-07"]
+        )
+        self.assertAlmostEqual(pre_fixed_profit, 12526521.40, places=2)
+        self.assertEqual(round(pre_fixed_profit - 19461474), -6934953)
 
 
 if __name__ == "__main__":
