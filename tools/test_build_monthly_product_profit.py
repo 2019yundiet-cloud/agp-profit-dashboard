@@ -1,11 +1,14 @@
 import sys
+import tempfile
 import unittest
 from decimal import Decimal
 from pathlib import Path
 
+import openpyxl
+
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from build_monthly_product_profit import allocate_order, build_rows, category_for_sku, unit_cost_for_source
+from build_monthly_product_profit import allocate_order, build_rows, category_for_sku, load_costs, unit_cost_for_source
 
 
 class MonthlyProductProfitTests(unittest.TestCase):
@@ -26,6 +29,20 @@ class MonthlyProductProfitTests(unittest.TestCase):
         self.assertEqual(category_for_sku("윤식단 순수단백 저당 쌈장제육 100g"), "순수단백")
         self.assertEqual(category_for_sku("데리야끼 소스 40g"), "소스")
         self.assertEqual(category_for_sku("아이스팩 추가"), "부가옵션")
+        self.assertEqual(category_for_sku("드라이아이스 추가"), "부가옵션")
+
+    def test_cost_loader_reads_rows_after_blank_separators(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            workbook_path = Path(tmpdir) / "costs.xlsx"
+            workbook = openpyxl.Workbook()
+            sheet = workbook.active
+            sheet.append(["브랜드", "상품명", "원가", "적용일"])
+            sheet.append(["부자재", "아이스팩 추가", 600, "2026-01-01"])
+            sheet.append([None, None, None, None])
+            sheet.append(["부자재", "드라이아이스 추가", 880, "2026-07-11"])
+            workbook.save(workbook_path)
+
+            self.assertEqual(load_costs(workbook_path)["드라이아이스 추가"], Decimal("880"))
 
     def test_balancy_set_cost_respects_channel_quantity_contract(self):
         stored = Decimal("7410")

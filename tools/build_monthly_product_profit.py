@@ -70,7 +70,7 @@ def next_month(month: str) -> str:
 
 def category_for_sku(sku_name: str) -> str:
     name = sku_name.strip()
-    if "아이스팩" in name or "배송" in name:
+    if "아이스팩" in name or "드라이아이스" in name or "배송" in name:
         return "부가옵션"
     if "밸런시" in name or "곡물볶음밥" in name:
         return "밸런시"
@@ -99,9 +99,9 @@ def load_costs(path: Path) -> dict[str, Decimal]:
     result: dict[str, Decimal] = {}
     for row in sheet.iter_rows(min_row=2, values_only=True):
         if not row[0]:
-            break
+            continue
         name = str(row[1] or "").strip()
-        if name:
+        if name and row[2] not in (None, ""):
             result[name] = as_decimal(row[2])
     return result
 
