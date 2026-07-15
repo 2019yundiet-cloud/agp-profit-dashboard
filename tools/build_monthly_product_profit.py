@@ -166,23 +166,49 @@ def fetch_month_data(conn, month: str) -> dict:
 
         cur.execute(
             """
+            with costed_matching as (
+                select sem.source_system, sem.source_order_id, sem.matched_sku_name,
+                       sem.matched_qty,
+                       case
+                         when sem.source_system = 'ga4_self_store'
+                          and sem.matched_sku_name = any(%s)
+                         then coalesce(cm.cogs, 0) / 4
+                         else coalesce(cm.cogs, 0)
+                       end as unit_cost
+                from stg_ezadmin_order_match sem
+                join fact_order fo
+                  on fo.source_system = sem.source_system
+                 and fo.source_order_id = sem.source_order_id
+                left join lateral (
+                    select cost.cogs
+                    from stg_cost_master_sku cost
+                    where cost.normalized_sku_name = regexp_replace(
+                              lower(sem.matched_sku_name), '[^a-z0-9가-힣]+', '', 'g'
+                          )
+                      and coalesce(cost.effective_start_date, date '1900-01-01') <= fo.paid_datetime::date
+                    order by coalesce(cost.effective_start_date, date '1900-01-01') desc
+                    limit 1
+                ) cm on true
+                where sem.source_system = any(%s)
+                  and sem.report_date >= %s::date
+                  and sem.report_date < %s::date
+                  and sem.match_status = 'matched'
+                  and coalesce(sem.matched_sku_name, '') <> ''
+                  and sem.matched_qty > 0
+            )
             select source_system, source_order_id, matched_sku_name,
-                   sum(matched_qty) as matched_qty
-            from stg_ezadmin_order_match
-            where source_system = any(%s)
-              and report_date >= %s::date
-              and report_date < %s::date
-              and match_status = 'matched'
-              and coalesce(matched_sku_name, '') <> ''
-              and matched_qty > 0
+                   sum(matched_qty) as matched_qty, max(unit_cost) as unit_cost
+            from costed_matching
             group by 1, 2, 3
             order by 1, 2, 3
             """,
-            (list(SOURCE_SYSTEMS), start, end),
+            (list(BALANCY_SET_COST_SKUS), list(SOURCE_SYSTEMS), start, end),
         )
         matching = defaultdict(list)
-        for source, order_id, sku_name, qty in cur.fetchall():
-            matching[(source, order_id)].append((str(sku_name).strip(), as_decimal(qty)))
+        for source, order_id, sku_name, qty, unit_cost in cur.fetchall():
+            matching[(source, order_id)].append(
+                (str(sku_name).strip(), as_decimal(qty), as_decimal(unit_cost))
+            )
 
         cur.execute(
             """
@@ -231,10 +257,13 @@ def build_rows(data: dict, costs: dict[str, Decimal], product_limit: int = 15) -
             continue
         source_system = order_key[0]
         lines = []
-        for raw_name, qty in raw_lines:
+        for raw_name, qty, authoritative_unit_cost in raw_lines:
             name = COST_ALIASES.get(raw_name, raw_name)
-            stored_cost = costs.get(name, Decimal("0"))
-            unit_cost = unit_cost_for_source(source_system, name, stored_cost)
+            if authoritative_unit_cost > 0:
+                unit_cost = authoritative_unit_cost
+            else:
+                stored_cost = costs.get(name, Decimal("0"))
+                unit_cost = unit_cost_for_source(source_system, name, stored_cost)
             if unit_cost <= 0:
                 missing_cost_skus.add(name)
             lines.append((name, qty, unit_cost))
