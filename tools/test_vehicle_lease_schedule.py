@@ -56,6 +56,7 @@ class VehicleLeaseScheduleTests(unittest.TestCase):
         expected = {
             "차량 리스 · IM캐피탈 (김애경 차량)": 554500,
             "차량 리스 · KB (아빠 차량)": 883840,
+            "차량 리스 · BMW (윤준호 차량)": 980993,
         }
         for month in ("2026-06", "2026-07"):
             actual = {
@@ -65,25 +66,26 @@ class VehicleLeaseScheduleTests(unittest.TestCase):
             }
             self.assertEqual(actual, expected)
 
-    def test_vehicle_schedule_adds_bmw_from_september(self):
+    def test_vehicle_schedule_changes_bmw_amount_from_september(self):
         june_period, september_period = self.lease_schedule
         self.assertEqual(june_period["effectiveFrom"], "2026-06")
         self.assertEqual(june_period["effectiveTo"], "2026-08")
-        self.assertEqual(sum(amount for _, amount in june_period["rows"]), 1438340)
+        self.assertEqual(sum(amount for _, amount in june_period["rows"]), 2419333)
+        self.assertIn(["차량 리스 · BMW (윤준호 차량)", 980993], june_period["rows"])
         self.assertEqual(september_period["effectiveFrom"], "2026-09")
         self.assertIsNone(september_period["effectiveTo"])
         self.assertEqual(sum(amount for _, amount in september_period["rows"]), 2037045)
         self.assertIn(["차량 리스 · BMW (윤준호 차량)", 598705], september_period["rows"])
 
     def test_monthly_fixed_cost_totals_are_recalculated(self):
-        expected = {"2026-06": 16990466, "2026-07": 18180481}
+        expected = {"2026-06": 17971459, "2026-07": 19161474}
         for month, total in expected.items():
             self.assertEqual(sum(row[1] for row in self.fixed_costs[month]), total)
             self.assertEqual(self.month_config[month]["fixedCost"], total)
 
     def test_july_visible_defaults_match_the_itemized_total(self):
-        self.assertIn('id="fixedInput" type="number" value="18180481"', self.html)
-        self.assertIn('id="fixedCostInfoValue">₩18,180,481', self.html)
+        self.assertIn('id="fixedInput" type="number" value="19161474"', self.html)
+        self.assertIn('id="fixedCostInfoValue">₩19,161,474', self.html)
 
 
 if __name__ == "__main__":
