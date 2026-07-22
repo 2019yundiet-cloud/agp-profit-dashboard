@@ -51,8 +51,41 @@ class VehicleLeaseScheduleTests(unittest.TestCase):
         cls.fixed_costs = extract_json_const(cls.html, "fixedCostsByMonth")
         cls.lease_schedule = extract_json_const(cls.html, "vehicleLeaseSchedule")
         cls.insurance_schedule = extract_json_const(cls.html, "vehicleInsuranceSchedule")
+        cls.fixed_cost_change_schedule = extract_json_const(cls.html, "fixedCostChangeSchedule")
         cls.month_config = extract_json_const(cls.html, "monthConfig")
         cls.daily_rows = extract_json_const(cls.html, "dailyRowsByMonth")
+
+    def scheduled_fixed_cost_rows(self, month):
+        available_months = sorted(key for key in self.fixed_costs if key <= month)
+        self.assertTrue(available_months)
+        rows = [list(row) for row in self.fixed_costs[available_months[-1]]]
+        excluded_names = {
+            name
+            for rule in self.fixed_cost_change_schedule
+            if month >= rule["effectiveFrom"]
+            for name in rule["excludedNames"]
+        }
+        rows = [row for row in rows if row[0] not in excluded_names]
+        lease_period = next(
+            period
+            for period in self.lease_schedule
+            if month >= period["effectiveFrom"]
+            and (period["effectiveTo"] is None or month <= period["effectiveTo"])
+        )
+        insurance_period = next(
+            period
+            for period in self.insurance_schedule
+            if month >= period["effectiveFrom"]
+            and (period["effectiveTo"] is None or month <= period["effectiveTo"])
+        )
+        rows = [row for row in rows if not row[0].startswith("차량")]
+        finance_index = next(
+            (index for index, row in enumerate(rows) if row[0].startswith("금융")),
+            -1,
+        )
+        insert_at = finance_index + 1 if finance_index >= 0 else 0
+        rows[insert_at:insert_at] = lease_period["rows"] + insurance_period["rows"]
+        return rows
 
     def test_june_and_july_use_the_owner_approved_vehicle_rows(self):
         expected = {
@@ -93,6 +126,32 @@ class VehicleLeaseScheduleTests(unittest.TestCase):
         for month in ("2026-06", "2026-07"):
             rows = {name: amount for name, amount, *_ in self.fixed_costs[month]}
             self.assertEqual(rows["차량 보험비"], 300000)
+
+    def test_august_stops_accounting_outsource_and_kyungrinara_but_keeps_tax(self):
+        rows = {name: amount for name, amount, *_ in self.scheduled_fixed_cost_rows("2026-08")}
+        self.assertNotIn("외주 서비스 · 경리 (2026년 7월까지)", rows)
+        self.assertNotIn("사스 서비스 · 경리나라", rows)
+        self.assertEqual(rows["외주 서비스 · 세무법인청년"], 200000)
+        self.assertEqual(rows["차량 리스 · BMW (윤준호 차량)"], 980993)
+
+    def test_september_uses_reduced_bmw_lease_and_keeps_tax_outsource(self):
+        rows = {name: amount for name, amount, *_ in self.scheduled_fixed_cost_rows("2026-09")}
+        self.assertNotIn("외주 서비스 · 경리 (2026년 7월까지)", rows)
+        self.assertNotIn("사스 서비스 · 경리나라", rows)
+        self.assertEqual(rows["외주 서비스 · 세무법인청년"], 200000)
+        self.assertEqual(rows["차량 리스 · BMW (윤준호 차량)"], 598705)
+
+    def test_future_change_schedule_is_visible_without_claiming_full_month_total(self):
+        self.assertIn('id="fixedCostChangeRows"', self.html)
+        self.assertIn("사용자가 확정한 변경 항목만 표시합니다.", self.html)
+        visible_changes = {
+            (row["effectiveFrom"], row["item"], row["change"])
+            for row in self.fixed_cost_change_schedule
+        }
+        self.assertIn(("2026-08", "경리 외주", "중단 (월 800,000원 제외)"), visible_changes)
+        self.assertIn(("2026-08", "경리나라", "사용 중단 (월 75,900원 제외)"), visible_changes)
+        self.assertIn(("2026-08", "세무 외주", "계속 진행 (월 200,000원 유지)"), visible_changes)
+        self.assertIn(("2026-09", "BMW 리스료", "월 980,993원 → 598,705원"), visible_changes)
 
     def test_monthly_fixed_cost_totals_are_recalculated(self):
         expected = {"2026-06": 18271459, "2026-07": 19461474}

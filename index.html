@@ -618,6 +618,12 @@
         <div class="card">
           <h2>비용 구조</h2>
           <div id="fixedBars"></div>
+          <h3>향후 고정비 변경 예정</h3>
+          <table>
+            <thead><tr><th>적용 월</th><th>항목</th><th>변경 내용</th></tr></thead>
+            <tbody id="fixedCostChangeRows"></tbody>
+          </table>
+          <div class="note">사용자가 확정한 변경 항목만 표시합니다. 해당 월의 전체 고정비는 그 달의 나머지 항목을 확인한 뒤 확정합니다.</div>
         </div>
         <div class="card">
           <h2>변동비 룰</h2>
@@ -775,6 +781,32 @@ mtd_achievement_rate =
         "rows": [
           ["차량 보험비", 300000]
         ]
+      }
+    ];
+    const fixedCostChangeSchedule = [
+      {
+        "effectiveFrom": "2026-08",
+        "item": "경리 외주",
+        "change": "중단 (월 800,000원 제외)",
+        "excludedNames": ["외주 서비스 · 경리 (2026년 7월까지)"]
+      },
+      {
+        "effectiveFrom": "2026-08",
+        "item": "경리나라",
+        "change": "사용 중단 (월 75,900원 제외)",
+        "excludedNames": ["사스 서비스 · 경리나라"]
+      },
+      {
+        "effectiveFrom": "2026-08",
+        "item": "세무 외주",
+        "change": "계속 진행 (월 200,000원 유지)",
+        "excludedNames": []
+      },
+      {
+        "effectiveFrom": "2026-09",
+        "item": "BMW 리스료",
+        "change": "월 980,993원 → 598,705원",
+        "excludedNames": []
       }
     ];
     const variableCosts = [
@@ -3126,8 +3158,26 @@ mtd_achievement_rate =
       return schedule ? schedule.rows.map(row => [...row]) : [];
     }
 
+    function latestFixedCostBaseRows(monthKey) {
+      const exactRows = fixedCostsByMonth[monthKey];
+      if (exactRows) return exactRows.map(row => [...row]);
+      const latestKey = Object.keys(fixedCostsByMonth)
+        .filter(key => key <= monthKey)
+        .sort()
+        .at(-1);
+      return latestKey ? fixedCostsByMonth[latestKey].map(row => [...row]) : [];
+    }
+
+    function excludedFixedCostNames(monthKey) {
+      return new Set(fixedCostChangeSchedule
+        .filter(({ effectiveFrom }) => monthKey >= effectiveFrom)
+        .flatMap(({ excludedNames }) => excludedNames));
+    }
+
     function fixedCostRows(monthKey) {
-      const baseRows = fixedCostsByMonth[monthKey] || fixedCostsByMonth["2026-05"] || fixedCostsByMonth["2026-04"] || [];
+      const excludedNames = excludedFixedCostNames(monthKey);
+      const baseRows = latestFixedCostBaseRows(monthKey)
+        .filter(([name]) => !excludedNames.has(name));
       const scheduledVehicleRows = [...vehicleLeaseRows(monthKey), ...vehicleInsuranceRows(monthKey)];
       if (!scheduledVehicleRows.length) return baseRows;
 
@@ -3135,6 +3185,14 @@ mtd_achievement_rate =
       const financeIndex = rowsWithoutVehicle.findIndex(([name]) => String(name).startsWith("금융"));
       rowsWithoutVehicle.splice(financeIndex >= 0 ? financeIndex + 1 : 0, 0, ...scheduledVehicleRows);
       return rowsWithoutVehicle;
+    }
+
+    function renderFixedCostChangeSchedule() {
+      document.getElementById("fixedCostChangeRows").innerHTML = fixedCostChangeSchedule
+        .map(({ effectiveFrom, item, change }) => `
+          <tr><td>${effectiveFrom}</td><td>${item}</td><td>${change}</td></tr>
+        `)
+        .join("");
     }
 
     function fixedCostTotal(monthKey) {
@@ -3890,6 +3948,7 @@ mtd_achievement_rate =
       button.addEventListener("click", () => switchDataView(button.dataset.view));
     });
     renderGeneratedAt();
+    renderFixedCostChangeSchedule();
     updateGauge();
   </script>
 </body>
