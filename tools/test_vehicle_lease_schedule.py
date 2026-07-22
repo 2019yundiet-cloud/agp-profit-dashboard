@@ -138,21 +138,23 @@ class VehicleLeaseScheduleTests(unittest.TestCase):
             rows = {name: amount for name, amount, *_ in self.fixed_costs[month]}
             self.assertEqual(rows["차량 보험비"], 300000)
 
-    def test_august_stops_accounting_outsource_and_kyungrinara_but_keeps_tax(self):
+    def test_august_stops_accounting_services_and_uses_increased_tax_fee(self):
         rows = {name: amount for name, amount, *_ in self.scheduled_fixed_cost_rows("2026-08")}
         self.assertNotIn("외주 서비스 · 경리 (2026년 7월까지)", rows)
         self.assertNotIn("사스 서비스 · 경리나라", rows)
-        self.assertEqual(rows["외주 서비스 · 세무법인청년"], 200000)
+        self.assertNotIn("사스 서비스 · 커넥트파킹", rows)
+        self.assertEqual(rows["외주 서비스 · 세무법인청년 (인상)"], 230000)
         self.assertEqual(rows["차량 리스 · BMW (윤준호 차량, 인상)"], 1068993)
-        self.assertEqual(sum(rows.values()), 18697806)
+        self.assertEqual(sum(rows.values()), 18617806)
 
-    def test_september_uses_reduced_bmw_lease_and_keeps_tax_outsource(self):
+    def test_september_uses_reduced_bmw_and_keeps_increased_tax_fee(self):
         rows = {name: amount for name, amount, *_ in self.scheduled_fixed_cost_rows("2026-09")}
         self.assertNotIn("외주 서비스 · 경리 (2026년 7월까지)", rows)
         self.assertNotIn("사스 서비스 · 경리나라", rows)
-        self.assertEqual(rows["외주 서비스 · 세무법인청년"], 200000)
+        self.assertNotIn("사스 서비스 · 커넥트파킹", rows)
+        self.assertEqual(rows["외주 서비스 · 세무법인청년 (인상)"], 230000)
         self.assertEqual(rows["차량 리스 · BMW (윤준호 차량)"], 598705)
-        self.assertEqual(sum(rows.values()), 18227518)
+        self.assertEqual(sum(rows.values()), 18147518)
 
     def test_future_change_schedule_is_visible_without_claiming_full_month_total(self):
         self.assertIn('id="fixedCostChangeRows"', self.html)
@@ -163,7 +165,8 @@ class VehicleLeaseScheduleTests(unittest.TestCase):
         }
         self.assertIn(("2026-08", "경리 외주", "중단 (월 800,000원 제외)"), visible_changes)
         self.assertIn(("2026-08", "경리나라", "사용 중단 (월 75,900원 제외)"), visible_changes)
-        self.assertIn(("2026-08", "세무 외주", "계속 진행 (월 200,000원 유지)"), visible_changes)
+        self.assertIn(("2026-08", "세무 외주", "계속 진행, 월 200,000원 → 230,000원 인상"), visible_changes)
+        self.assertIn(("2026-08", "커넥트파킹 주차", "종료 (월 110,000원 제외)"), visible_changes)
         self.assertIn(("2026-09", "BMW 리스료", "월 1,068,993원 → 598,705원"), visible_changes)
 
     def test_monthly_fixed_cost_totals_are_recalculated(self):
