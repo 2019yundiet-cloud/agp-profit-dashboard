@@ -32,7 +32,7 @@ from pathlib import Path
 import psycopg2
 
 NAVER_FEE_RATE = 0.068
-CATEGORY_ORDER = ["단백밥", "소스", "순수단백", "닭가슴살", "함박스테이크", "밸런시", "기타", "부가옵션"]
+CATEGORY_ORDER = ["단백밥", "소스", "순수단백", "닭가슴살", "함박스테이크", "밸런시", "기타", "부가옵션", "미매칭 추정"]
 SOURCE_SYSTEMS = ("ga4_self_store", "naver_commerce")
 BALANCY_SET_COST_SKUS = (
     "밸런시 마라 280g",
@@ -183,6 +183,32 @@ def build_month_detail(conn, month):
             c["amt"] += p["amt"]
             c["cogs"] += p["cogs"]
             c["iAmt" if p["ch"] == "i" else "nAmt"] += p["amt"]
+
+        # GA4 손익은 90% 이상 매칭을 허용하고 미매칭 주문에는 보수적인 추정원가를
+        # 반영한다. 출고표에 없는 주문을 임의 SKU로 만들지 않고, 공식 채널 손익과
+        # 출고 SKU 합계의 양수 잔액만 별도 행으로 보존한다.
+        imweb_products = [p for p in products if p["d"] == d and p["ch"] == "i"]
+        imweb_residual_revenue = g["ipay"] - sum(p["amt"] for p in imweb_products)
+        imweb_residual_cogs = iw["cogs"] - sum(p["cogs"] for p in imweb_products)
+        residual_note = ""
+        if imweb_residual_revenue > 6 or imweb_residual_cogs > 2:
+            if imweb_residual_revenue < 0 or imweb_residual_cogs < 0:
+                errors.append(
+                    f"{month}-{d:02d} imweb: 미매칭 잔액이 음수 "
+                    f"(매출 {imweb_residual_revenue}, 원가 {imweb_residual_cogs})"
+                )
+            else:
+                residual = cat_map.setdefault(
+                    "미매칭 추정",
+                    {"qty": 0, "buyers": 0, "amt": 0, "cogs": 0, "iAmt": 0, "nAmt": 0},
+                )
+                residual["amt"] += imweb_residual_revenue
+                residual["cogs"] += imweb_residual_cogs
+                residual["iAmt"] += imweb_residual_revenue
+                residual_note = (
+                    f"출고 SKU가 확인되지 않은 주문 잔액을 미매칭 추정으로 분리했습니다 "
+                    f"(매출 {imweb_residual_revenue:,}원, 추정원가 {imweb_residual_cogs:,}원)."
+                )
         cats = sorted(cat_map.items(), key=lambda kv: CATEGORY_ORDER.index(kv[0]) if kv[0] in CATEGORY_ORDER else 99)
 
         # 데이터 품질 노트
@@ -209,6 +235,9 @@ def build_month_detail(conn, month):
             channel_products = [p for p in products if p["d"] == d and p["ch"] == product_ch]
             product_revenue = sum(p["amt"] for p in channel_products)
             product_cogs = sum(p["cogs"] for p in channel_products)
+            if product_ch == "i" and residual_note:
+                product_revenue += imweb_residual_revenue
+                product_cogs += imweb_residual_cogs
             if abs(product_revenue - official_ch["pay"]) > 6:
                 errors.append(
                     f"{month}-{d:02d} {label}: 출고 SKU 배부매출 {product_revenue} != 결제액 {official_ch['pay']}"
