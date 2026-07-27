@@ -15,7 +15,9 @@ import argparse
 import json
 import os
 import re
+from datetime import datetime
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 import psycopg2
 
@@ -73,7 +75,28 @@ def render_block(month, rows):
     return block, quality_str
 
 
-def update_html(html_path, month, block, quality_str, last_day, dry_run):
+def update_metadata(text, basis_date, generated_at):
+    text, generated_count = re.subn(
+        r'(<meta name="data-generated-at" content=")[^"]*(">)',
+        lambda m: m.group(1) + generated_at + m.group(2),
+        text,
+        count=1,
+    )
+    text, basis_count = re.subn(
+        r'(<meta name="data-basis-date" content=")[^"]*(">)',
+        lambda m: m.group(1) + basis_date + m.group(2),
+        text,
+        count=1,
+    )
+    if generated_count != 1 or basis_count != 1:
+        raise SystemExit(
+            "dashboard metadata 갱신 실패 "
+            f"(data-generated-at={generated_count}, data-basis-date={basis_count})"
+        )
+    return text
+
+
+def update_html(html_path, month, block, quality_str, last_day, dry_run, generated_at=None):
     text = html_path.read_text(encoding="utf-8")
 
     # dailyRowsByMonth 안의 해당 월 배열 교체 (다음 월 키 또는 객체 끝 직전까지)
@@ -96,6 +119,10 @@ def update_html(html_path, month, block, quality_str, last_day, dry_run):
     if not (n_q and n_e):
         raise SystemExit(f"monthConfig {month}의 quality/emptyState 갱신 실패 (quality={n_q}, emptyState={n_e})")
 
+    basis_date = f"{month}-{last_day:02d}"
+    generated_at = generated_at or datetime.now(ZoneInfo("Asia/Seoul")).isoformat(timespec="seconds")
+    text = update_metadata(text, basis_date, generated_at)
+
     if dry_run:
         print(f"[dry-run] {month}: 행 블록 준비 완료, HTML 미수정 (quality: {quality_str}, last_day: {last_day})")
         return
@@ -108,6 +135,7 @@ def main():
     parser.add_argument("--month", required=True, help="YYYY-MM")
     parser.add_argument("--html", default=str(Path(__file__).resolve().parent.parent / "index.html"))
     parser.add_argument("--dry-run", action="store_true")
+    parser.add_argument("--generated-at", help="검증 가능한 ISO-8601 생성시각; 생략 시 Asia/Seoul 현재시각")
     args = parser.parse_args()
 
     if not re.fullmatch(r"\d{4}-\d{2}", args.month):
@@ -120,7 +148,15 @@ def main():
     if not rows:
         raise SystemExit(f"{args.month}에 mart_daily_profit_gauge 행이 없습니다")
     block, quality_str = render_block(args.month, rows)
-    update_html(Path(args.html), args.month, block, quality_str, max(r[0] for r in rows), args.dry_run)
+    update_html(
+        Path(args.html),
+        args.month,
+        block,
+        quality_str,
+        max(r[0] for r in rows),
+        args.dry_run,
+        args.generated_at,
+    )
 
 
 if __name__ == "__main__":

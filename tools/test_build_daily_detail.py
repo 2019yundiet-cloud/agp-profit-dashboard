@@ -5,6 +5,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from build_daily_detail import BALANCY_SET_COST_SKUS, CATEGORY_CASE_SQL, SOURCE_SYSTEMS
+from build_daily_rows import update_metadata
 
 
 class DailyDetailContractTests(unittest.TestCase):
@@ -35,6 +36,15 @@ class DailyDetailContractTests(unittest.TestCase):
         self.assertIn('meta[name="data-generated-at"]', html)
         self.assertIn("function renderGeneratedAt()", html)
         self.assertIn("renderGeneratedAt();", html)
+
+    def test_daily_rows_refreshes_generated_and_basis_metadata(self):
+        source = (
+            '<meta name="data-generated-at" content="old">'
+            '<meta name="data-basis-date" content="2026-07-23">'
+        )
+        updated = update_metadata(source, "2026-07-26", "2026-07-27T10:45:00+09:00")
+        self.assertIn('content="2026-07-27T10:45:00+09:00"', updated)
+        self.assertIn('content="2026-07-26"', updated)
 
 
 if __name__ == "__main__":
