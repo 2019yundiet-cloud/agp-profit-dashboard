@@ -22,6 +22,14 @@ class DailyDetailContractTests(unittest.TestCase):
         self.assertIn("밸런시 마라 280g", BALANCY_SET_COST_SKUS)
         self.assertIn("밸런시 시그니처 280g", BALANCY_SET_COST_SKUS)
 
+    def test_unmatched_naver_revenue_is_visible_residual_not_fabricated_sku(self):
+        source = Path(__file__).with_name("build_daily_detail.py").read_text(encoding="utf-8")
+        self.assertIn("naver_residual_revenue", source)
+        self.assertIn("naver_residual_cogs", source)
+        self.assertIn('residual["nAmt"] += naver_residual_revenue', source)
+        self.assertIn("네이버 매출", source)
+        self.assertNotIn("naver_fallback_sku", source)
+
     def test_visible_generated_at_is_bound_to_the_meta_timestamp(self):
         html = Path(__file__).resolve().parent.parent.joinpath("index.html").read_text(encoding="utf-8")
         self.assertIn('meta[name="data-generated-at"]', html)
