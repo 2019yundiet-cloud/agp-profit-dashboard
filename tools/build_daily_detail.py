@@ -23,11 +23,14 @@ vw_naver_commerce_profit_daily도 UTC `::date` 절단을 쓰므로 이 스크립
 """
 
 import argparse
+import hashlib
 import json
 import os
 import re
 import sys
+from datetime import datetime
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 import psycopg2
 
@@ -39,6 +42,9 @@ BALANCY_SET_COST_SKUS = (
     "밸런시 시그니처 280g",
     "밸런시 커리 280g",
     "밸런시 토마토 280g",
+)
+DEFAULT_IMWEB_ARTIFACT_DIR = Path(
+    "/Users/junho/Documents/codex/data/imweb_profit/artifacts"
 )
 
 # build_category_profit_dashboard.py의 매핑과 동일한 우선순위 (부가옵션 → 밸런시 → 소스 → 함박 → 순수단백 → 닭가슴살 → 단백밥 → 기타)
@@ -64,7 +70,163 @@ def fetch_all(cur, sql, params):
     return [dict(zip(cols, row)) for row in cur.fetchall()]
 
 
-def build_month_detail(conn, month):
+def classify_sku_name(name):
+    nm = (name or "").lower().replace(" ", "")
+    if any(token in nm for token in ("아이스팩", "드라이아이스", "공동현관", "배송메모", "1회배송", "배송방법")):
+        return "부가옵션"
+    if "밸런시" in nm or "곡물볶음밥" in nm:
+        return "밸런시"
+    if "소스" in nm or "드레싱" in nm:
+        return "소스"
+    if "함박스테이크" in nm and "도시락" not in nm and "순수단백" not in nm:
+        return "함박스테이크"
+    pure_tokens = (
+        "순수단백", "슬라이스닭가슴살", "저당함박", "저당불고기",
+        "쌈장제육", "저당제육", "제육볶음10팩", "간장불고기",
+    )
+    if any(token in nm for token in pure_tokens) and "도시락" not in nm and "단백밥" not in nm:
+        return "순수단백"
+    if "닭가슴살" in nm and "도시락" not in nm and "단백밥" not in nm:
+        return "닭가슴살"
+    if any(token in nm for token in ("단백밥", "담백밥", "도시락", "단백질50g")):
+        return "단백밥"
+    return "기타"
+
+
+def safe_buyer_key(order):
+    raw = (
+        order.get("customer_phone")
+        or order.get("customer_name")
+        or order.get("order_no")
+        or order.get("ga4_transaction_id")
+        or ""
+    )
+    return hashlib.sha256(str(raw).strip().encode("utf-8")).hexdigest()
+
+
+def load_self_store_artifact_days(month, artifact_dir):
+    """Load only packlist-verified, aggregate-safe self-store category rows."""
+    artifact_dir = Path(artifact_dir)
+    days = {}
+    issues = {}
+    for day_dir in sorted(artifact_dir.glob(f"{month}-??")):
+        matching_path = day_dir / "ez_matching.json"
+        profit_path = day_dir / "ga4_profit.json"
+        if not matching_path.is_file() or not profit_path.is_file():
+            continue
+        matching = json.loads(matching_path.read_text(encoding="utf-8"))
+        profit = json.loads(profit_path.read_text(encoding="utf-8"))
+        summary = profit.get("summary") or {}
+        report_date = str(summary.get("date") or day_dir.name)
+        stats = matching.get("stats") or {}
+        violations = []
+        if matching.get("matching_mode") != "ezadmin_packlist_only":
+            violations.append("matching_mode")
+        if int(stats.get("by_imweb_items") or 0) != 0:
+            violations.append("by_imweb_items")
+        if int(stats.get("by_ezadmin_packlist") or 0) != int(stats.get("matched") or 0):
+            violations.append("packlist_count")
+        if float(summary.get("cost_coverage_rate") or 0) < 0.90:
+            violations.append("cost_coverage_rate")
+        if violations:
+            issues[report_date] = f"artifact_contract_failed:{','.join(violations)}"
+            continue
+
+        category_rows = {}
+        matched_revenue = 0
+        matched_cogs = 0
+        matched_orders = 0
+        unmatched_cogs = 0
+        for order in profit.get("orders") or []:
+            items = order.get("sku_profitability") or []
+            if order.get("match_status") != "완전매칭" or not items:
+                unmatched_cogs += int(round(float(order.get("sku_cost") or 0)))
+                continue
+            matched_orders += 1
+            buyer_key = safe_buyer_key(order)
+            for item in items:
+                category = classify_sku_name(item.get("sku"))
+                row = category_rows.setdefault(
+                    category,
+                    {"qty": 0, "buyers": set(), "amt": 0, "cogs": 0},
+                )
+                qty = int(round(float(item.get("qty") or 0)))
+                revenue = int(round(float(item.get("revenue_allocated") or 0)))
+                cogs = int(round(float(item.get("total_cost") or 0)))
+                row["qty"] += qty
+                row["buyers"].add(buyer_key)
+                row["amt"] += revenue
+                row["cogs"] += cogs
+                matched_revenue += revenue
+                matched_cogs += cogs
+
+        expected_revenue = int(round(float(summary.get("matched_revenue") or 0)))
+        total_cogs = int(round(float(summary.get("total_sku_cost") or 0)))
+        expected_matched_cogs = total_cogs - unmatched_cogs
+        if (
+            abs(matched_revenue - expected_revenue) > 2
+            or abs(matched_cogs - expected_matched_cogs) > 2
+        ):
+            issues[report_date] = (
+                "artifact_total_mismatch:"
+                f"revenue={matched_revenue}/{expected_revenue},"
+                f"cogs={matched_cogs}/{expected_matched_cogs}"
+            )
+            continue
+
+        safe_rows = []
+        fingerprint_rows = []
+        for category, row in category_rows.items():
+            safe_rows.append(
+                {
+                    "ch": "i",
+                    "category": category,
+                    "qty": row["qty"],
+                    "buyers": len(row["buyers"]),
+                    "amt": row["amt"],
+                    "cogs": row["cogs"],
+                }
+            )
+            fingerprint_rows.append(
+                [category, row["qty"], len(row["buyers"]), row["amt"], row["cogs"]]
+            )
+        fingerprint_payload = {
+            "report_date": report_date,
+            "matching_mode": matching.get("matching_mode"),
+            "matched_orders": matched_orders,
+            "matched_revenue": matched_revenue,
+            "matched_cogs": matched_cogs,
+            "unmatched_cogs": unmatched_cogs,
+            "rows": sorted(fingerprint_rows),
+        }
+        fingerprint = hashlib.sha256(
+            json.dumps(
+                fingerprint_payload,
+                ensure_ascii=False,
+                sort_keys=True,
+                separators=(",", ":"),
+            ).encode("utf-8")
+        ).hexdigest()
+        days[report_date] = {
+            "rows": safe_rows,
+            "total_revenue": int(round(float(summary.get("total_revenue") or 0))),
+            "matched_revenue": expected_revenue,
+            "unmatched_revenue": int(round(float(summary.get("unmatched_revenue") or 0))),
+            "total_cogs": total_cogs,
+            "unmatched_cogs": unmatched_cogs,
+            "matched_orders": matched_orders,
+            "total_orders": int(summary.get("total_orders") or 0),
+            "fingerprint": fingerprint,
+        }
+    return days, issues
+
+
+def build_month_detail(
+    conn,
+    month,
+    artifact_dir=DEFAULT_IMWEB_ARTIFACT_DIR,
+    required_self_store_category_date=None,
+):
     start = f"{month}-01"
     end_sql = "(%s::date + interval '1 month')::date"
     cur = conn.cursor()
@@ -163,20 +325,60 @@ def build_month_detail(conn, month):
         from items group by 1, 2, 3
     """, (list(BALANCY_SET_COST_SKUS), list(SOURCE_SYSTEMS), start, start, start, start))
 
+    # 자사몰 fact_order_item 배분 규약 감지 (품목표 원천 아님 — 경고 노트 전용).
+    # 웨어하우스 전체 리빌드는 수량비례(source_order_item_id null), 자사몰 일별수익
+    # 파이프라인은 아이템 피드 실금액(orderno:idx)으로 같은 테이블을 날짜 단위로
+    # 덮어써서, 마지막 기록자에 따라 품목 단가가 날짜별로 플립된다(소스 40g ~3,500원 ↔ ~500원).
+    item_allocation = {r["d"]: r for r in fetch_all(cur, f"""
+        select extract(day from fo.paid_datetime)::int d,
+               count(*) filter (where foi.source_order_item_id is null)::int qty_share_rows,
+               count(*) filter (where foi.source_order_item_id is not null)::int feed_rows
+        from fact_order_item foi
+        join fact_order fo on fo.internal_order_id = foi.internal_order_id
+        where fo.source_system = 'ga4_self_store'
+          and fo.paid_datetime >= %s and fo.paid_datetime < {end_sql}
+        group by 1
+    """, (start, start))}
+
+    artifact_days, artifact_issues = load_self_store_artifact_days(month, artifact_dir)
     out = {}
     errors = []
+    used_artifact_dates = set()
     for g in gauge:
         d = g["d"]
+        report_date = f"{month}-{d:02d}"
         iw, nv = imweb.get(d), naver.get(d)
         if not iw or nv is None:
             errors.append(f"{month}-{d:02d}: 자사몰/네이버 요약 행 누락 (imweb={bool(iw)}, naver={nv is not None})")
             continue
         n_fee = round(g["npay"] * NAVER_FEE_RATE)
 
+        day_products = [p for p in products if p["d"] == d]
+        artifact_note = ""
+        artifact = artifact_days.get(report_date)
+        if artifact:
+            if (
+                artifact["total_revenue"] == g["ipay"]
+                and artifact["total_cogs"] == iw["cogs"]
+            ):
+                day_products = [p for p in day_products if p["ch"] != "i"]
+                day_products.extend({"d": d, **row} for row in artifact["rows"])
+                used_artifact_dates.add(report_date)
+                artifact_note = (
+                    "자사몰 상세는 최종 이지어드민 출고 패킹리스트 산출물로 분류했습니다 "
+                    f"(매출 반영률 {artifact['matched_revenue'] / max(artifact['total_revenue'], 1) * 100:.1f}%, "
+                    f"스냅샷 {artifact['fingerprint'][:12]})."
+                )
+            else:
+                artifact_note = (
+                    "자사몰 상세 산출물과 공식 일별 손익의 스냅샷이 달라 "
+                    "DB 출고 상세만 사용했습니다."
+                )
+        elif report_date in artifact_issues:
+            artifact_note = "자사몰 상세 산출물 계약 검증이 실패해 DB 출고 상세만 사용했습니다."
+
         cat_map = {}
-        for p in products:
-            if p["d"] != d:
-                continue
+        for p in day_products:
             c = cat_map.setdefault(p["category"], {"qty": 0, "buyers": 0, "amt": 0, "cogs": 0, "iAmt": 0, "nAmt": 0})
             c["qty"] += p["qty"]
             c["buyers"] += p["buyers"]
@@ -187,7 +389,7 @@ def build_month_detail(conn, month):
         # GA4 손익은 90% 이상 매칭을 허용하고 미매칭 주문에는 보수적인 추정원가를
         # 반영한다. 출고표에 없는 주문을 임의 SKU로 만들지 않고, 공식 채널 손익과
         # 출고 SKU 합계의 양수 잔액만 별도 행으로 보존한다.
-        imweb_products = [p for p in products if p["d"] == d and p["ch"] == "i"]
+        imweb_products = [p for p in day_products if p["ch"] == "i"]
         imweb_residual_revenue = g["ipay"] - sum(p["amt"] for p in imweb_products)
         imweb_residual_cogs = iw["cogs"] - sum(p["cogs"] for p in imweb_products)
         residual_notes = []
@@ -212,7 +414,7 @@ def build_month_detail(conn, month):
 
         # 네이버도 90% 이상 매칭을 허용한다. 출고표에 없는 주문을 임의 SKU로
         # 만들지 않고 공식 채널 합계와 출고 SKU 합계의 양수 잔액만 분리한다.
-        naver_products = [p for p in products if p["d"] == d and p["ch"] == "n"]
+        naver_products = [p for p in day_products if p["ch"] == "n"]
         naver_residual_revenue = g["npay"] - sum(p["amt"] for p in naver_products)
         naver_residual_cogs = nv["cogs"] - sum(p["cogs"] for p in naver_products)
         if naver_residual_revenue > 6 or naver_residual_cogs > 2:
@@ -240,6 +442,21 @@ def build_month_detail(conn, month):
         if iw.get("cost_gap"):
             notes.append("일부 SKU가 원가 미등록 상태로 계산돼 품목 원가가 과소 표시될 수 있습니다.")
         notes.extend(residual_notes)
+        if artifact_note:
+            notes.append(artifact_note)
+        alloc = item_allocation.get(d)
+        if alloc and alloc["feed_rows"] > 0:
+            if alloc["qty_share_rows"] > 0:
+                notes.append(
+                    "자사몰 fact_order_item 품목 금액이 이날은 수량비례 배분과 아이템 피드 실금액 두 규약이 "
+                    "혼재돼 품목 단가 분석에 사용할 수 없습니다. 이 품목표는 출고 SKU 원가비례 배분이라 영향 없습니다."
+                )
+            else:
+                notes.append(
+                    "자사몰 fact_order_item 품목 금액이 이날은 아이템 피드 실금액 규약으로 적재돼, 수량비례 배분 "
+                    "규약인 날짜와 품목 단가를 비교할 수 없습니다(예: 소스 40g ~500원 ↔ ~3,500원 플립). "
+                    "이 품목표는 출고 SKU 원가비례 배분이라 영향 없습니다."
+                )
 
         detail = {
             "imweb": {"pay": g["ipay"], "fee": iw["fee"], "dfee": g["idf"], "cogs": iw["cogs"], "contrib": g["ic"],
@@ -257,13 +474,13 @@ def build_month_detail(conn, month):
             if abs(calc - ch["contrib"]) > 2:
                 errors.append(f"{month}-{d:02d} {ch_name}: 검증 실패 계산 {calc} != 공헌이익 {ch['contrib']}")
         for product_ch, official_ch, label in (("i", detail["imweb"], "imweb"), ("n", detail["naver"], "naver")):
-            channel_products = [p for p in products if p["d"] == d and p["ch"] == product_ch]
+            channel_products = [p for p in day_products if p["ch"] == product_ch]
             product_revenue = sum(p["amt"] for p in channel_products)
             product_cogs = sum(p["cogs"] for p in channel_products)
             if product_ch == "i" and imweb_residual_revenue > 6:
                 product_revenue += imweb_residual_revenue
                 product_cogs += imweb_residual_cogs
-            if product_ch == "n" and naver_residual_revenue > 6:
+            if product_ch == "n" and (naver_residual_revenue > 6 or naver_residual_cogs > 2):
                 product_revenue += naver_residual_revenue
                 product_cogs += naver_residual_cogs
             if abs(product_revenue - official_ch["pay"]) > 6:
@@ -276,14 +493,45 @@ def build_month_detail(conn, month):
                 )
         out[str(d)] = detail
 
+    if required_self_store_category_date:
+        if required_self_store_category_date not in used_artifact_dates:
+            errors.append(
+                f"{required_self_store_category_date}: 검증된 자사몰 카테고리 산출물을 사용하지 못했습니다"
+            )
+        else:
+            required_day = out.get(str(int(required_self_store_category_date[-2:]))) or {}
+            imweb_pay = int((required_day.get("imweb") or {}).get("pay") or 0)
+            unmatched_self_revenue = sum(
+                int(row[5] or 0)
+                for row in required_day.get("products") or []
+                if row[0] == "미매칭 추정"
+            )
+            if unmatched_self_revenue > max(6, round(imweb_pay * 0.10)):
+                errors.append(
+                    f"{required_self_store_category_date}: 자사몰 미분류 매출이 10%를 초과합니다 "
+                    f"({unmatched_self_revenue}/{imweb_pay})"
+                )
     if errors:
         for e in errors:
             print(f"[VERIFY-FAIL] {e}", file=sys.stderr)
         raise SystemExit(1)
-    return out
+    snapshot_payload = {
+        "month": month,
+        "detail": out,
+        "used_self_store_artifact_dates": sorted(used_artifact_dates),
+    }
+    snapshot_id = hashlib.sha256(
+        json.dumps(
+            snapshot_payload,
+            ensure_ascii=False,
+            sort_keys=True,
+            separators=(",", ":"),
+        ).encode("utf-8")
+    ).hexdigest()
+    return out, snapshot_id
 
 
-def update_html(html_path, month, month_detail, dry_run):
+def update_html(html_path, month, month_detail, snapshot_id, dry_run):
     text = html_path.read_text(encoding="utf-8")
     pattern = re.compile(r"^(\s*)const dailyDetailByMonth = (.*);$", re.MULTILINE)
     match = pattern.search(text)
@@ -292,17 +540,68 @@ def update_html(html_path, month, month_detail, dry_run):
     existing = json.loads(match.group(2))
     existing[month] = month_detail
     replacement = f"{match.group(1)}const dailyDetailByMonth = {json.dumps(existing, ensure_ascii=False, separators=(',', ':'))};"
+    updated = text[:match.start()] + replacement + text[match.end():]
+    basis_date = f"{month}-{max(int(day) for day in month_detail):02d}"
+    generated_at = datetime.now(ZoneInfo("Asia/Seoul")).isoformat(timespec="seconds")
+    updated, generated_count = re.subn(
+        r'(<meta name="data-generated-at" content=")[^"]*(">)',
+        rf"\g<1>{generated_at}\2",
+        updated,
+        count=1,
+    )
+    updated, basis_count = re.subn(
+        r'(<meta name="data-basis-date" content=")[^"]*(">)',
+        rf"\g<1>{basis_date}\2",
+        updated,
+        count=1,
+    )
+    snapshot_meta = f'  <meta name="source-snapshot-id" content="{snapshot_id}">'
+    if 'meta name="source-snapshot-id"' in updated:
+        updated = re.sub(
+            r'  <meta name="source-snapshot-id" content="[^"]*">',
+            snapshot_meta,
+            updated,
+            count=1,
+        )
+    else:
+        updated, snapshot_count = re.subn(
+            r'(?m)^(\s*)(<meta name="data-basis-date")',
+            lambda match: (
+                f'{match.group(1)}<meta name="source-snapshot-id" content="{snapshot_id}">\n'
+                f"{match.group(1)}{match.group(2)}"
+            ),
+            updated,
+            count=1,
+        )
+        if not snapshot_count:
+            raise SystemExit("대시보드 원천 스냅샷 메타 삽입 실패")
+    if not generated_count or not basis_count:
+        raise SystemExit("대시보드 생성시각/기준일 메타 갱신 실패")
     if dry_run:
-        print(f"[dry-run] {month}: {len(month_detail)}일 상세 준비됨, HTML 미수정")
+        print(
+            f"[dry-run] {month}: {len(month_detail)}일 상세 준비됨, HTML 미수정 "
+            f"(basis={basis_date}, snapshot={snapshot_id})"
+        )
         return
-    html_path.write_text(text[:match.start()] + replacement + text[match.end():], encoding="utf-8")
-    print(f"updated {html_path} — {month}: {len(month_detail)}일 상세")
+    html_path.write_text(updated, encoding="utf-8")
+    print(
+        f"updated {html_path} — {month}: {len(month_detail)}일 상세 "
+        f"(basis={basis_date}, snapshot={snapshot_id})"
+    )
 
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--month", required=True, help="YYYY-MM")
     parser.add_argument("--html", default=str(Path(__file__).resolve().parent.parent / "index.html"))
+    parser.add_argument(
+        "--imweb-artifact-dir",
+        default=str(DEFAULT_IMWEB_ARTIFACT_DIR),
+    )
+    parser.add_argument(
+        "--require-self-store-category-date",
+        help="이 날짜의 자사몰 상세가 검증된 packlist 산출물로 분류되지 않으면 실패",
+    )
     parser.add_argument("--dry-run", action="store_true")
     args = parser.parse_args()
 
@@ -314,12 +613,17 @@ def main():
 
     conn = psycopg2.connect(database_url)
     try:
-        month_detail = build_month_detail(conn, args.month)
+        month_detail, snapshot_id = build_month_detail(
+            conn,
+            args.month,
+            artifact_dir=args.imweb_artifact_dir,
+            required_self_store_category_date=args.require_self_store_category_date,
+        )
     finally:
         conn.close()
     if not month_detail:
         raise SystemExit(f"{args.month}에 게이지 행이 없습니다")
-    update_html(Path(args.html), args.month, month_detail, args.dry_run)
+    update_html(Path(args.html), args.month, month_detail, snapshot_id, args.dry_run)
 
 
 if __name__ == "__main__":
