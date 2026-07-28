@@ -35,7 +35,21 @@ from zoneinfo import ZoneInfo
 import psycopg2
 
 NAVER_FEE_RATE = 0.068
-CATEGORY_ORDER = ["단백밥", "소스", "순수단백", "닭가슴살", "함박스테이크", "밸런시", "기타", "부가옵션", "미매칭 추정"]
+TAXONOMY_REVIEW_CATEGORY = "분류확인필요"
+CATEGORY_ORDER = [
+    "단백밥",
+    "소스",
+    "직화제육",
+    "불고기",
+    "쌈장제육",
+    "닭가슴살",
+    "함박스테이크",
+    "밸런시",
+    "기타",
+    "부가옵션",
+    TAXONOMY_REVIEW_CATEGORY,
+    "미매칭 추정",
+]
 SOURCE_SYSTEMS = ("ga4_self_store", "naver_commerce")
 BALANCY_SET_COST_SKUS = (
     "밸런시 마라 280g",
@@ -47,18 +61,20 @@ DEFAULT_IMWEB_ARTIFACT_DIR = Path(
     "/Users/junho/Documents/codex/data/imweb_profit/artifacts"
 )
 
-# build_category_profit_dashboard.py의 매핑과 동일한 우선순위 (부가옵션 → 밸런시 → 소스 → 함박 → 순수단백 → 닭가슴살 → 단백밥 → 기타)
+# 출고 SKU의 실제 제품명을 우선한다. 단백밥/도시락 맛 이름은 개별 육류
+# 카테고리로 분리하지 않고 세트 카테고리인 단백밥으로 유지한다.
 CATEGORY_CASE_SQL = """
     case
       when nm like '%아이스팩%' or nm like '%드라이아이스%' or nm like '%공동현관%' or nm like '%배송메모%' or nm like '%1회 배송%' or nm like '%배송방법%' then '부가옵션'
       when nm like '%밸런시%' or nm like '%곡물볶음밥%' then '밸런시'
       when nm like '%소스%' or nm like '%드레싱%' then '소스'
-      when nm like '%함박스테이크%' and nm not like '%도시락%' and nm not like '%순수단백%' then '함박스테이크'
-      when (nm like '%순수단백%' or nm like '%슬라이스 닭가슴살%' or nm like '%저당함박%' or nm like '%저당 함박%'
-            or nm like '%저당불고기%' or nm like '%쌈장제육%' or nm like '%저당 제육%' or nm like '%제육볶음 10팩%'
-            or nm like '%간장불고기%') and nm not like '%도시락%' and nm not like '%단백밥%' then '순수단백'
-      when nm like '%닭가슴살%' and nm not like '%도시락%' and nm not like '%단백밥%' then '닭가슴살'
       when nm like '%단백밥%' or nm like '%담백밥%' or nm like '%도시락%' or nm like '%단백질 50g%' or nm like '%단백질50g%' then '단백밥'
+      when (nm like '%직화제육%' or nm like '%제육볶음%' or nm like '%저당 제육%' or nm like '%저당제육%') then '직화제육'
+      when (nm like '%간장불고기%' or nm like '%저당불고기%' or nm like '%저당 불고기%' or nm like '%불고기%') then '불고기'
+      when nm like '%쌈장제육%' then '쌈장제육'
+      when (nm like '%함박스테이크%' or nm like '%저당함박%' or nm like '%저당 함박%') then '함박스테이크'
+      when nm like '%순수단백%' then '분류확인필요'
+      when nm like '%닭가슴살%' and nm not like '%도시락%' and nm not like '%단백밥%' then '닭가슴살'
       else '기타'
     end
 """
@@ -78,18 +94,20 @@ def classify_sku_name(name):
         return "밸런시"
     if "소스" in nm or "드레싱" in nm:
         return "소스"
-    if "함박스테이크" in nm and "도시락" not in nm and "순수단백" not in nm:
-        return "함박스테이크"
-    pure_tokens = (
-        "순수단백", "슬라이스닭가슴살", "저당함박", "저당불고기",
-        "쌈장제육", "저당제육", "제육볶음10팩", "간장불고기",
-    )
-    if any(token in nm for token in pure_tokens) and "도시락" not in nm and "단백밥" not in nm:
-        return "순수단백"
-    if "닭가슴살" in nm and "도시락" not in nm and "단백밥" not in nm:
-        return "닭가슴살"
     if any(token in nm for token in ("단백밥", "담백밥", "도시락", "단백질50g")):
         return "단백밥"
+    if any(token in nm for token in ("직화제육", "제육볶음", "저당제육")):
+        return "직화제육"
+    if any(token in nm for token in ("간장불고기", "저당불고기", "불고기")):
+        return "불고기"
+    if "쌈장제육" in nm:
+        return "쌈장제육"
+    if any(token in nm for token in ("함박스테이크", "저당함박")):
+        return "함박스테이크"
+    if "닭가슴살" in nm:
+        return "닭가슴살"
+    if "순수단백" in nm:
+        return TAXONOMY_REVIEW_CATEGORY
     return "기타"
 
 
@@ -506,10 +524,20 @@ def build_month_detail(
                 for row in required_day.get("products") or []
                 if row[0] == "미매칭 추정"
             )
+            taxonomy_review_revenue = sum(
+                int(row[5] or 0)
+                for row in required_day.get("products") or []
+                if row[0] == TAXONOMY_REVIEW_CATEGORY
+            )
             if unmatched_self_revenue > max(6, round(imweb_pay * 0.10)):
                 errors.append(
                     f"{required_self_store_category_date}: 자사몰 미분류 매출이 10%를 초과합니다 "
                     f"({unmatched_self_revenue}/{imweb_pay})"
+                )
+            if taxonomy_review_revenue > 0:
+                errors.append(
+                    f"{required_self_store_category_date}: 제품 세부 분류 확인이 필요한 자사몰 매출이 있습니다 "
+                    f"({taxonomy_review_revenue})"
                 )
     if errors:
         for e in errors:

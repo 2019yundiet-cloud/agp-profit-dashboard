@@ -4,7 +4,12 @@ from pathlib import Path
 
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from build_daily_detail import BALANCY_SET_COST_SKUS, CATEGORY_CASE_SQL, SOURCE_SYSTEMS
+from build_daily_detail import (
+    BALANCY_SET_COST_SKUS,
+    CATEGORY_CASE_SQL,
+    CATEGORY_ORDER,
+    SOURCE_SYSTEMS,
+)
 from build_daily_rows import update_metadata
 
 
@@ -17,6 +22,13 @@ class DailyDetailContractTests(unittest.TestCase):
     def test_dry_ice_is_an_add_on_option(self):
         self.assertIn("드라이아이스", CATEGORY_CASE_SQL)
         self.assertIn("부가옵션", CATEGORY_CASE_SQL)
+
+    def test_pure_protein_flavors_are_separate_categories(self):
+        self.assertNotIn("순수단백", CATEGORY_ORDER)
+        for category in ("직화제육", "불고기", "쌈장제육"):
+            self.assertIn(category, CATEGORY_ORDER)
+            self.assertIn(f"then '{category}'", CATEGORY_CASE_SQL)
+        self.assertLess(CATEGORY_CASE_SQL.index("then '단백밥'"), CATEGORY_CASE_SQL.index("then '직화제육'"))
 
     def test_channel_and_balancy_cost_contracts_match_monthly_builder(self):
         self.assertEqual(SOURCE_SYSTEMS, ("ga4_self_store", "naver_commerce"))

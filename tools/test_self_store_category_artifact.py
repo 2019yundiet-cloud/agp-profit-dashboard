@@ -7,6 +7,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from build_daily_detail import (
+    CATEGORY_ORDER,
+    TAXONOMY_REVIEW_CATEGORY,
     classify_sku_name,
     load_self_store_artifact_days,
     update_html,
@@ -17,11 +19,21 @@ class SelfStoreCategoryArtifactTests(unittest.TestCase):
     def test_category_taxonomy(self):
         self.assertEqual(classify_sku_name("윤식단 단백밥 오리지널 [L]"), "단백밥")
         self.assertEqual(classify_sku_name("데리야끼 소스 40g"), "소스")
-        self.assertEqual(classify_sku_name("윤식단 순수단백 저당 제육볶음 100g"), "순수단백")
+        self.assertEqual(classify_sku_name("윤식단 순수단백 저당 제육볶음 100g"), "직화제육")
+        self.assertEqual(classify_sku_name("윤식단 순수단백 저당 간장불고기 100g"), "불고기")
+        self.assertEqual(classify_sku_name("윤식단 순수단백 저당 쌈장제육 150g"), "쌈장제육")
+        self.assertEqual(classify_sku_name("윤식단 단백밥 직화제육"), "단백밥")
+        self.assertEqual(classify_sku_name("윤식단 단백밥 단짠불고기"), "단백밥")
+        self.assertEqual(classify_sku_name("윤식단 단백밥 쌈장제육"), "단백밥")
+        self.assertEqual(
+            classify_sku_name("윤식단 순수단백 신규맛 100g"),
+            TAXONOMY_REVIEW_CATEGORY,
+        )
         self.assertEqual(classify_sku_name("윤식단 닭가슴살 150g"), "닭가슴살")
         self.assertEqual(classify_sku_name("윤식단 함박스테이크 150g"), "함박스테이크")
         self.assertEqual(classify_sku_name("밸런시 마라 280g"), "밸런시")
         self.assertEqual(classify_sku_name("아이스팩 추가"), "부가옵션")
+        self.assertNotIn("순수단백", CATEGORY_ORDER)
 
     def test_packlist_artifact_is_aggregated_without_pii(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -59,16 +71,22 @@ class SelfStoreCategoryArtifactTests(unittest.TestCase):
                                 "customer_name": "테스트고객",
                                 "sku_profitability": [
                                     {
-                                        "sku": "윤식단 단백밥 오리지널 [L]",
-                                        "qty": 2,
-                                        "revenue_allocated": 15000,
-                                        "total_cost": 7500,
+                                        "sku": "윤식단 순수단백 저당 제육볶음 100g",
+                                        "qty": 1,
+                                        "revenue_allocated": 7000,
+                                        "total_cost": 3500,
                                     },
                                     {
-                                        "sku": "데리야끼 소스 40g",
-                                        "qty": 2,
-                                        "revenue_allocated": 5000,
-                                        "total_cost": 2500,
+                                        "sku": "윤식단 순수단백 저당 간장불고기 100g",
+                                        "qty": 1,
+                                        "revenue_allocated": 6000,
+                                        "total_cost": 3000,
+                                    },
+                                    {
+                                        "sku": "윤식단 순수단백 저당 쌈장제육 100g",
+                                        "qty": 1,
+                                        "revenue_allocated": 7000,
+                                        "total_cost": 3500,
                                     },
                                 ],
                             }
@@ -85,10 +103,18 @@ class SelfStoreCategoryArtifactTests(unittest.TestCase):
         result = days["2026-07-27"]
         self.assertEqual(result["matched_revenue"], 20000)
         self.assertEqual(result["total_cogs"], 10000)
-        self.assertEqual({row["category"] for row in result["rows"]}, {"단백밥", "소스"})
+        self.assertEqual(
+            {row["category"] for row in result["rows"]},
+            {"직화제육", "불고기", "쌈장제육"},
+        )
         serialized = json.dumps(result, ensure_ascii=False)
         self.assertNotIn("01000000000", serialized)
         self.assertNotIn("테스트고객", serialized)
+
+    def test_required_date_blocks_unreviewed_pure_protein_taxonomy(self):
+        source = Path(__file__).with_name("build_daily_detail.py").read_text(encoding="utf-8")
+        self.assertIn("taxonomy_review_revenue", source)
+        self.assertIn("제품 세부 분류 확인이 필요한 자사몰 매출", source)
 
     def test_non_packlist_artifact_is_rejected(self):
         with tempfile.TemporaryDirectory() as tmp:
