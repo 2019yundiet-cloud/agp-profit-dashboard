@@ -138,23 +138,33 @@ class VehicleLeaseScheduleTests(unittest.TestCase):
             rows = {name: amount for name, amount, *_ in self.fixed_costs[month]}
             self.assertEqual(rows["차량 보험비"], 300000)
 
-    def test_august_stops_accounting_services_and_uses_increased_tax_fee(self):
+    def test_august_stops_accounting_services_and_uses_new_subscription_costs(self):
         rows = {name: amount for name, amount, *_ in self.scheduled_fixed_cost_rows("2026-08")}
         self.assertNotIn("외주 서비스 · 경리 (2026년 7월까지)", rows)
         self.assertNotIn("사스 서비스 · 경리나라", rows)
         self.assertNotIn("사스 서비스 · 커넥트파킹", rows)
+        self.assertEqual(rows["사스 서비스 · Claude"], 160000)
+        self.assertEqual(rows["사스 서비스 · OpenAI"], 450000)
         self.assertEqual(rows["외주 서비스 · 세무법인청년 (인상)"], 230000)
         self.assertEqual(rows["차량 리스 · BMW (윤준호 차량, 인상)"], 1068993)
-        self.assertEqual(sum(rows.values()), 18617806)
+        # 2026-08-01 실측 재점검: 나이스 54,890 · 네이버페이 Plus 14,800 해지 확정 제외
+        self.assertNotIn("사스 서비스 · 정기과금_나이스", rows)
+        self.assertNotIn("사스 서비스 · 네이버페이 Plus", rows)
+        self.assertEqual(rows["사스 서비스 · 네이버플러스"], 4900)
+        self.assertEqual(sum(rows.values()), 18222350)
 
     def test_september_uses_reduced_bmw_and_keeps_increased_tax_fee(self):
         rows = {name: amount for name, amount, *_ in self.scheduled_fixed_cost_rows("2026-09")}
         self.assertNotIn("외주 서비스 · 경리 (2026년 7월까지)", rows)
         self.assertNotIn("사스 서비스 · 경리나라", rows)
         self.assertNotIn("사스 서비스 · 커넥트파킹", rows)
+        self.assertEqual(rows["사스 서비스 · Claude"], 160000)
+        self.assertEqual(rows["사스 서비스 · OpenAI"], 450000)
         self.assertEqual(rows["외주 서비스 · 세무법인청년 (인상)"], 230000)
         self.assertEqual(rows["차량 리스 · BMW (윤준호 차량)"], 598705)
-        self.assertEqual(sum(rows.values()), 18147518)
+        self.assertNotIn("사스 서비스 · 정기과금_나이스", rows)
+        self.assertNotIn("사스 서비스 · 네이버페이 Plus", rows)
+        self.assertEqual(sum(rows.values()), 17752062)
 
     def test_future_change_schedule_is_visible_without_claiming_full_month_total(self):
         self.assertIn('id="fixedCostChangeRows"', self.html)
@@ -166,7 +176,11 @@ class VehicleLeaseScheduleTests(unittest.TestCase):
         self.assertIn(("2026-08", "경리 외주", "중단 (월 800,000원 제외)"), visible_changes)
         self.assertIn(("2026-08", "경리나라", "사용 중단 (월 75,900원 제외)"), visible_changes)
         self.assertIn(("2026-08", "세무 외주", "계속 진행, 월 200,000원 → 230,000원 인상"), visible_changes)
+        self.assertIn(("2026-08", "Claude", "월 335,766원 → 160,000원"), visible_changes)
+        self.assertIn(("2026-08", "OpenAI", "월 600,000원 → 450,000원"), visible_changes)
         self.assertIn(("2026-08", "커넥트파킹 주차", "종료 (월 110,000원 제외)"), visible_changes)
+        self.assertIn(("2026-08", "정기과금_나이스", "해지 확정 (월 54,890원 제외)"), visible_changes)
+        self.assertIn(("2026-08", "네이버페이 Plus", "해지 확정 (월 14,800원 제외)"), visible_changes)
         self.assertIn(("2026-09", "BMW 리스료", "월 1,068,993원 → 598,705원"), visible_changes)
 
     def test_monthly_fixed_cost_totals_are_recalculated(self):
