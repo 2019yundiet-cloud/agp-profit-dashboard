@@ -109,7 +109,7 @@ class VehicleLeaseScheduleTests(unittest.TestCase):
             self.assertEqual(actual, expected)
 
     def test_vehicle_schedule_changes_bmw_amount_from_september(self):
-        june_period, july_period, september_period = self.lease_schedule
+        june_period, july_period, september_period, november_period = self.lease_schedule
         self.assertEqual(june_period["effectiveFrom"], "2026-06")
         self.assertEqual(june_period["effectiveTo"], "2026-06")
         self.assertEqual(sum(amount for _, amount in june_period["rows"]), 2419333)
@@ -119,9 +119,13 @@ class VehicleLeaseScheduleTests(unittest.TestCase):
         self.assertEqual(sum(amount for _, amount in july_period["rows"]), 2570533)
         self.assertIn(["차량 리스 · BMW (윤준호 차량, 인상)", 1068993], july_period["rows"])
         self.assertEqual(september_period["effectiveFrom"], "2026-09")
-        self.assertIsNone(september_period["effectiveTo"])
+        self.assertEqual(september_period["effectiveTo"], "2026-10")
         self.assertEqual(sum(amount for _, amount in september_period["rows"]), 2100245)
         self.assertIn(["차량 리스 · BMW (윤준호 차량)", 598705], september_period["rows"])
+        self.assertEqual(november_period["effectiveFrom"], "2026-11")
+        self.assertIsNone(november_period["effectiveTo"])
+        self.assertEqual(sum(amount for _, amount in november_period["rows"]), 1153105)
+        self.assertNotIn(["차량 리스 · KB (아빠 차량, 인상)", 947140], november_period["rows"])
 
     def test_vehicle_insurance_is_separate_and_effective_from_june(self):
         self.assertEqual(
@@ -166,6 +170,14 @@ class VehicleLeaseScheduleTests(unittest.TestCase):
         self.assertNotIn("사스 서비스 · 네이버페이 Plus", rows)
         self.assertEqual(sum(rows.values()), 17752062)
 
+    def test_november_excludes_kb_lease_and_recalculates_total(self):
+        october_rows = {name: amount for name, amount, *_ in self.scheduled_fixed_cost_rows("2026-10")}
+        november_rows = {name: amount for name, amount, *_ in self.scheduled_fixed_cost_rows("2026-11")}
+        self.assertEqual(sum(october_rows.values()), 17752062)
+        self.assertIn("차량 리스 · KB (아빠 차량, 인상)", october_rows)
+        self.assertNotIn("차량 리스 · KB (아빠 차량, 인상)", november_rows)
+        self.assertEqual(sum(november_rows.values()), 16804922)
+
     def test_future_change_schedule_is_visible_without_claiming_full_month_total(self):
         self.assertIn('id="fixedCostChangeRows"', self.html)
         self.assertIn("사용자가 확정한 변경 항목만 표시합니다.", self.html)
@@ -182,6 +194,7 @@ class VehicleLeaseScheduleTests(unittest.TestCase):
         self.assertIn(("2026-08", "정기과금_나이스", "해지 확정 (월 54,890원 제외)"), visible_changes)
         self.assertIn(("2026-08", "네이버페이 Plus", "해지 확정 (월 14,800원 제외)"), visible_changes)
         self.assertIn(("2026-09", "BMW 리스료", "월 1,068,993원 → 598,705원"), visible_changes)
+        self.assertIn(("2026-11", "KB 리스료", "종료 (월 947,140원 제외)"), visible_changes)
 
     def test_monthly_fixed_cost_totals_are_recalculated(self):
         expected = {"2026-06": 18271459, "2026-07": 19573706}
