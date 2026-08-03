@@ -122,6 +122,37 @@ def safe_buyer_key(order):
     return hashlib.sha256(str(raw).strip().encode("utf-8")).hexdigest()
 
 
+def normalize_rounding_residual(revenue, cogs):
+    """Clamp only the documented allocation rounding tolerance to zero."""
+    revenue = int(revenue)
+    cogs = int(cogs)
+    return (
+        0 if abs(revenue) <= 6 else revenue,
+        0 if abs(cogs) <= 2 else cogs,
+    )
+
+
+def latest_dashboard_basis(text, fallback):
+    match = re.search(
+        r"const dailyRowsByMonth = (\{.*?\});\n\s*const ",
+        text,
+        re.DOTALL,
+    )
+    if not match:
+        return fallback
+    try:
+        rows_by_month = json.loads(match.group(1))
+    except json.JSONDecodeError:
+        return fallback
+    dates = [
+        f"{month}-{int(row['day']):02d}"
+        for month, rows in rows_by_month.items()
+        for row in rows
+        if row.get("day") is not None
+    ]
+    return max(dates, default=fallback)
+
+
 def load_self_store_artifact_days(month, artifact_dir):
     """Load only packlist-verified, aggregate-safe self-store category rows."""
     artifact_dir = Path(artifact_dir)
@@ -408,10 +439,12 @@ def build_month_detail(
         # 반영한다. 출고표에 없는 주문을 임의 SKU로 만들지 않고, 공식 채널 손익과
         # 출고 SKU 합계의 양수 잔액만 별도 행으로 보존한다.
         imweb_products = [p for p in day_products if p["ch"] == "i"]
-        imweb_residual_revenue = g["ipay"] - sum(p["amt"] for p in imweb_products)
-        imweb_residual_cogs = iw["cogs"] - sum(p["cogs"] for p in imweb_products)
+        imweb_residual_revenue, imweb_residual_cogs = normalize_rounding_residual(
+            g["ipay"] - sum(p["amt"] for p in imweb_products),
+            iw["cogs"] - sum(p["cogs"] for p in imweb_products),
+        )
         residual_notes = []
-        if imweb_residual_revenue > 6 or imweb_residual_cogs > 2:
+        if imweb_residual_revenue or imweb_residual_cogs:
             if imweb_residual_revenue < 0 or imweb_residual_cogs < 0:
                 errors.append(
                     f"{month}-{d:02d} imweb: 미매칭 잔액이 음수 "
@@ -433,9 +466,11 @@ def build_month_detail(
         # 네이버도 90% 이상 매칭을 허용한다. 출고표에 없는 주문을 임의 SKU로
         # 만들지 않고 공식 채널 합계와 출고 SKU 합계의 양수 잔액만 분리한다.
         naver_products = [p for p in day_products if p["ch"] == "n"]
-        naver_residual_revenue = g["npay"] - sum(p["amt"] for p in naver_products)
-        naver_residual_cogs = nv["cogs"] - sum(p["cogs"] for p in naver_products)
-        if naver_residual_revenue > 6 or naver_residual_cogs > 2:
+        naver_residual_revenue, naver_residual_cogs = normalize_rounding_residual(
+            g["npay"] - sum(p["amt"] for p in naver_products),
+            nv["cogs"] - sum(p["cogs"] for p in naver_products),
+        )
+        if naver_residual_revenue or naver_residual_cogs:
             if naver_residual_revenue < 0 or naver_residual_cogs < 0:
                 errors.append(
                     f"{month}-{d:02d} naver: 미매칭 잔액이 음수 "
@@ -495,10 +530,10 @@ def build_month_detail(
             channel_products = [p for p in day_products if p["ch"] == product_ch]
             product_revenue = sum(p["amt"] for p in channel_products)
             product_cogs = sum(p["cogs"] for p in channel_products)
-            if product_ch == "i" and imweb_residual_revenue > 6:
+            if product_ch == "i" and (imweb_residual_revenue or imweb_residual_cogs):
                 product_revenue += imweb_residual_revenue
                 product_cogs += imweb_residual_cogs
-            if product_ch == "n" and (naver_residual_revenue > 6 or naver_residual_cogs > 2):
+            if product_ch == "n" and (naver_residual_revenue or naver_residual_cogs):
                 product_revenue += naver_residual_revenue
                 product_cogs += naver_residual_cogs
             if abs(product_revenue - official_ch["pay"]) > 6:
@@ -569,7 +604,8 @@ def update_html(html_path, month, month_detail, snapshot_id, dry_run):
     existing[month] = month_detail
     replacement = f"{match.group(1)}const dailyDetailByMonth = {json.dumps(existing, ensure_ascii=False, separators=(',', ':'))};"
     updated = text[:match.start()] + replacement + text[match.end():]
-    basis_date = f"{month}-{max(int(day) for day in month_detail):02d}"
+    target_basis_date = f"{month}-{max(int(day) for day in month_detail):02d}"
+    basis_date = latest_dashboard_basis(updated, target_basis_date)
     generated_at = datetime.now(ZoneInfo("Asia/Seoul")).isoformat(timespec="seconds")
     updated, generated_count = re.subn(
         r'(<meta name="data-generated-at" content=")[^"]*(">)',

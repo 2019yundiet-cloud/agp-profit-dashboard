@@ -12,6 +12,7 @@ monthConfig의 quality/emptyState 문자열을 index.html에 반영한다.
 """
 
 import argparse
+import calendar
 import json
 import os
 import re
@@ -75,6 +76,29 @@ def render_block(month, rows):
     return block, quality_str
 
 
+def validate_row_coverage(month, rows, now=None):
+    """Fail closed when a gauge month has duplicate dates or an unexplained gap."""
+    if not rows:
+        raise SystemExit(f"{month}에 mart_daily_profit_gauge 행이 없습니다")
+    days = [int(row[0]) for row in rows]
+    if len(days) != len(set(days)):
+        raise SystemExit(f"{month} 일별 행에 중복 날짜가 있습니다: {days}")
+    last_day = max(days)
+    missing_days = sorted(set(range(1, last_day + 1)) - set(days))
+    if missing_days:
+        raise SystemExit(f"{month} 일별 행에 적재 누락일이 있습니다: {missing_days}")
+
+    now = now or datetime.now(ZoneInfo("Asia/Seoul"))
+    month_start = datetime.strptime(f"{month}-01", "%Y-%m-%d").date()
+    current_month_start = now.date().replace(day=1)
+    expected_last_day = calendar.monthrange(month_start.year, month_start.month)[1]
+    if month_start < current_month_start and last_day != expected_last_day:
+        raise SystemExit(
+            f"{month} 과거 월 마감행이 불완전합니다: "
+            f"latest={last_day}, expected={expected_last_day}"
+        )
+
+
 def update_metadata(text, basis_date, generated_at):
     text, generated_count = re.subn(
         r'(<meta name="data-generated-at" content=")[^"]*(">)',
@@ -94,6 +118,28 @@ def update_metadata(text, basis_date, generated_at):
             f"(data-generated-at={generated_count}, data-basis-date={basis_count})"
         )
     return text
+
+
+def latest_dashboard_basis(text, fallback):
+    """Keep page-level freshness on the newest embedded month during backfills."""
+    match = re.search(
+        r"const dailyRowsByMonth = (\{.*?\});\n\s*const ",
+        text,
+        re.DOTALL,
+    )
+    if not match:
+        return fallback
+    try:
+        rows_by_month = json.loads(match.group(1))
+    except json.JSONDecodeError:
+        return fallback
+    dates = [
+        f"{month}-{int(row['day']):02d}"
+        for month, rows in rows_by_month.items()
+        for row in rows
+        if row.get("day") is not None
+    ]
+    return max(dates, default=fallback)
 
 
 def update_html(html_path, month, block, quality_str, last_day, dry_run, generated_at=None):
@@ -119,7 +165,7 @@ def update_html(html_path, month, block, quality_str, last_day, dry_run, generat
     if not (n_q and n_e):
         raise SystemExit(f"monthConfig {month}의 quality/emptyState 갱신 실패 (quality={n_q}, emptyState={n_e})")
 
-    basis_date = f"{month}-{last_day:02d}"
+    basis_date = latest_dashboard_basis(text, f"{month}-{last_day:02d}")
     generated_at = generated_at or datetime.now(ZoneInfo("Asia/Seoul")).isoformat(timespec="seconds")
     text = update_metadata(text, basis_date, generated_at)
 
@@ -145,8 +191,7 @@ def main():
         raise SystemExit("DATABASE_URL 환경변수가 필요합니다")
 
     rows = fetch_rows(database_url, args.month)
-    if not rows:
-        raise SystemExit(f"{args.month}에 mart_daily_profit_gauge 행이 없습니다")
+    validate_row_coverage(args.month, rows)
     block, quality_str = render_block(args.month, rows)
     update_html(
         Path(args.html),
