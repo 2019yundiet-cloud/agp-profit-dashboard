@@ -44,7 +44,12 @@ def fetch_rows(database_url, month):
                    round(total_delivery_fee)::bigint,
                    coalesce(meta_ad_spend_source, 'missing'), coalesce(google_ads_spend_source, 'missing'),
                    coalesce(naver_searchad_spend_source, 'missing'), coalesce(data_quality_bucket, 'UNKNOWN')
-            from mart_daily_profit_gauge
+            from (
+              select source_rows.*,
+                     coalesce(gauge_rows.data_quality_bucket, 'UNKNOWN') as data_quality_bucket
+              from mart_daily_profit_gauge_source source_rows
+              left join mart_daily_profit_gauge gauge_rows using (report_date)
+            ) daily_source
             where report_date >= %s::date and report_date < (%s::date + interval '1 month')::date
             order by report_date
             """,

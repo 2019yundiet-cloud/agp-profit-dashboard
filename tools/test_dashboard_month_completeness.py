@@ -66,7 +66,7 @@ class DashboardMonthCompletenessTest(unittest.TestCase):
     def test_historical_backfill_keeps_newest_page_basis(self):
         self.assertEqual(
             build_daily_rows.latest_dashboard_basis(self.html, "2026-07-31"),
-            "2026-08-10",
+            "2026-08-11",
         )
 
     def test_july_uses_approved_fixed_cost_and_open_reconciliation_note(self):
