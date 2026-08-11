@@ -197,14 +197,14 @@ class VehicleLeaseScheduleTests(unittest.TestCase):
         self.assertIn(("2026-11", "KB 리스료", "종료 (월 947,140원 제외)"), visible_changes)
 
     def test_monthly_fixed_cost_totals_are_recalculated(self):
-        expected = {"2026-06": 18271459, "2026-07": 19573706}
+        expected = {"2026-06": 18271459, "2026-07": 18952126}
         for month, total in expected.items():
             self.assertEqual(sum(row[1] for row in self.fixed_costs[month]), total)
             self.assertEqual(self.month_config[month]["fixedCost"], total)
 
     def test_july_visible_defaults_match_the_itemized_total(self):
-        self.assertIn('id="fixedInput" type="number" value="19573706"', self.html)
-        self.assertIn('id="fixedCostInfoValue">₩19,573,706', self.html)
+        self.assertIn('id="fixedInput" type="number" value="18952126"', self.html)
+        self.assertIn('id="fixedCostInfoValue">₩18,952,126', self.html)
 
     def test_july_net_profit_decreases_by_the_insurance_cost(self):
         pre_fixed_profit = sum(
@@ -222,7 +222,7 @@ class VehicleLeaseScheduleTests(unittest.TestCase):
         profit_after_fixed_cost = pre_fixed_profit - approved_fixed_cost
         profit_without_insurance = pre_fixed_profit - (approved_fixed_cost - insurance_cost)
 
-        self.assertEqual(approved_fixed_cost, 19573706)
+        self.assertEqual(approved_fixed_cost, 18952126)
         self.assertEqual(insurance_cost, 300000)
         self.assertAlmostEqual(profit_without_insurance - profit_after_fixed_cost, 300000, places=2)
 

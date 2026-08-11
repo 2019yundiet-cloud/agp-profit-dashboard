@@ -295,7 +295,9 @@ def build_month_detail(
     imweb = {r["d"]: r for r in fetch_all(cur, f"""
         select extract(day from date_key::date)::int d, round(channel_fee)::bigint fee,
                round(total_cost)::bigint cogs,
-               (sku_detail_text like '%%원가 미등록%%') cost_gap
+               (sku_detail_text like '%%원가 미등록%%') cost_gap,
+               coalesce((raw_row->'july_2026_reconciliation'->>'unclassified_shipment_revenue_inferred')::boolean, true) = false
+                 api_reconciled_without_unclassified_revenue
         from imweb_profit_daily_summary
         where date_key::date >= %s and date_key::date < {end_sql} and source = 'ga4'
     """, (start, start))}
@@ -445,23 +447,32 @@ def build_month_detail(
         )
         residual_notes = []
         if imweb_residual_revenue or imweb_residual_cogs:
-            if imweb_residual_revenue < 0 or imweb_residual_cogs < 0:
+            api_reconciled = bool(iw.get("api_reconciled_without_unclassified_revenue"))
+            if (imweb_residual_revenue < 0 or imweb_residual_cogs < 0) and not api_reconciled:
                 errors.append(
                     f"{month}-{d:02d} imweb: 미매칭 잔액이 음수 "
                     f"(매출 {imweb_residual_revenue}, 원가 {imweb_residual_cogs})"
                 )
             else:
+                residual_category = "아임웹 API 추가·보정" if api_reconciled else "미매칭 추정"
                 residual = cat_map.setdefault(
-                    "미매칭 추정",
+                    residual_category,
                     {"qty": 0, "buyers": 0, "amt": 0, "cogs": 0, "iAmt": 0, "nAmt": 0},
                 )
                 residual["amt"] += imweb_residual_revenue
                 residual["cogs"] += imweb_residual_cogs
                 residual["iAmt"] += imweb_residual_revenue
-                residual_notes.append(
-                    f"출고 SKU가 확인되지 않은 주문 잔액을 미매칭 추정으로 분리했습니다 "
-                    f"(자사몰 매출 {imweb_residual_revenue:,}원, 추정원가 {imweb_residual_cogs:,}원)."
-                )
+                if api_reconciled:
+                    residual_notes.append(
+                        f"아임웹 API에서 확인된 추가 주문과 현재 결제금액 보정을 별도 행으로 반영했습니다 "
+                        f"(자사몰 매출 보정 {imweb_residual_revenue:,}원, 확인 원가 {imweb_residual_cogs:,}원). "
+                        "협찬 가능성이 있는 미분류 출고에서는 매출을 추정하지 않았습니다."
+                    )
+                else:
+                    residual_notes.append(
+                        f"출고 SKU가 확인되지 않은 주문 잔액을 미매칭 추정으로 분리했습니다 "
+                        f"(자사몰 매출 {imweb_residual_revenue:,}원, 추정원가 {imweb_residual_cogs:,}원)."
+                    )
 
         # 네이버도 90% 이상 매칭을 허용한다. 출고표에 없는 주문을 임의 SKU로
         # 만들지 않고 공식 채널 합계와 출고 SKU 합계의 양수 잔액만 분리한다.

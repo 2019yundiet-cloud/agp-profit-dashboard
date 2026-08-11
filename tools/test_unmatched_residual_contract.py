@@ -18,6 +18,12 @@ class UnmatchedResidualContractTests(unittest.TestCase):
     def test_material_negative_residual_is_not_hidden(self):
         self.assertEqual(normalize_rounding_residual(-7, 440), (-7, 440))
 
+    def test_api_reconciliation_has_named_visible_adjustment_lane(self):
+        source = Path(__file__).with_name("build_daily_detail.py").read_text(encoding="utf-8")
+        self.assertIn('"아임웹 API 추가·보정"', source)
+        self.assertIn("api_reconciled_without_unclassified_revenue", source)
+        self.assertIn("협찬 가능성이 있는 미분류 출고에서는 매출을 추정하지 않았습니다", source)
+
 
 if __name__ == "__main__":
     unittest.main()

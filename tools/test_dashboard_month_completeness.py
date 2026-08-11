@@ -69,6 +69,14 @@ class DashboardMonthCompletenessTest(unittest.TestCase):
             "2026-08-10",
         )
 
+    def test_july_uses_approved_fixed_cost_and_open_reconciliation_note(self):
+        month_config = extract_json_const(self.html, "monthConfig")
+        fixed_items = extract_json_const(self.html, "fixedCostsByMonth")
+        self.assertEqual(month_config["2026-07"]["fixedCost"], 18_952_126)
+        self.assertEqual(sum(row[1] for row in fixed_items["2026-07"]), 18_952_126)
+        self.assertIn("미분류 출고 28건", month_config["2026-07"]["closeNote"])
+        self.assertIn("월마감 확정 전", month_config["2026-07"]["closeNote"])
+
 
 if __name__ == "__main__":
     unittest.main()
