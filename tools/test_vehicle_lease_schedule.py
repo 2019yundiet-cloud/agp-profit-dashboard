@@ -234,7 +234,7 @@ class VehicleLeaseScheduleTests(unittest.TestCase):
             - row["meta"]
             - row["googleAd"]
             - row["naverAd"]
-            - row["revenue"] * 0.12
+            - row["revenue"] * (10 / 110 + 0.02)
             for row in self.daily_rows["2026-07"]
         )
         fixed_cost_rows = {name: amount for name, amount, *_ in self.fixed_costs["2026-07"]}
