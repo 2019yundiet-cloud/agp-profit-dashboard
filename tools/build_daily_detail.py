@@ -59,7 +59,7 @@ BALANCY_SET_COST_SKUS = (
     "밸런시 토마토 280g",
 )
 DEFAULT_IMWEB_ARTIFACT_DIR = Path(
-    "/Users/junho/Documents/codex/data/imweb_profit/artifacts"
+    "/Users/junho/Documents/데이터관리/data/imweb_profit/artifacts"
 )
 
 # 출고 SKU의 실제 제품명을 우선한다. 단백밥/도시락 맛 이름은 개별 육류
@@ -341,9 +341,11 @@ def build_month_detail(
                count(distinct fo.internal_customer_id) filter (where fo.is_first_order)::int first,
                count(distinct fo.internal_customer_id) filter (where fo.is_repeat_order)::int repeat
         from fact_order fo
-        where fo.is_valid_purchase and fo.paid_datetime >= %s and fo.paid_datetime < {end_sql}
+        where fo.is_valid_purchase
+          and fo.source_system = any(%s)
+          and fo.paid_datetime >= %s and fo.paid_datetime < {end_sql}
         group by 1, 2
-    """, (start, end))
+    """, (list(SOURCE_SYSTEMS), start, end))
     stat_map = {(r["d"], r["ch"]): r for r in stats}
 
     cat_sql = CATEGORY_CASE_SQL.replace("%", "%%")  # psycopg2 paramstyle에서 LIKE % 이스케이프

@@ -8,6 +8,7 @@ from build_daily_detail import (
     BALANCY_SET_COST_SKUS,
     CATEGORY_CASE_SQL,
     CATEGORY_ORDER,
+    DEFAULT_IMWEB_ARTIFACT_DIR,
     SOURCE_SYSTEMS,
     resolve_end_exclusive,
 )
@@ -38,6 +39,16 @@ class DailyDetailContractTests(unittest.TestCase):
         self.assertEqual(SOURCE_SYSTEMS, ("ga4_self_store", "naver_commerce"))
         self.assertIn("밸런시 마라 280g", BALANCY_SET_COST_SKUS)
         self.assertIn("밸런시 시그니처 280g", BALANCY_SET_COST_SKUS)
+
+    def test_default_self_store_artifact_path_uses_current_source_of_truth(self):
+        self.assertEqual(
+            DEFAULT_IMWEB_ARTIFACT_DIR,
+            Path("/Users/junho/Documents/데이터관리/data/imweb_profit/artifacts"),
+        )
+
+    def test_order_and_buyer_stats_use_only_supported_channel_sources(self):
+        source = Path(__file__).with_name("build_daily_detail.py").read_text(encoding="utf-8")
+        self.assertIn("fo.source_system = any(%s)", source)
 
     def test_unmatched_naver_revenue_is_visible_residual_not_fabricated_sku(self):
         source = Path(__file__).with_name("build_daily_detail.py").read_text(encoding="utf-8")

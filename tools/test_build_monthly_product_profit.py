@@ -8,10 +8,22 @@ import openpyxl
 
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from build_monthly_product_profit import allocate_order, build_rows, category_for_sku, load_costs, unit_cost_for_source
+from build_monthly_product_profit import (
+    allocate_order,
+    build_rows,
+    category_for_sku,
+    load_costs,
+    resolve_end_exclusive,
+    unit_cost_for_source,
+)
 
 
 class MonthlyProductProfitTests(unittest.TestCase):
+    def test_through_date_limits_monthly_product_query_to_next_day_exclusive(self):
+        self.assertEqual(resolve_end_exclusive("2026-08", "2026-08-12"), "2026-08-13")
+        with self.assertRaises(ValueError):
+            resolve_end_exclusive("2026-08", "2026-09-01")
+
     def test_allocation_reconciles_exact_order_revenue(self):
         rows = allocate_order(
             Decimal("10000"),

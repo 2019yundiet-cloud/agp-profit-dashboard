@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import argparse
 from collections import defaultdict
-from datetime import date
+from datetime import date, timedelta
 from decimal import Decimal, ROUND_HALF_UP
 import json
 import os
@@ -66,6 +66,15 @@ def next_month(month: str) -> str:
     if number == 12:
         return f"{year + 1:04d}-01-01"
     return f"{year:04d}-{number + 1:02d}-01"
+
+
+def resolve_end_exclusive(month: str, through_date: str | None = None) -> str:
+    if not through_date:
+        return next_month(month)
+    target = date.fromisoformat(through_date)
+    if target.strftime("%Y-%m") != month:
+        raise ValueError("--through-date must belong to --month")
+    return (target + timedelta(days=1)).isoformat()
 
 
 def category_for_sku(sku_name: str) -> str:
@@ -145,9 +154,9 @@ def allocate_order(revenue: Decimal, lines: list[tuple[str, Decimal, Decimal]]) 
     return allocations
 
 
-def fetch_month_data(conn, month: str) -> dict:
+def fetch_month_data(conn, month: str, through_date: str | None = None) -> dict:
     start = f"{month}-01"
-    end = next_month(month)
+    end = resolve_end_exclusive(month, through_date)
     with conn.cursor() as cur:
         cur.execute(
             """
@@ -240,6 +249,7 @@ def fetch_month_data(conn, month: str) -> dict:
         "gauge_orders": int(gauge_orders or 0),
         "gauge_revenue": as_decimal(gauge_revenue),
         "official_channel_cogs": official_channel_cogs,
+        "through_date": through_date or (date.fromisoformat(end) - timedelta(days=1)).isoformat(),
     }
 
 
@@ -316,6 +326,7 @@ def build_rows(data: dict, costs: dict[str, Decimal], product_limit: int = 15) -
     shipping_cogs = sum((values["cogs"] for values in product_totals.values()), Decimal("0"))
     official_channel_cogs = data["official_channel_cogs"]
     meta = {
+        "throughDate": data.get("through_date"),
         "factOrders": fact_orders,
         "matchedOrders": matched_orders,
         "unmatchedOrders": fact_orders - matched_orders,
@@ -410,6 +421,7 @@ def main() -> None:
     parser.add_argument("--html", default=str(Path(__file__).resolve().parent.parent / "index.html"))
     parser.add_argument("--cost-master", default=str(Path.home() / "Desktop" / "원가관리.xlsx"))
     parser.add_argument("--product-limit", type=int, default=15)
+    parser.add_argument("--through-date", help="이 날짜까지만 닫힌 주문으로 생성 (YYYY-MM-DD)")
     parser.add_argument("--dry-run", action="store_true")
     args = parser.parse_args()
 
@@ -425,7 +437,7 @@ def main() -> None:
     costs = load_costs(cost_path)
     with psycopg2.connect(database_url) as conn:
         conn.set_session(readonly=True)
-        data = fetch_month_data(conn, args.month)
+        data = fetch_month_data(conn, args.month, args.through_date)
     categories, products, meta = build_rows(data, costs, product_limit=args.product_limit)
     if not categories or not products:
         raise SystemExit(f"{args.month} 제품 손익 행이 비어 있습니다")
