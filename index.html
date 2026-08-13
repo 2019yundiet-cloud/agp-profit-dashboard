@@ -4633,7 +4633,10 @@ mtd_achievement_rate =
         `;
       };
       const productRows = detail.products.map(([cat, qty, catBuyers, amt, catCogs, iAmt, nAmt]) => {
-        const margin = amt - catCogs;
+        const excludedFromProfit = cat === "미매칭 손익 제외";
+        const margin = excludedFromProfit ? 0 : amt - catCogs;
+        const marginText = excludedFromProfit ? "손익 제외" : won(margin);
+        const marginRateText = excludedFromProfit ? "-" : (amt > 0 ? percent(margin / amt) : "-");
         return `
           <tr>
             <td>${cat}</td>
@@ -4644,8 +4647,8 @@ mtd_achievement_rate =
             <td>${won(nAmt)}</td>
             <td>${won(qty > 0 ? amt / qty : 0)}</td>
             <td>${won(catCogs)}</td>
-            <td class="${margin >= 0 ? "good" : "bad"}">${won(margin)}</td>
-            <td>${amt > 0 ? percent(margin / amt) : "-"}</td>
+            <td class="${excludedFromProfit ? "" : margin >= 0 ? "good" : "bad"}">${marginText}</td>
+            <td>${marginRateText}</td>
           </tr>
         `;
       }).join("");

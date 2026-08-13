@@ -64,6 +64,11 @@ class DailyDetailContractTests(unittest.TestCase):
         self.assertIn("미매칭 손익 제외", source)
         self.assertIn("사용자 승인 잠정 매칭 기준", source)
 
+    def test_dashboard_does_not_render_excluded_revenue_as_product_margin(self):
+        html = Path(__file__).resolve().parent.parent.joinpath("index.html").read_text(encoding="utf-8")
+        self.assertIn('excludedFromProfit = cat === "미매칭 손익 제외"', html)
+        self.assertIn('excludedFromProfit ? "손익 제외"', html)
+
     def test_visible_generated_at_is_bound_to_the_meta_timestamp(self):
         html = Path(__file__).resolve().parent.parent.joinpath("index.html").read_text(encoding="utf-8")
         self.assertIn('meta[name="data-generated-at"]', html)
