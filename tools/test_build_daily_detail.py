@@ -9,11 +9,15 @@ from build_daily_detail import (
     CATEGORY_CASE_SQL,
     CATEGORY_ORDER,
     SOURCE_SYSTEMS,
+    resolve_end_exclusive,
 )
 from build_daily_rows import update_metadata
 
 
 class DailyDetailContractTests(unittest.TestCase):
+    def test_through_date_limits_detail_query_to_next_day_exclusive(self):
+        self.assertEqual(resolve_end_exclusive("2026-08", "2026-08-12"), "2026-08-13")
+
     def test_shipping_match_is_the_product_detail_source(self):
         source = Path(__file__).with_name("build_daily_detail.py").read_text(encoding="utf-8")
         self.assertIn("from stg_ezadmin_order_match sem", source)
@@ -42,6 +46,12 @@ class DailyDetailContractTests(unittest.TestCase):
         self.assertIn('residual["nAmt"] += naver_residual_revenue', source)
         self.assertIn("네이버 매출", source)
         self.assertNotIn("naver_fallback_sku", source)
+
+    def test_matched_basis_excludes_unmatched_revenue_from_contribution_check(self):
+        source = Path(__file__).with_name("build_daily_detail.py").read_text(encoding="utf-8")
+        self.assertIn("excludedUnmatchedRevenue", source)
+        self.assertIn("미매칭 손익 제외", source)
+        self.assertIn("사용자 승인 잠정 매칭 기준", source)
 
     def test_visible_generated_at_is_bound_to_the_meta_timestamp(self):
         html = Path(__file__).resolve().parent.parent.joinpath("index.html").read_text(encoding="utf-8")

@@ -16,7 +16,7 @@ import calendar
 import json
 import os
 import re
-from datetime import datetime
+from datetime import date, datetime, timedelta
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
@@ -28,7 +28,20 @@ def num(v):
     return int(f) if f == int(f) else round(f, 2)
 
 
-def fetch_rows(database_url, month):
+def resolve_end_exclusive(month, through_date=None):
+    month_start = datetime.strptime(f"{month}-01", "%Y-%m-%d").date()
+    if through_date:
+        cutoff = date.fromisoformat(through_date)
+        if cutoff.strftime("%Y-%m") != month:
+            raise SystemExit("--through-date는 --month 안의 날짜여야 합니다")
+        return (cutoff + timedelta(days=1)).isoformat()
+    if month_start.month == 12:
+        return date(month_start.year + 1, 1, 1).isoformat()
+    return date(month_start.year, month_start.month + 1, 1).isoformat()
+
+
+def fetch_rows(database_url, month, through_date=None):
+    end_exclusive = resolve_end_exclusive(month, through_date)
     conn = psycopg2.connect(database_url)
     try:
         cur = conn.cursor()
@@ -50,10 +63,10 @@ def fetch_rows(database_url, month):
               from mart_daily_profit_gauge_source source_rows
               left join mart_daily_profit_gauge gauge_rows using (report_date)
             ) daily_source
-            where report_date >= %s::date and report_date < (%s::date + interval '1 month')::date
+            where report_date >= %s::date and report_date < %s::date
             order by report_date
             """,
-            (f"{month}-01", f"{month}-01"),
+            (f"{month}-01", end_exclusive),
         )
         return cur.fetchall()
     finally:
@@ -186,6 +199,7 @@ def main():
     parser.add_argument("--month", required=True, help="YYYY-MM")
     parser.add_argument("--html", default=str(Path(__file__).resolve().parent.parent / "index.html"))
     parser.add_argument("--dry-run", action="store_true")
+    parser.add_argument("--through-date", help="이 날짜까지만 닫힌 행으로 생성 (YYYY-MM-DD)")
     parser.add_argument("--generated-at", help="검증 가능한 ISO-8601 생성시각; 생략 시 Asia/Seoul 현재시각")
     args = parser.parse_args()
 
@@ -195,7 +209,7 @@ def main():
     if not database_url:
         raise SystemExit("DATABASE_URL 환경변수가 필요합니다")
 
-    rows = fetch_rows(database_url, args.month)
+    rows = fetch_rows(database_url, args.month, args.through_date)
     validate_row_coverage(args.month, rows)
     block, quality_str = render_block(args.month, rows)
     update_html(

@@ -28,7 +28,7 @@ import json
 import os
 import re
 import sys
-from datetime import datetime
+from datetime import date, datetime, timedelta
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
@@ -48,6 +48,7 @@ CATEGORY_ORDER = [
     "기타",
     "부가옵션",
     TAXONOMY_REVIEW_CATEGORY,
+    "미매칭 손익 제외",
     "미매칭 추정",
 ]
 SOURCE_SYSTEMS = ("ga4_self_store", "naver_commerce")
@@ -84,6 +85,18 @@ def fetch_all(cur, sql, params):
     cur.execute(sql, params)
     cols = [c[0] for c in cur.description]
     return [dict(zip(cols, row)) for row in cur.fetchall()]
+
+
+def resolve_end_exclusive(month, through_date=None):
+    month_start = datetime.strptime(f"{month}-01", "%Y-%m-%d").date()
+    if through_date:
+        cutoff = date.fromisoformat(through_date)
+        if cutoff.strftime("%Y-%m") != month:
+            raise SystemExit("--through-date는 --month 안의 날짜여야 합니다")
+        return (cutoff + timedelta(days=1)).isoformat()
+    if month_start.month == 12:
+        return date(month_start.year + 1, 1, 1).isoformat()
+    return date(month_start.year, month_start.month + 1, 1).isoformat()
 
 
 def classify_sku_name(name):
@@ -153,9 +166,10 @@ def latest_dashboard_basis(text, fallback):
     return max(dates, default=fallback)
 
 
-def load_self_store_artifact_days(month, artifact_dir):
+def load_self_store_artifact_days(month, artifact_dir, allowed_low_coverage_dates=None):
     """Load only packlist-verified, aggregate-safe self-store category rows."""
     artifact_dir = Path(artifact_dir)
+    allowed_low_coverage_dates = set(allowed_low_coverage_dates or ())
     days = {}
     issues = {}
     for day_dir in sorted(artifact_dir.glob(f"{month}-??")):
@@ -175,7 +189,14 @@ def load_self_store_artifact_days(month, artifact_dir):
             violations.append("by_imweb_items")
         if int(stats.get("by_ezadmin_packlist") or 0) != int(stats.get("matched") or 0):
             violations.append("packlist_count")
-        if float(summary.get("cost_coverage_rate") or 0) < 0.90:
+        low_coverage_exception = (
+            float(summary.get("cost_coverage_rate") or 0) < 0.90
+            and report_date in allowed_low_coverage_dates
+        )
+        if (
+            float(summary.get("cost_coverage_rate") or 0) < 0.90
+            and not low_coverage_exception
+        ):
             violations.append("cost_coverage_rate")
         if violations:
             issues[report_date] = f"artifact_contract_failed:{','.join(violations)}"
@@ -266,6 +287,7 @@ def load_self_store_artifact_days(month, artifact_dir):
             "matched_orders": matched_orders,
             "total_orders": int(summary.get("total_orders") or 0),
             "fingerprint": fingerprint,
+            "low_coverage_exception": low_coverage_exception,
         }
     return days, issues
 
@@ -275,9 +297,12 @@ def build_month_detail(
     month,
     artifact_dir=DEFAULT_IMWEB_ARTIFACT_DIR,
     required_self_store_category_date=None,
+    through_date=None,
+    allowed_low_coverage_dates=None,
 ):
     start = f"{month}-01"
-    end_sql = "(%s::date + interval '1 month')::date"
+    end = resolve_end_exclusive(month, through_date)
+    end_sql = "%s::date"
     cur = conn.cursor()
 
     gauge = fetch_all(cur, f"""
@@ -290,7 +315,7 @@ def build_month_detail(
         from mart_daily_profit_gauge_source
         where report_date >= %s and report_date < {end_sql}
         order by report_date
-    """, (start, start))
+    """, (start, end))
 
     imweb = {r["d"]: r for r in fetch_all(cur, f"""
         select extract(day from date_key::date)::int d, round(channel_fee)::bigint fee,
@@ -300,13 +325,13 @@ def build_month_detail(
                  api_reconciled_without_unclassified_revenue
         from imweb_profit_daily_summary
         where date_key::date >= %s and date_key::date < {end_sql} and source = 'ga4'
-    """, (start, start))}
+    """, (start, end))}
 
     naver = {r["d"]: r for r in fetch_all(cur, f"""
         select extract(day from report_date)::int d, round(cogs)::bigint cogs
         from vw_naver_commerce_profit_daily
         where report_date >= %s and report_date < {end_sql}
-    """, (start, start))}
+    """, (start, end))}
 
     stats = fetch_all(cur, f"""
         select extract(day from fo.paid_datetime)::int d,
@@ -318,7 +343,7 @@ def build_month_detail(
         from fact_order fo
         where fo.is_valid_purchase and fo.paid_datetime >= %s and fo.paid_datetime < {end_sql}
         group by 1, 2
-    """, (start, start))
+    """, (start, end))
     stat_map = {(r["d"], r["ch"]): r for r in stats}
 
     cat_sql = CATEGORY_CASE_SQL.replace("%", "%%")  # psycopg2 paramstyle에서 LIKE % 이스케이프
@@ -374,7 +399,7 @@ def build_month_detail(
                sum(qty)::int qty, count(distinct internal_customer_id)::int buyers,
                round(sum(amt))::bigint amt, round(sum(cogs))::bigint cogs
         from items group by 1, 2, 3
-    """, (list(BALANCY_SET_COST_SKUS), list(SOURCE_SYSTEMS), start, start, start, start))
+    """, (list(BALANCY_SET_COST_SKUS), list(SOURCE_SYSTEMS), start, end, start, end))
 
     # 자사몰 fact_order_item 배분 규약 감지 (품목표 원천 아님 — 경고 노트 전용).
     # 웨어하우스 전체 리빌드는 수량비례(source_order_item_id null), 자사몰 일별수익
@@ -389,9 +414,13 @@ def build_month_detail(
         where fo.source_system = 'ga4_self_store'
           and fo.paid_datetime >= %s and fo.paid_datetime < {end_sql}
         group by 1
-    """, (start, start))}
+    """, (start, end))}
 
-    artifact_days, artifact_issues = load_self_store_artifact_days(month, artifact_dir)
+    artifact_days, artifact_issues = load_self_store_artifact_days(
+        month,
+        artifact_dir,
+        allowed_low_coverage_dates=allowed_low_coverage_dates,
+    )
     out = {}
     errors = []
     used_artifact_dates = set()
@@ -406,6 +435,7 @@ def build_month_detail(
 
         day_products = [p for p in products if p["d"] == d]
         artifact_note = ""
+        matched_basis_excluded_revenue = 0
         artifact = artifact_days.get(report_date)
         if artifact:
             if (
@@ -420,6 +450,13 @@ def build_month_detail(
                     f"(매출 반영률 {artifact['matched_revenue'] / max(artifact['total_revenue'], 1) * 100:.1f}%, "
                     f"스냅샷 {artifact['fingerprint'][:12]})."
                 )
+                if artifact["low_coverage_exception"]:
+                    if artifact["unmatched_cogs"] == 0:
+                        matched_basis_excluded_revenue = artifact["unmatched_revenue"]
+                    artifact_note += (
+                        " 사용자 승인에 따라 잠정 매칭 기준으로 게시했으며, "
+                        "미매칭 주문의 원가는 추정하지 않았습니다."
+                    )
             else:
                 artifact_note = (
                     "자사몰 상세 산출물과 공식 일별 손익의 스냅샷이 달라 "
@@ -454,7 +491,13 @@ def build_month_detail(
                     f"(매출 {imweb_residual_revenue}, 원가 {imweb_residual_cogs})"
                 )
             else:
-                residual_category = "아임웹 API 추가·보정" if api_reconciled else "미매칭 추정"
+                residual_category = (
+                    "아임웹 API 추가·보정"
+                    if api_reconciled
+                    else "미매칭 손익 제외"
+                    if matched_basis_excluded_revenue
+                    else "미매칭 추정"
+                )
                 residual = cat_map.setdefault(
                     residual_category,
                     {"qty": 0, "buyers": 0, "amt": 0, "cogs": 0, "iAmt": 0, "nAmt": 0},
@@ -467,6 +510,11 @@ def build_month_detail(
                         f"아임웹 API에서 확인된 추가 주문과 현재 결제금액 보정을 별도 행으로 반영했습니다 "
                         f"(자사몰 매출 보정 {imweb_residual_revenue:,}원, 확인 원가 {imweb_residual_cogs:,}원). "
                         "협찬 가능성이 있는 미분류 출고에서는 매출을 추정하지 않았습니다."
+                    )
+                elif matched_basis_excluded_revenue:
+                    residual_notes.append(
+                        "출고 SKU가 확인되지 않은 자사몰 주문은 사용자 승인 잠정 매칭 기준에 따라 "
+                        f"손익에서 제외했습니다 (매출 {imweb_residual_revenue:,}원, 반영 원가 0원)."
                     )
                 else:
                     residual_notes.append(
@@ -524,6 +572,7 @@ def build_month_detail(
 
         detail = {
             "imweb": {"pay": g["ipay"], "fee": iw["fee"], "dfee": g["idf"], "cogs": iw["cogs"], "contrib": g["ic"],
+                      "excludedUnmatchedRevenue": matched_basis_excluded_revenue,
                       **{k: stat_map.get((d, "i"), {}).get(k, 0) for k in ("orders", "buyers", "first", "repeat")}},
             "naver": {"pay": g["npay"], "fee": n_fee, "dfee": g["ndf"], "cogs": nv["cogs"], "contrib": g["nc"],
                       **{k: stat_map.get((d, "n"), {}).get(k, 0) for k in ("orders", "buyers", "first", "repeat")}},
@@ -534,7 +583,13 @@ def build_month_detail(
 
         for ch_name in ("imweb", "naver"):
             ch = detail[ch_name]
-            calc = ch["pay"] - ch["fee"] - ch["dfee"] - ch["cogs"]
+            calc = (
+                ch["pay"]
+                - int(ch.get("excludedUnmatchedRevenue") or 0)
+                - ch["fee"]
+                - ch["dfee"]
+                - ch["cogs"]
+            )
             if abs(calc - ch["contrib"]) > 2:
                 errors.append(f"{month}-{d:02d} {ch_name}: 검증 실패 계산 {calc} != 공헌이익 {ch['contrib']}")
         for product_ch, official_ch, label in (("i", detail["imweb"], "imweb"), ("n", detail["naver"], "naver")):
@@ -678,6 +733,13 @@ def main():
         help="이 날짜의 자사몰 상세가 검증된 packlist 산출물로 분류되지 않으면 실패",
     )
     parser.add_argument("--dry-run", action="store_true")
+    parser.add_argument("--through-date", help="이 날짜까지만 닫힌 행으로 생성 (YYYY-MM-DD)")
+    parser.add_argument(
+        "--allow-low-coverage-date",
+        action="append",
+        default=[],
+        help="사용자가 명시 승인한 잠정 매칭 기준 날짜; 반복 지정 가능",
+    )
     args = parser.parse_args()
 
     if not re.fullmatch(r"\d{4}-\d{2}", args.month):
@@ -693,6 +755,8 @@ def main():
             args.month,
             artifact_dir=args.imweb_artifact_dir,
             required_self_store_category_date=args.require_self_store_category_date,
+            through_date=args.through_date,
+            allowed_low_coverage_dates=args.allow_low_coverage_date,
         )
     finally:
         conn.close()

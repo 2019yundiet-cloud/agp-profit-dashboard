@@ -16,6 +16,46 @@ from build_daily_detail import (
 
 
 class SelfStoreCategoryArtifactTests(unittest.TestCase):
+    def test_low_coverage_artifact_requires_exact_date_exception(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            day_dir = Path(tmp) / "2026-08-12"
+            day_dir.mkdir()
+            (day_dir / "ez_matching.json").write_text(
+                json.dumps(
+                    {
+                        "matching_mode": "ezadmin_packlist_only",
+                        "stats": {"matched": 0, "by_ezadmin_packlist": 0, "by_imweb_items": 0},
+                    }
+                ),
+                encoding="utf-8",
+            )
+            (day_dir / "ga4_profit.json").write_text(
+                json.dumps(
+                    {
+                        "summary": {
+                            "date": "2026-08-12",
+                            "total_orders": 1,
+                            "total_revenue": 10000,
+                            "matched_revenue": 0,
+                            "unmatched_revenue": 10000,
+                            "total_sku_cost": 0,
+                            "cost_coverage_rate": 0.0,
+                        },
+                        "orders": [],
+                    }
+                ),
+                encoding="utf-8",
+            )
+            rejected, issues = load_self_store_artifact_days("2026-08", tmp)
+            accepted, accepted_issues = load_self_store_artifact_days(
+                "2026-08", tmp, allowed_low_coverage_dates={"2026-08-12"}
+            )
+
+        self.assertEqual(rejected, {})
+        self.assertIn("2026-08-12", issues)
+        self.assertEqual(accepted_issues, {})
+        self.assertTrue(accepted["2026-08-12"]["low_coverage_exception"])
+
     def test_category_taxonomy(self):
         self.assertEqual(classify_sku_name("윤식단 단백밥 오리지널 [L]"), "단백밥")
         self.assertEqual(classify_sku_name("데리야끼 소스 40g"), "소스")
