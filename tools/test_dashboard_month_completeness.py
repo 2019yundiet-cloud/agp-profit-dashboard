@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import json
+import re
 import sys
 import unittest
 from datetime import datetime
@@ -64,9 +65,12 @@ class DashboardMonthCompletenessTest(unittest.TestCase):
         )
 
     def test_historical_backfill_keeps_newest_page_basis(self):
+        current_basis = re.search(
+            r'<meta name="data-basis-date" content="([^"]+)"', self.html
+        ).group(1)
         self.assertEqual(
             build_daily_rows.latest_dashboard_basis(self.html, "2026-07-31"),
-            "2026-08-12",
+            current_basis,
         )
 
     def test_through_date_limits_query_to_next_day_exclusive(self):
