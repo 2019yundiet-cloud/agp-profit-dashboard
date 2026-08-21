@@ -38,6 +38,8 @@
 ## 기타 확정 사항
 
 - 고정비 정본은 `dim_agp_fixed_cost_monthly`(DB)와 index.html `fixedCostsByMonth`가 동일 값.
-- 네이버 수수료 6.8%·배송비 6,200원/주문은 추정 고정값(자사몰은 실측) — 값 변경은 소유자 승인 필요.
+- 네이버 수수료는 6.8%다. 배송부담은 결제일 기준으로 2026-07-01 이전
+  6,200원/주문, 2026-07-01부터 6,442원/주문을 적용한다. 한 개의 영구
+  고정값으로 되돌리지 않는다.
 - DB 뷰 변경은 supabase MCP가 읽기 전용이므로 `~/Documents/codex`에서
   `supabase db query --linked -f <sql>` 경로를 쓴다 (`db push` 금지).
