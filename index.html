@@ -4590,11 +4590,30 @@ mtd_achievement_rate =
           </tr>
         `).join("");
       };
-      document.getElementById("categoryProfitRows").innerHTML = renderRows(categoryRowsByMonth[monthKey]);
-      document.getElementById("productProfitRows").innerHTML = renderRows(productRowsByMonth[monthKey]);
+      const categoryRows = categoryRowsByMonth[monthKey] || [];
+      const productRows = productRowsByMonth[monthKey] || [];
       const meta = productProfitMetaByMonth[monthKey];
       const categoryNote = document.getElementById("categoryProfitNote");
       const productNote = document.getElementById("productProfitNote");
+      const latestDailyDay = Math.max(0, ...(dailyRowsByMonth[monthKey] || []).map(row => Number(row.day || 0)));
+      const productThroughDay = Number(String(meta?.throughDate || meta?.productDataThrough || "").slice(-2)) || 0;
+      const hasBroadPureProteinCategory = categoryRows.some(row => /^(윤식단\s*)?순수단백$/.test(String(row.name || "").trim()));
+      const reconciliationFailed = Boolean(meta) && (
+        Number(meta.coveragePercent || 0) < 90
+        || Number(meta.factRevenueGapVsGauge || 0) !== 0
+        || Number(meta.cogsGapVsDailyProfit || 0) !== 0
+        || (latestDailyDay > 0 && productThroughDay > 0 && productThroughDay < latestDailyDay)
+      );
+      if (hasBroadPureProteinCategory || reconciliationFailed) {
+        const hiddenRow = `<tr><td colspan="4">현재 검증된 일별 상세를 사용합니다.</td></tr>`;
+        document.getElementById("categoryProfitRows").innerHTML = hiddenRow;
+        document.getElementById("productProfitRows").innerHTML = hiddenRow;
+        categoryNote.textContent = "월간 제품 분류표는 세부 맛 분류와 공식 원가 대사가 끝나지 않아 숨겼습니다. 날짜별 행을 눌러 검증된 출고 SKU 상세를 확인해 주세요.";
+        productNote.textContent = "오래된 월간 제품표는 현재 일별 손익과 금액이 일치하지 않아 표시하지 않습니다.";
+        return;
+      }
+      document.getElementById("categoryProfitRows").innerHTML = renderRows(categoryRows);
+      document.getElementById("productProfitRows").innerHTML = renderRows(productRows);
       if (meta) {
         const coverage = Number(meta.coveragePercent || 0).toLocaleString("ko-KR", { maximumFractionDigits: 1 });
         const productThroughText = meta.productDataThrough ? `제품표 기준 ${meta.productDataThrough} · ` : "";
