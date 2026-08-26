@@ -30,10 +30,14 @@ class DailyDetailContractTests(unittest.TestCase):
 
     def test_pure_protein_flavors_are_separate_categories(self):
         self.assertNotIn("순수단백", CATEGORY_ORDER)
-        for category in ("직화제육", "불고기", "쌈장제육"):
+        for category in ("직화제육", "불고기", "쌈장제육", "돈다리살 고추장맛"):
             self.assertIn(category, CATEGORY_ORDER)
             self.assertIn(f"then '{category}'", CATEGORY_CASE_SQL)
         self.assertLess(CATEGORY_CASE_SQL.index("then '단백밥'"), CATEGORY_CASE_SQL.index("then '직화제육'"))
+        self.assertLess(
+            CATEGORY_CASE_SQL.index("then '돈다리살 고추장맛'"),
+            CATEGORY_CASE_SQL.index("then '직화제육'"),
+        )
 
     def test_channel_and_balancy_cost_contracts_match_monthly_builder(self):
         self.assertEqual(SOURCE_SYSTEMS, ("ga4_self_store", "naver_commerce"))

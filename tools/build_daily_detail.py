@@ -42,6 +42,7 @@ CATEGORY_ORDER = [
     "직화제육",
     "불고기",
     "쌈장제육",
+    "돈다리살 고추장맛",
     "닭가슴살",
     "함박스테이크",
     "밸런시",
@@ -70,6 +71,7 @@ CATEGORY_CASE_SQL = """
       when nm like '%밸런시%' or nm like '%곡물볶음밥%' then '밸런시'
       when nm like '%소스%' or nm like '%드레싱%' then '소스'
       when nm like '%단백밥%' or nm like '%담백밥%' or nm like '%도시락%' or nm like '%단백질 50g%' or nm like '%단백질50g%' then '단백밥'
+      when nm like '%그릴드 포크 고추장맛%' or nm like '%그릴드포크 고추장맛%' or nm like '%돈다리살 고추장맛%' then '돈다리살 고추장맛'
       when (nm like '%직화제육%' or nm like '%제육볶음%' or nm like '%저당 제육%' or nm like '%저당제육%') then '직화제육'
       when (nm like '%간장불고기%' or nm like '%저당불고기%' or nm like '%저당 불고기%' or nm like '%불고기%') then '불고기'
       when nm like '%쌈장제육%' then '쌈장제육'
@@ -109,6 +111,8 @@ def classify_sku_name(name):
         return "소스"
     if any(token in nm for token in ("단백밥", "담백밥", "도시락", "단백질50g")):
         return "단백밥"
+    if any(token in nm for token in ("그릴드포크고추장맛", "돈다리살고추장맛")):
+        return "돈다리살 고추장맛"
     if any(token in nm for token in ("직화제육", "제육볶음", "저당제육")):
         return "직화제육"
     if any(token in nm for token in ("간장불고기", "저당불고기", "불고기")):

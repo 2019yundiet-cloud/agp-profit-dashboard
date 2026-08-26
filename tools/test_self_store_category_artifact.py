@@ -62,6 +62,8 @@ class SelfStoreCategoryArtifactTests(unittest.TestCase):
         self.assertEqual(classify_sku_name("윤식단 순수단백 저당 제육볶음 100g"), "직화제육")
         self.assertEqual(classify_sku_name("윤식단 순수단백 저당 간장불고기 100g"), "불고기")
         self.assertEqual(classify_sku_name("윤식단 순수단백 저당 쌈장제육 150g"), "쌈장제육")
+        self.assertEqual(classify_sku_name("그릴드 포크 고추장맛"), "돈다리살 고추장맛")
+        self.assertEqual(classify_sku_name("윤식단 돈다리살 고추장맛 100g"), "돈다리살 고추장맛")
         self.assertEqual(classify_sku_name("윤식단 단백밥 직화제육"), "단백밥")
         self.assertEqual(classify_sku_name("윤식단 단백밥 단짠불고기"), "단백밥")
         self.assertEqual(classify_sku_name("윤식단 단백밥 쌈장제육"), "단백밥")
@@ -98,10 +100,10 @@ class SelfStoreCategoryArtifactTests(unittest.TestCase):
                         "summary": {
                             "date": "2026-07-27",
                             "total_orders": 1,
-                            "total_revenue": 20000,
-                            "matched_revenue": 20000,
+                            "total_revenue": 37000,
+                            "matched_revenue": 37000,
                             "unmatched_revenue": 0,
-                            "total_sku_cost": 10000,
+                            "total_sku_cost": 20500,
                             "cost_coverage_rate": 1.0,
                         },
                         "orders": [
@@ -128,6 +130,12 @@ class SelfStoreCategoryArtifactTests(unittest.TestCase):
                                         "revenue_allocated": 7000,
                                         "total_cost": 3500,
                                     },
+                                    {
+                                        "sku": "그릴드 포크 고추장맛",
+                                        "qty": 7,
+                                        "revenue_allocated": 17000,
+                                        "total_cost": 10500,
+                                    },
                                 ],
                             }
                         ],
@@ -141,11 +149,11 @@ class SelfStoreCategoryArtifactTests(unittest.TestCase):
 
         self.assertEqual(issues, {})
         result = days["2026-07-27"]
-        self.assertEqual(result["matched_revenue"], 20000)
-        self.assertEqual(result["total_cogs"], 10000)
+        self.assertEqual(result["matched_revenue"], 37000)
+        self.assertEqual(result["total_cogs"], 20500)
         self.assertEqual(
             {row["category"] for row in result["rows"]},
-            {"직화제육", "불고기", "쌈장제육"},
+            {"직화제육", "불고기", "쌈장제육", "돈다리살 고추장맛"},
         )
         serialized = json.dumps(result, ensure_ascii=False)
         self.assertNotIn("01000000000", serialized)
