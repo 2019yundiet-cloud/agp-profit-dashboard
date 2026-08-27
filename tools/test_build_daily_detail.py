@@ -10,6 +10,7 @@ from build_daily_detail import (
     CATEGORY_ORDER,
     DEFAULT_IMWEB_ARTIFACT_DIR,
     SOURCE_SYSTEMS,
+    resolve_channel_stats,
     resolve_end_exclusive,
 )
 from build_daily_rows import update_metadata
@@ -53,6 +54,15 @@ class DailyDetailContractTests(unittest.TestCase):
     def test_order_and_buyer_stats_use_only_supported_channel_sources(self):
         source = Path(__file__).with_name("build_daily_detail.py").read_text(encoding="utf-8")
         self.assertIn("fo.source_system = any(%s)", source)
+
+    def test_verified_self_store_artifact_overrides_only_order_count(self):
+        stat_map = {
+            (26, "i"): {"orders": 40, "buyers": 40, "first": 0, "repeat": 40}
+        }
+        self.assertEqual(
+            resolve_channel_stats(stat_map, 26, "i", {"total_orders": 42}),
+            {"orders": 42, "buyers": 40, "first": 0, "repeat": 40},
+        )
 
     def test_unmatched_naver_revenue_is_visible_residual_not_fabricated_sku(self):
         source = Path(__file__).with_name("build_daily_detail.py").read_text(encoding="utf-8")

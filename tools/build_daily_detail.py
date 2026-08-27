@@ -149,6 +149,17 @@ def normalize_rounding_residual(revenue, cogs):
     )
 
 
+def resolve_channel_stats(stat_map, day, channel, artifact=None):
+    """Keep buyer history from fact_order, but prefer verified artifact order totals."""
+    stats = {
+        key: stat_map.get((day, channel), {}).get(key, 0)
+        for key in ("orders", "buyers", "first", "repeat")
+    }
+    if channel == "i" and artifact:
+        stats["orders"] = int(artifact.get("total_orders") or 0)
+    return stats
+
+
 def latest_dashboard_basis(text, fallback):
     match = re.search(
         r"const dailyRowsByMonth = (\{.*?\});\n\s*const ",
@@ -579,9 +590,14 @@ def build_month_detail(
         detail = {
             "imweb": {"pay": g["ipay"], "fee": iw["fee"], "dfee": g["idf"], "cogs": iw["cogs"], "contrib": g["ic"],
                       "excludedUnmatchedRevenue": matched_basis_excluded_revenue,
-                      **{k: stat_map.get((d, "i"), {}).get(k, 0) for k in ("orders", "buyers", "first", "repeat")}},
+                      **resolve_channel_stats(
+                          stat_map,
+                          d,
+                          "i",
+                          artifact if report_date in used_artifact_dates else None,
+                      )},
             "naver": {"pay": g["npay"], "fee": n_fee, "dfee": g["ndf"], "cogs": nv["cogs"], "contrib": g["nc"],
-                      **{k: stat_map.get((d, "n"), {}).get(k, 0) for k in ("orders", "buyers", "first", "repeat")}},
+                      **resolve_channel_stats(stat_map, d, "n")},
             "ads": {"meta": g["meta"], "google": g["google"], "naver": g["nsa"]},
             "products": [[name, c["qty"], c["buyers"], c["amt"], c["cogs"], c["iAmt"], c["nAmt"]] for name, c in cats],
             "notes": notes,
