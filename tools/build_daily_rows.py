@@ -23,6 +23,9 @@ from zoneinfo import ZoneInfo
 import psycopg2
 
 
+NAVER_UNMATCHED_PROFIT_EFFECTIVE_DATE = date(2026, 8, 27)
+
+
 def num(v):
     f = float(v)
     return int(f) if f == int(f) else round(f, 2)
@@ -56,7 +59,13 @@ def fetch_rows(database_url, month, through_date=None):
                    round(imweb_delivery_fee)::bigint, round(naver_delivery_fee)::bigint,
                    round(total_delivery_fee)::bigint,
                    coalesce(meta_ad_spend_source, 'missing'), coalesce(google_ads_spend_source, 'missing'),
-                   coalesce(naver_searchad_spend_source, 'missing'), coalesce(data_quality_bucket, 'UNKNOWN')
+                   coalesce(naver_searchad_spend_source, 'missing'), coalesce(data_quality_bucket, 'UNKNOWN'),
+                   coalesce(naver_unmatched_orders, 0)::int,
+                   coalesce((
+                     select (to_jsonb(nv)->>'unmatched_profit_excluded')::boolean
+                     from vw_naver_commerce_profit_daily nv
+                     where nv.report_date = daily_source.report_date
+                   ), false)
             from (
               select source_rows.*,
                      coalesce(gauge_rows.data_quality_bucket, 'UNKNOWN') as data_quality_bucket
@@ -76,7 +85,7 @@ def fetch_rows(database_url, month, through_date=None):
 def render_block(month, rows):
     entries = []
     quality_counts = {}
-    for (d, pay, ipay, npay, ic, nc, meta, google, nsa, idf, ndf, tdf, ms, gs, ns, q) in rows:
+    for (d, pay, ipay, npay, ic, nc, meta, google, nsa, idf, ndf, tdf, ms, gs, ns, q, _nu, _nue) in rows:
         quality_counts[q] = quality_counts.get(q, 0) + 1
         entry = {
             "day": d, "revenue": num(pay), "selfRevenueApi": num(ipay), "naverRevenueApi": num(npay),
@@ -92,6 +101,25 @@ def render_block(month, rows):
     block = f'          "{month}": [\n' + ",\n".join(entries) + "\n          ]"
     quality_str = " · ".join(f"{k} {v}일" for k, v in sorted(quality_counts.items(), key=lambda kv: -kv[1]))
     return block, quality_str
+
+
+def validate_naver_unmatched_profit_contract(month, rows):
+    """Block a publish when a post-contract unmatched day still carries profit."""
+    failures = []
+    for row in rows:
+        report_date = date.fromisoformat(f"{month}-{int(row[0]):02d}")
+        unmatched_orders = int(row[16] or 0)
+        exclusion_active = bool(row[17])
+        if (
+            report_date >= NAVER_UNMATCHED_PROFIT_EFFECTIVE_DATE
+            and unmatched_orders > 0
+            and not exclusion_active
+        ):
+            failures.append(report_date.isoformat())
+    if failures:
+        raise SystemExit(
+            "NAVER_UNMATCHED_PROFIT_CONTRACT_MISSING: " + ",".join(failures)
+        )
 
 
 def validate_row_coverage(month, rows, now=None):
@@ -210,6 +238,7 @@ def main():
         raise SystemExit("DATABASE_URL 환경변수가 필요합니다")
 
     rows = fetch_rows(database_url, args.month, args.through_date)
+    validate_naver_unmatched_profit_contract(args.month, rows)
     validate_row_coverage(args.month, rows)
     block, quality_str = render_block(args.month, rows)
     update_html(

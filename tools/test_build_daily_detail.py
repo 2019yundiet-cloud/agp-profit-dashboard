@@ -13,7 +13,7 @@ from build_daily_detail import (
     resolve_channel_stats,
     resolve_end_exclusive,
 )
-from build_daily_rows import update_metadata
+from build_daily_rows import update_metadata, validate_naver_unmatched_profit_contract
 
 
 class DailyDetailContractTests(unittest.TestCase):
@@ -64,13 +64,29 @@ class DailyDetailContractTests(unittest.TestCase):
             {"orders": 42, "buyers": 40, "first": 0, "repeat": 40},
         )
 
-    def test_unmatched_naver_revenue_is_visible_residual_not_fabricated_sku(self):
+    def test_unmatched_naver_revenue_is_visible_but_excluded_from_profit(self):
         source = Path(__file__).with_name("build_daily_detail.py").read_text(encoding="utf-8")
         self.assertIn("naver_residual_revenue", source)
         self.assertIn("naver_residual_cogs", source)
         self.assertIn('residual["nAmt"] += naver_residual_revenue', source)
-        self.assertIn("네이버 매출", source)
+        self.assertIn("naver_excluded_revenue", source)
+        self.assertIn("출고 SKU가 확인되지 않은 네이버 주문", source)
         self.assertNotIn("naver_fallback_sku", source)
+
+    def test_daily_rows_blocks_unfixed_post_contract_unmatched_day(self):
+        row = (
+            27, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0,
+            "api", "api", "api", "OK", 1, False,
+        )
+        with self.assertRaisesRegex(SystemExit, "NAVER_UNMATCHED_PROFIT_CONTRACT_MISSING"):
+            validate_naver_unmatched_profit_contract("2026-08", [row])
+
+    def test_daily_rows_accepts_fixed_post_contract_unmatched_day(self):
+        row = (
+            27, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0,
+            "api", "api", "api", "OK", 1, True,
+        )
+        validate_naver_unmatched_profit_contract("2026-08", [row])
 
     def test_matched_basis_excludes_unmatched_revenue_from_contribution_check(self):
         source = Path(__file__).with_name("build_daily_detail.py").read_text(encoding="utf-8")

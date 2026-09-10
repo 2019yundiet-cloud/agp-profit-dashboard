@@ -343,7 +343,24 @@ def build_month_detail(
     """, (start, end))}
 
     naver = {r["d"]: r for r in fetch_all(cur, f"""
-        select extract(day from report_date)::int d, round(cogs)::bigint cogs
+        select extract(day from report_date)::int d, round(cogs)::bigint cogs,
+               round(coalesce(
+                 (to_jsonb(vw_naver_commerce_profit_daily)->>'channel_fee')::numeric,
+                 payment_amount * {NAVER_FEE_RATE}
+               ))::bigint fee,
+               round(coalesce(
+                 (to_jsonb(vw_naver_commerce_profit_daily)->>'delivery_burden')::numeric,
+                 0
+               ))::bigint dfee,
+               coalesce(unmatched_orders, 0)::int unmatched_orders,
+               coalesce(
+                 (to_jsonb(vw_naver_commerce_profit_daily)->>'unmatched_revenue')::numeric,
+                 0
+               )::bigint unmatched_revenue,
+               coalesce(
+                 (to_jsonb(vw_naver_commerce_profit_daily)->>'unmatched_profit_excluded')::boolean,
+                 false
+               ) unmatched_profit_excluded
         from vw_naver_commerce_profit_daily
         where report_date >= %s and report_date < {end_sql}
     """, (start, end))}
@@ -448,7 +465,24 @@ def build_month_detail(
         if not iw or nv is None:
             errors.append(f"{month}-{d:02d}: 자사몰/네이버 요약 행 누락 (imweb={bool(iw)}, naver={nv is not None})")
             continue
-        n_fee = round(g["npay"] * NAVER_FEE_RATE)
+        n_fee = nv["fee"]
+        naver_excluded_revenue = (
+            int(nv["unmatched_revenue"] or 0)
+            if nv["unmatched_profit_excluded"]
+            else 0
+        )
+        if (
+            report_date >= "2026-08-27"
+            and int(nv["unmatched_orders"] or 0) > 0
+            and not nv["unmatched_profit_excluded"]
+        ):
+            errors.append(
+                f"{report_date} naver: NAVER_UNMATCHED_PROFIT_CONTRACT_MISSING"
+            )
+        if nv["unmatched_profit_excluded"] and g["ndf"] != nv["dfee"]:
+            errors.append(
+                f"{report_date} naver: 일별 행 배송비 {g['ndf']} != 계약 배송비 {nv['dfee']}"
+            )
 
         day_products = [p for p in products if p["d"] == d]
         artifact_note = ""
@@ -553,17 +587,28 @@ def build_month_detail(
                     f"(매출 {naver_residual_revenue}, 원가 {naver_residual_cogs})"
                 )
             else:
+                residual_category = (
+                    "미매칭 손익 제외"
+                    if naver_excluded_revenue
+                    else "미매칭 추정"
+                )
                 residual = cat_map.setdefault(
-                    "미매칭 추정",
+                    residual_category,
                     {"qty": 0, "buyers": 0, "amt": 0, "cogs": 0, "iAmt": 0, "nAmt": 0},
                 )
                 residual["amt"] += naver_residual_revenue
                 residual["cogs"] += naver_residual_cogs
                 residual["nAmt"] += naver_residual_revenue
-                residual_notes.append(
-                    f"출고 SKU가 확인되지 않은 주문 잔액을 미매칭 추정으로 분리했습니다 "
-                    f"(네이버 매출 {naver_residual_revenue:,}원, 추정원가 {naver_residual_cogs:,}원)."
-                )
+                if naver_excluded_revenue:
+                    residual_notes.append(
+                        "출고 SKU가 확인되지 않은 네이버 주문은 매출 합계에는 표시하되 "
+                        f"손익에서 제외했습니다 (매출 {naver_residual_revenue:,}원, 반영 원가 0원)."
+                    )
+                else:
+                    residual_notes.append(
+                        f"출고 SKU가 확인되지 않은 주문 잔액을 미매칭 추정으로 분리했습니다 "
+                        f"(네이버 매출 {naver_residual_revenue:,}원, 추정원가 {naver_residual_cogs:,}원)."
+                    )
         cats = sorted(cat_map.items(), key=lambda kv: CATEGORY_ORDER.index(kv[0]) if kv[0] in CATEGORY_ORDER else 99)
 
         # 데이터 품질 노트
@@ -596,7 +641,8 @@ def build_month_detail(
                           "i",
                           artifact if report_date in used_artifact_dates else None,
                       )},
-            "naver": {"pay": g["npay"], "fee": n_fee, "dfee": g["ndf"], "cogs": nv["cogs"], "contrib": g["nc"],
+            "naver": {"pay": g["npay"], "fee": n_fee, "dfee": nv["dfee"], "cogs": nv["cogs"], "contrib": g["nc"],
+                      "excludedUnmatchedRevenue": naver_excluded_revenue,
                       **resolve_channel_stats(stat_map, d, "n")},
             "ads": {"meta": g["meta"], "google": g["google"], "naver": g["nsa"]},
             "products": [[name, c["qty"], c["buyers"], c["amt"], c["cogs"], c["iAmt"], c["nAmt"]] for name, c in cats],
