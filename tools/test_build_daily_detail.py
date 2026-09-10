@@ -9,7 +9,9 @@ from build_daily_detail import (
     CATEGORY_CASE_SQL,
     CATEGORY_ORDER,
     DEFAULT_IMWEB_ARTIFACT_DIR,
+    IMWEB_COMMERCE_SOURCES,
     SOURCE_SYSTEMS,
+    select_commerce_sources,
     resolve_channel_stats,
     resolve_end_exclusive,
 )
@@ -98,6 +100,51 @@ class DailyDetailContractTests(unittest.TestCase):
         html = Path(__file__).resolve().parent.parent.joinpath("index.html").read_text(encoding="utf-8")
         self.assertIn('excludedFromProfit = cat === "미매칭 손익 제외"', html)
         self.assertIn('excludedFromProfit ? "손익 제외"', html)
+
+    def test_imweb_commerce_sources_includes_imweb(self):
+        """Imweb official source must be included in IMWEB_COMMERCE_SOURCES."""
+        self.assertIn("imweb", IMWEB_COMMERCE_SOURCES)
+        self.assertIn("ga4_self_store", IMWEB_COMMERCE_SOURCES)
+        self.assertIn("naver_commerce", IMWEB_COMMERCE_SOURCES)
+
+    def test_legacy_source_systems_unchanged(self):
+        """Legacy SOURCE_SYSTEMS tuple preserved for backward compatibility."""
+        self.assertEqual(SOURCE_SYSTEMS, ("ga4_self_store", "naver_commerce"))
+
+    def test_balancy_cost_applies_to_both_imweb_and_ga4(self):
+        """Balancy /4 division must apply for both imweb and ga4_self_store."""
+        source = Path(__file__).with_name("build_daily_detail.py").read_text(encoding="utf-8")
+        self.assertIn("in ('ga4_self_store', 'imweb')", source)
+
+    def test_item_allocation_includes_imweb_source(self):
+        """Item allocation diagnostic must cover both imweb and ga4_self_store."""
+        source = Path(__file__).with_name("build_daily_detail.py").read_text(encoding="utf-8")
+        self.assertIn("in ('ga4_self_store', 'imweb')", source)
+
+    def test_both_sources_fail_closed_check_exists(self):
+        rows=[{'d':9,'source_system':s} for s in ('imweb','ga4_self_store')]
+        with self.assertRaisesRegex(SystemExit,'IMWEB_CANONICAL_SOURCE_SET_MISMATCH'):
+            select_commerce_sources(rows,'2026-09-09',True)
+
+    def test_partial_imweb_day_cannot_take_over(self):
+        with self.assertRaises(SystemExit):
+            select_commerce_sources([{'d':9,'source_system':'imweb'}],'2026-09-09',False)
+
+    def test_historical_physical_pairs_retain_prior_source(self):
+        rows=[{'d':1,'source_system':s} for s in ('imweb','ga4_self_store')]
+        rows.append({'d':9,'source_system':'imweb'})
+        self.assertEqual(select_commerce_sources(rows,'2026-09-09',True),
+                         {1:'ga4_self_store',9:'imweb'})
+
+    def test_no_explicit_commerce_date_keeps_legacy_selection(self):
+        self.assertEqual(select_commerce_sources([{'d':1,'source_system':'ga4_self_store'}],None,False),
+                         {1:'ga4_self_store'})
+
+    def test_subsequent_run_retains_verified_adopted_commerce_day(self):
+        rows=[{'d':9,'source_system':'imweb'},{'d':10,'source_system':'imweb'}]
+        self.assertEqual(select_commerce_sources(rows,'2026-09-10',{9:True,10:True},{9}),{9:'imweb',10:'imweb'})
+        with self.assertRaises(SystemExit):
+            select_commerce_sources(rows,'2026-09-10',{9:False,10:True},{9})
 
     def test_visible_generated_at_is_bound_to_the_meta_timestamp(self):
         html = Path(__file__).resolve().parent.parent.joinpath("index.html").read_text(encoding="utf-8")

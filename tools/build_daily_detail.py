@@ -14,9 +14,8 @@ index.html의 `const dailyDetailByMonth = ...;` 라인을 갱신한다.
 
 검증: 채널별 contrib == pay - fee - dfee - cogs (±2원). 불일치 시 실패 종료.
 
-타임존 규약: 웨어하우스(fact_order.paid_datetime)는 날짜 정오(KST)로 정규화 저장되고
-vw_naver_commerce_profit_daily도 UTC `::date` 절단을 쓰므로 이 스크립트도 같은 규약을 따른다.
-파이프라인이 실제 시각을 저장하도록 바뀌면 뷰와 함께 KST 변환으로 일괄 수정할 것.
+타임존 규약: 세션은 Asia/Seoul이다. 네이버 정오 정규화와 자사몰 실제 결제 시각을
+모두 한국 날짜로 조회하며 원결제 시각을 바꾸지 않는다.
 
 사용:
   DATABASE_URL=... python3 tools/build_daily_detail.py --month 2026-07 [--html index.html] [--dry-run]
@@ -53,6 +52,9 @@ CATEGORY_ORDER = [
     "미매칭 추정",
 ]
 SOURCE_SYSTEMS = ("ga4_self_store", "naver_commerce")
+# New Imweb commerce dates are explicit and verified against the whole API staging
+# set. Existing dates retain the historical GA4 source, including legacy pairs.
+IMWEB_COMMERCE_SOURCES = ("imweb", "ga4_self_store", "naver_commerce")
 BALANCY_SET_COST_SKUS = (
     "밸런시 마라 280g",
     "밸런시 시그니처 280g",
@@ -87,6 +89,22 @@ def fetch_all(cur, sql, params):
     cur.execute(sql, params)
     cols = [c[0] for c in cur.description]
     return [dict(zip(cols, row)) for row in cur.fetchall()]
+
+
+def select_commerce_sources(source_rows, required_date, canonical_equal, adopted_days=None):
+    """Only an explicitly required, fully verified date adopts commerce facts."""
+    by_day = {}
+    for row in source_rows:
+        by_day.setdefault(row['d'],set()).add(row['source_system'])
+    selected = {day:'ga4_self_store' for day in by_day}
+    adoption=set(adopted_days or [])
+    if required_date:adoption.add(date.fromisoformat(required_date).day)
+    for day in adoption:
+        equal=canonical_equal.get(day,False) if isinstance(canonical_equal,dict) else canonical_equal
+        if by_day.get(day)!= {'imweb'} or not equal:
+            raise SystemExit('IMWEB_CANONICAL_SOURCE_SET_MISMATCH: exact complete commerce source required')
+        selected[day]='imweb'
+    return selected
 
 
 def resolve_end_exclusive(month, through_date=None):
@@ -319,6 +337,42 @@ def build_month_detail(
     end = resolve_end_exclusive(month, through_date)
     end_sql = "%s::date"
     cur = conn.cursor()
+    cur.execute("SET LOCAL TIME ZONE 'Asia/Seoul'")
+
+    # Explicit adoption prevents a partial Imweb day from taking over a legacy
+    # date, and preserves historical output when physical legacy pairs coexist.
+    _src_rows = fetch_all(cur, f"""
+        select extract(day from fo.paid_datetime)::int d,
+               fo.source_system, count(*)::int cnt
+        from fact_order fo
+        where fo.source_system in ('imweb', 'ga4_self_store')
+          and fo.paid_datetime >= %s and fo.paid_datetime < {end_sql}
+        group by 1, 2
+    """, (start, end))
+    cur.execute("""SELECT extract(day from date_key::date)::int FROM imweb_profit_daily_summary
+       WHERE date_key::date >= %s AND date_key::date < %s::date
+         AND raw_row->>'canonical_commerce_source'='imweb'""",(start,end))
+    adopted_days={r[0] for r in cur.fetchall()}
+    required_days=set(adopted_days)
+    if required_self_store_category_date:required_days.add(date.fromisoformat(required_self_store_category_date).day)
+    canonical_equal={}
+    for selected_day in sorted(required_days):
+        selected_date=f'{month}-{selected_day:02d}'
+        cur.execute("""WITH staged AS (
+          SELECT source_order_id,paid_datetime,is_valid_purchase,payment_amount,
+                 coalesce(refund_amount,0) refund_amount
+          FROM stg_orders_clean WHERE source_system='imweb' AND paid_datetime::date=%s::date
+        ), materialized AS (
+          SELECT source_order_id,paid_datetime,is_valid_purchase,payment_amount,
+                 coalesce(refund_amount,0) refund_amount
+          FROM fact_order WHERE source_system='imweb' AND paid_datetime::date=%s::date
+        ), differences AS (
+          (SELECT * FROM staged EXCEPT ALL SELECT * FROM materialized)
+          UNION ALL (SELECT * FROM materialized EXCEPT ALL SELECT * FROM staged)
+        ) SELECT (SELECT count(*) FROM staged)>0 AND NOT EXISTS(SELECT 1 FROM differences)""",
+            (selected_date,selected_date))
+        canonical_equal[selected_day]=cur.fetchone()[0]
+    _day_sources=select_commerce_sources(_src_rows,required_self_store_category_date,canonical_equal,adopted_days)
 
     gauge = fetch_all(cur, f"""
         select extract(day from report_date)::int d,
@@ -367,6 +421,7 @@ def build_month_detail(
 
     stats = fetch_all(cur, f"""
         select extract(day from fo.paid_datetime)::int d,
+               fo.source_system,
                case when fo.source_system = 'naver_commerce' then 'n' else 'i' end ch,
                count(distinct fo.internal_order_id)::int orders,
                count(distinct fo.internal_customer_id)::int buyers,
@@ -376,9 +431,14 @@ def build_month_detail(
         where fo.is_valid_purchase
           and fo.source_system = any(%s)
           and fo.paid_datetime >= %s and fo.paid_datetime < {end_sql}
-        group by 1, 2
-    """, (list(SOURCE_SYSTEMS), start, end))
-    stat_map = {(r["d"], r["ch"]): r for r in stats}
+        group by 1, 2, 3
+    """, (list(IMWEB_COMMERCE_SOURCES), start, end))
+    # Filter stats to only the selected source per day
+    stat_map = {}
+    for r in stats:
+        day_src = _day_sources.get(r["d"], "ga4_self_store")
+        if r["source_system"] == "naver_commerce" or r["source_system"] == day_src:
+            stat_map[(r["d"], r["ch"])] = r
 
     cat_sql = CATEGORY_CASE_SQL.replace("%", "%%")  # psycopg2 paramstyle에서 LIKE % 이스케이프
     products = fetch_all(cur, f"""
@@ -389,7 +449,7 @@ def build_month_detail(
                  coalesce(fo.net_payment_amount, fo.payment_amount, 0)::numeric order_revenue,
                  sem.matched_sku_name nm, sem.matched_qty::numeric qty,
                  case
-                   when sem.source_system = 'ga4_self_store'
+                   when sem.source_system in ('ga4_self_store', 'imweb')
                     and sem.matched_sku_name = any(%s)
                    then coalesce(cm.cogs, 0) / 4
                    else coalesce(cm.cogs, 0)
@@ -415,40 +475,48 @@ def build_month_detail(
             and sem.matched_qty > 0
             and sem.report_date >= %s and sem.report_date < {end_sql}
             and fo.paid_datetime >= %s and fo.paid_datetime < {end_sql}
+        ), rounded_lines as (
+          select *, case when source_system='imweb' then round(qty * unit_cost)
+                         else qty * unit_cost end as shipment_line_cogs
+          from costed_matching
         ), order_lines as (
           select d, ch, source_system, source_order_id, internal_customer_id,
-                 order_revenue, nm, sum(qty)::numeric qty, max(unit_cost)::numeric unit_cost
-          from costed_matching
+                 order_revenue, nm, sum(qty)::numeric qty, sum(shipment_line_cogs)::numeric line_cogs
+          from rounded_lines
           group by 1, 2, 3, 4, 5, 6, 7
         ), weighted as (
-          select *, qty * unit_cost as line_cogs,
-                 sum(qty * unit_cost) over (partition by source_system, source_order_id) as order_cogs
+          select *, sum(line_cogs) over (partition by source_system, source_order_id) as order_cogs
           from order_lines
         ), items as (
-          select d, ch, internal_customer_id, nm, qty, line_cogs cogs,
+          select d, ch, source_system, internal_customer_id, nm, qty, line_cogs cogs,
                  case when order_cogs > 0 then order_revenue * line_cogs / order_cogs else 0 end amt
           from weighted
         )
-        select d, ch, {cat_sql} category,
+        select d, ch, source_system, {cat_sql} category,
                sum(qty)::int qty, count(distinct internal_customer_id)::int buyers,
                round(sum(amt))::bigint amt, round(sum(cogs))::bigint cogs
-        from items group by 1, 2, 3
-    """, (list(BALANCY_SET_COST_SKUS), list(SOURCE_SYSTEMS), start, end, start, end))
+        from items group by 1, 2, 3, 4
+    """, (list(BALANCY_SET_COST_SKUS), list(IMWEB_COMMERCE_SOURCES), start, end, start, end))
+    products=[r for r in products if r['source_system']=='naver_commerce' or
+              r['source_system']==_day_sources.get(r['d'],'ga4_self_store')]
 
     # 자사몰 fact_order_item 배분 규약 감지 (품목표 원천 아님 — 경고 노트 전용).
     # 웨어하우스 전체 리빌드는 수량비례(source_order_item_id null), 자사몰 일별수익
     # 파이프라인은 아이템 피드 실금액(orderno:idx)으로 같은 테이블을 날짜 단위로
     # 덮어써서, 마지막 기록자에 따라 품목 단가가 날짜별로 플립된다(소스 40g ~3,500원 ↔ ~500원).
-    item_allocation = {r["d"]: r for r in fetch_all(cur, f"""
+    item_allocation_rows = fetch_all(cur, f"""
         select extract(day from fo.paid_datetime)::int d,
+               fo.source_system,
                count(*) filter (where foi.source_order_item_id is null)::int qty_share_rows,
                count(*) filter (where foi.source_order_item_id is not null)::int feed_rows
         from fact_order_item foi
         join fact_order fo on fo.internal_order_id = foi.internal_order_id
-        where fo.source_system = 'ga4_self_store'
+        where fo.source_system in ('ga4_self_store', 'imweb')
           and fo.paid_datetime >= %s and fo.paid_datetime < {end_sql}
-        group by 1
-    """, (start, end))}
+        group by 1, 2
+    """, (start, end))
+    item_allocation={r['d']:r for r in item_allocation_rows if
+                     r['source_system']==_day_sources.get(r['d'],'ga4_self_store')}
 
     artifact_days, artifact_issues = load_self_store_artifact_days(
         month,
