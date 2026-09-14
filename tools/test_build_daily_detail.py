@@ -126,6 +126,18 @@ class DailyDetailContractTests(unittest.TestCase):
         with self.assertRaisesRegex(SystemExit,'IMWEB_CANONICAL_SOURCE_SET_MISMATCH'):
             select_commerce_sources(rows,'2026-09-09',True)
 
+    def test_verified_legacy_pair_does_not_block_imweb_adoption(self):
+        rows=[{'d':9,'source_system':s} for s in ('imweb','ga4_self_store')]
+        self.assertEqual(
+            select_commerce_sources(rows,'2026-09-09',True,legacy_pair_equal={9:True}),
+            {9:'imweb'},
+        )
+
+    def test_non_equivalent_legacy_pair_still_fails_closed(self):
+        rows=[{'d':9,'source_system':s} for s in ('imweb','ga4_self_store')]
+        with self.assertRaisesRegex(SystemExit,'IMWEB_CANONICAL_SOURCE_SET_MISMATCH'):
+            select_commerce_sources(rows,'2026-09-09',True,legacy_pair_equal={9:False})
+
     def test_partial_imweb_day_cannot_take_over(self):
         with self.assertRaises(SystemExit):
             select_commerce_sources([{'d':9,'source_system':'imweb'}],'2026-09-09',False)

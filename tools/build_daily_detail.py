@@ -91,7 +91,8 @@ def fetch_all(cur, sql, params):
     return [dict(zip(cols, row)) for row in cur.fetchall()]
 
 
-def select_commerce_sources(source_rows, required_date, canonical_equal, adopted_days=None):
+def select_commerce_sources(source_rows, required_date, canonical_equal,
+                            adopted_days=None, legacy_pair_equal=None):
     """Only an explicitly required, fully verified date adopts commerce facts."""
     by_day = {}
     for row in source_rows:
@@ -101,7 +102,11 @@ def select_commerce_sources(source_rows, required_date, canonical_equal, adopted
     if required_date:adoption.add(date.fromisoformat(required_date).day)
     for day in adoption:
         equal=canonical_equal.get(day,False) if isinstance(canonical_equal,dict) else canonical_equal
-        if by_day.get(day)!= {'imweb'} or not equal:
+        sources=by_day.get(day)
+        legacy_equal=(legacy_pair_equal or {}).get(day,False)
+        valid_source_set=(sources=={'imweb'} or
+                          (sources=={'imweb','ga4_self_store'} and legacy_equal))
+        if not valid_source_set or not equal:
             raise SystemExit('IMWEB_CANONICAL_SOURCE_SET_MISMATCH: exact complete commerce source required')
         selected[day]='imweb'
     return selected
@@ -356,6 +361,7 @@ def build_month_detail(
     required_days=set(adopted_days)
     if required_self_store_category_date:required_days.add(date.fromisoformat(required_self_store_category_date).day)
     canonical_equal={}
+    legacy_pair_equal={}
     for selected_day in sorted(required_days):
         selected_date=f'{month}-{selected_day:02d}'
         cur.execute("""WITH staged AS (
@@ -372,7 +378,28 @@ def build_month_detail(
         ) SELECT (SELECT count(*) FROM staged)>0 AND NOT EXISTS(SELECT 1 FROM differences)""",
             (selected_date,selected_date))
         canonical_equal[selected_day]=cur.fetchone()[0]
-    _day_sources=select_commerce_sources(_src_rows,required_self_store_category_date,canonical_equal,adopted_days)
+        cur.execute("""WITH imweb AS (
+          SELECT source_order_id,(paid_datetime AT TIME ZONE 'Asia/Seoul')::date paid_date,
+                 is_valid_purchase,payment_amount,coalesce(refund_amount,0) refund_amount
+          FROM fact_order WHERE source_system='imweb'
+            AND (paid_datetime AT TIME ZONE 'Asia/Seoul')::date=%s::date
+        ), legacy AS (
+          SELECT source_order_id,(paid_datetime AT TIME ZONE 'Asia/Seoul')::date paid_date,
+                 is_valid_purchase,payment_amount,coalesce(refund_amount,0) refund_amount
+          FROM fact_order WHERE source_system='ga4_self_store'
+            AND (paid_datetime AT TIME ZONE 'Asia/Seoul')::date=%s::date
+        ), differences AS (
+          (SELECT * FROM imweb EXCEPT ALL SELECT * FROM legacy)
+          UNION ALL (SELECT * FROM legacy EXCEPT ALL SELECT * FROM imweb)
+        ) SELECT (SELECT count(*) FROM imweb)>0
+              AND (SELECT count(*) FROM legacy)>0
+              AND NOT EXISTS(SELECT 1 FROM differences)""",
+            (selected_date,selected_date))
+        legacy_pair_equal[selected_day]=cur.fetchone()[0]
+    _day_sources=select_commerce_sources(
+        _src_rows,required_self_store_category_date,canonical_equal,adopted_days,
+        legacy_pair_equal,
+    )
 
     gauge = fetch_all(cur, f"""
         select extract(day from report_date)::int d,
