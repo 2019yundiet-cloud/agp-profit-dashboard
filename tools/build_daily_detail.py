@@ -227,6 +227,9 @@ def load_self_store_artifact_days(month, artifact_dir, allowed_low_coverage_date
             violations.append("by_imweb_items")
         if int(stats.get("by_ezadmin_packlist") or 0) != int(stats.get("matched") or 0):
             violations.append("packlist_count")
+        unmatched_profit_excluded = bool(summary.get("unmatched_profit_excluded"))
+        if unmatched_profit_excluded and int(round(float(summary.get("unmatched_revenue") or 0))) <= 0:
+            violations.append("unmatched_profit_excluded_without_revenue")
         low_coverage_exception = (
             float(summary.get("cost_coverage_rate") or 0) < 0.90
             and report_date in allowed_low_coverage_dates
@@ -326,6 +329,7 @@ def load_self_store_artifact_days(month, artifact_dir, allowed_low_coverage_date
             "total_orders": int(summary.get("total_orders") or 0),
             "fingerprint": fingerprint,
             "low_coverage_exception": low_coverage_exception,
+            "unmatched_profit_excluded": unmatched_profit_excluded,
         }
     return days, issues
 
@@ -351,6 +355,7 @@ def build_month_detail(
                fo.source_system, count(*)::int cnt
         from fact_order fo
         where fo.source_system in ('imweb', 'ga4_self_store')
+          and fo.is_valid_purchase
           and fo.paid_datetime >= %s and fo.paid_datetime < {end_sql}
         group by 1, 2
     """, (start, end))
@@ -367,11 +372,13 @@ def build_month_detail(
         cur.execute("""WITH staged AS (
           SELECT source_order_id,paid_datetime,is_valid_purchase,payment_amount,
                  coalesce(refund_amount,0) refund_amount
-          FROM stg_orders_clean WHERE source_system='imweb' AND paid_datetime::date=%s::date
+          FROM stg_orders_clean WHERE source_system='imweb' AND is_valid_purchase
+            AND paid_datetime::date=%s::date
         ), materialized AS (
           SELECT source_order_id,paid_datetime,is_valid_purchase,payment_amount,
                  coalesce(refund_amount,0) refund_amount
-          FROM fact_order WHERE source_system='imweb' AND paid_datetime::date=%s::date
+          FROM fact_order WHERE source_system='imweb' AND is_valid_purchase
+            AND paid_datetime::date=%s::date
         ), differences AS (
           (SELECT * FROM staged EXCEPT ALL SELECT * FROM materialized)
           UNION ALL (SELECT * FROM materialized EXCEPT ALL SELECT * FROM staged)
@@ -381,12 +388,12 @@ def build_month_detail(
         cur.execute("""WITH imweb AS (
           SELECT source_order_id,(paid_datetime AT TIME ZONE 'Asia/Seoul')::date paid_date,
                  is_valid_purchase,payment_amount,coalesce(refund_amount,0) refund_amount
-          FROM fact_order WHERE source_system='imweb'
+          FROM fact_order WHERE source_system='imweb' AND is_valid_purchase
             AND (paid_datetime AT TIME ZONE 'Asia/Seoul')::date=%s::date
         ), legacy AS (
           SELECT source_order_id,(paid_datetime AT TIME ZONE 'Asia/Seoul')::date paid_date,
                  is_valid_purchase,payment_amount,coalesce(refund_amount,0) refund_amount
-          FROM fact_order WHERE source_system='ga4_self_store'
+          FROM fact_order WHERE source_system='ga4_self_store' AND is_valid_purchase
             AND (paid_datetime AT TIME ZONE 'Asia/Seoul')::date=%s::date
         ), differences AS (
           (SELECT * FROM imweb EXCEPT ALL SELECT * FROM legacy)
@@ -452,8 +459,24 @@ def build_month_detail(
                case when fo.source_system = 'naver_commerce' then 'n' else 'i' end ch,
                count(distinct fo.internal_order_id)::int orders,
                count(distinct fo.internal_customer_id)::int buyers,
-               count(distinct fo.internal_customer_id) filter (where fo.is_first_order)::int first,
-               count(distinct fo.internal_customer_id) filter (where fo.is_repeat_order)::int repeat
+               count(distinct fo.internal_customer_id) filter (where not exists (
+                 select 1 from fact_order prior
+                 where prior.internal_customer_id=fo.internal_customer_id
+                   and prior.is_valid_purchase
+                   and prior.paid_datetime < (
+                     date_trunc('day', fo.paid_datetime at time zone 'Asia/Seoul')
+                     at time zone 'Asia/Seoul'
+                   )
+               ))::int first,
+               count(distinct fo.internal_customer_id) filter (where exists (
+                 select 1 from fact_order prior
+                 where prior.internal_customer_id=fo.internal_customer_id
+                   and prior.is_valid_purchase
+                   and prior.paid_datetime < (
+                     date_trunc('day', fo.paid_datetime at time zone 'Asia/Seoul')
+                     at time zone 'Asia/Seoul'
+                   )
+               ))::int repeat
         from fact_order fo
         where fo.is_valid_purchase
           and fo.source_system = any(%s)
@@ -596,9 +619,18 @@ def build_month_detail(
                     f"(매출 반영률 {artifact['matched_revenue'] / max(artifact['total_revenue'], 1) * 100:.1f}%, "
                     f"스냅샷 {artifact['fingerprint'][:12]})."
                 )
-                if artifact["low_coverage_exception"]:
-                    if artifact["unmatched_cogs"] == 0:
+                if artifact["unmatched_profit_excluded"]:
+                    if artifact["unmatched_cogs"] != 0:
+                        errors.append(
+                            f"{report_date}: 손익 제외 주문에 추정 원가가 남아 있습니다 "
+                            f"({artifact['unmatched_cogs']})"
+                        )
+                    else:
                         matched_basis_excluded_revenue = artifact["unmatched_revenue"]
+                    artifact_note += (
+                        " 출고 원가가 확인되지 않은 주문은 매출에 보존하고 손익에서는 제외했습니다."
+                    )
+                elif artifact["low_coverage_exception"]:
                     artifact_note += (
                         " 사용자 승인에 따라 잠정 매칭 기준으로 게시했으며, "
                         "미매칭 주문의 원가는 추정하지 않았습니다."

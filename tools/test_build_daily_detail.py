@@ -1,4 +1,6 @@
+import json
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -11,6 +13,7 @@ from build_daily_detail import (
     DEFAULT_IMWEB_ARTIFACT_DIR,
     IMWEB_COMMERCE_SOURCES,
     SOURCE_SYSTEMS,
+    load_self_store_artifact_days,
     select_commerce_sources,
     resolve_channel_stats,
     resolve_end_exclusive,
@@ -57,6 +60,12 @@ class DailyDetailContractTests(unittest.TestCase):
         source = Path(__file__).with_name("build_daily_detail.py").read_text(encoding="utf-8")
         self.assertIn("fo.source_system = any(%s)", source)
 
+    def test_buyer_status_is_derived_from_prior_valid_orders(self):
+        source = Path(__file__).with_name("build_daily_detail.py").read_text(encoding="utf-8")
+        self.assertIn("not exists (", source)
+        self.assertIn("prior.is_valid_purchase", source)
+        self.assertNotIn("filter (where fo.is_first_order)", source)
+
     def test_verified_self_store_artifact_overrides_only_order_count(self):
         stat_map = {
             (26, "i"): {"orders": 40, "buyers": 40, "first": 0, "repeat": 40}
@@ -95,6 +104,36 @@ class DailyDetailContractTests(unittest.TestCase):
         self.assertIn("excludedUnmatchedRevenue", source)
         self.assertIn("미매칭 손익 제외", source)
         self.assertIn("사용자 승인 잠정 매칭 기준", source)
+
+    def test_high_coverage_unmatched_profit_exclusion_is_preserved(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            day_dir = Path(tmpdir) / "2026-09-14"
+            day_dir.mkdir()
+            (day_dir / "ez_matching.json").write_text(json.dumps({
+                "matching_mode": "ezadmin_packlist_only",
+                "stats": {"matched": 1, "by_ezadmin_packlist": 1, "by_imweb_items": 0},
+            }), encoding="utf-8")
+            (day_dir / "ga4_profit.json").write_text(json.dumps({
+                "summary": {
+                    "date": "2026-09-14", "total_orders": 2,
+                    "total_revenue": 11000, "matched_revenue": 10000,
+                    "unmatched_revenue": 1000, "cost_coverage_rate": 0.9091,
+                    "total_sku_cost": 3000, "unmatched_profit_excluded": True,
+                },
+                "orders": [
+                    {"match_status": "완전매칭", "payment_amount": 10000,
+                     "sku_cost": 3000, "sku_profitability": [{
+                         "sku": "단백밥", "qty": 1, "revenue_allocated": 10000,
+                         "total_cost": 3000,
+                     }]},
+                    {"match_status": "미매칭", "payment_amount": 1000,
+                     "sku_cost": 0, "sku_profitability": []},
+                ],
+            }), encoding="utf-8")
+            days, issues = load_self_store_artifact_days("2026-09", Path(tmpdir))
+            self.assertEqual(issues, {})
+            self.assertTrue(days["2026-09-14"]["unmatched_profit_excluded"])
+            self.assertEqual(days["2026-09-14"]["unmatched_cogs"], 0)
 
     def test_dashboard_does_not_render_excluded_revenue_as_product_margin(self):
         html = Path(__file__).resolve().parent.parent.joinpath("index.html").read_text(encoding="utf-8")
