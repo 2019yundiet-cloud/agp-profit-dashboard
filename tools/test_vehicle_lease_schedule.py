@@ -174,10 +174,10 @@ class VehicleLeaseScheduleTests(unittest.TestCase):
     def test_november_excludes_kb_lease_and_recalculates_total(self):
         october_rows = {name: amount for name, amount, *_ in self.scheduled_fixed_cost_rows("2026-10")}
         november_rows = {name: amount for name, amount, *_ in self.scheduled_fixed_cost_rows("2026-11")}
-        self.assertEqual(sum(october_rows.values()), 17831385)
+        self.assertEqual(sum(october_rows.values()), 17266756)
         self.assertIn("차량 리스 · KB (아빠 차량, 인상)", october_rows)
         self.assertNotIn("차량 리스 · KB (아빠 차량, 인상)", november_rows)
-        self.assertEqual(sum(november_rows.values()), 16884245)
+        self.assertEqual(sum(november_rows.values()), 16398995)
 
     def test_future_change_schedule_is_visible(self):
         self.assertIn('id="fixedCostChangeRows"', self.html)
@@ -195,6 +195,8 @@ class VehicleLeaseScheduleTests(unittest.TestCase):
         self.assertIn(("2026-08", "네이버페이 Plus", "해지 확정 (월 14,800원 제외)"), visible_changes)
         self.assertIn(("2026-09", "BMW 리스료", "월 1,068,993원 → 678,028원"), visible_changes)
         self.assertIn(("2026-11", "KB 리스료", "종료 (월 947,140원 제외)"), visible_changes)
+        self.assertIn(("2026-10", "신용보증재단 대출", "원금 전액 상환 (월 657,464원 제외)"), visible_changes)
+        self.assertIn(("2026-11", "클린플러스 대출이자", "월 92,835원(10/15 첫 이자) → 172,214원(잔액 49,869,018원 기준)"), visible_changes)
 
     def test_august_to_december_forecast_table_uses_audited_totals(self):
         self.assertIn('id="fixedCostForecastRows"', self.html)
@@ -205,16 +207,16 @@ class VehicleLeaseScheduleTests(unittest.TestCase):
         expected_totals = {
             "2026-08": 18222350,
             "2026-09": 17831385,
-            "2026-10": 17831385,
-            "2026-11": 16884245,
-            "2026-12": 16884245,
+            "2026-10": 17266756,
+            "2026-11": 16398995,
+            "2026-12": 16398995,
         }
         for month, expected_total in expected_totals.items():
             rows = self.scheduled_fixed_cost_rows(month)
             self.assertEqual(sum(row[1] for row in rows), expected_total)
         self.assertIn("10월 기보 연장·원금 추가 납입액은 아직 확정되지 않아 포함하지 않았습니다.", self.html)
         october = next(row for row in self.fixed_cost_forecast_months if row["month"] == "2026-10")
-        self.assertEqual(october["status"], "기본 예상")
+        self.assertEqual(october["status"], "대표 확인")
         self.assertIn("기보 추가금 미포함", october["change"])
 
     def test_monthly_fixed_cost_totals_are_recalculated(self):
