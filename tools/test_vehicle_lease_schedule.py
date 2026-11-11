@@ -125,8 +125,9 @@ class VehicleLeaseScheduleTests(unittest.TestCase):
         self.assertIn(["차량 리스 · BMW (윤준호 차량)", 678028], september_period["rows"])
         self.assertEqual(november_period["effectiveFrom"], "2026-11")
         self.assertIsNone(november_period["effectiveTo"])
-        self.assertEqual(sum(amount for _, amount in november_period["rows"]), 1232428)
+        self.assertEqual(sum(amount for _, amount in november_period["rows"]), 1998240)
         self.assertNotIn(["차량 리스 · KB (아빠 차량, 인상)", 947140], november_period["rows"])
+        self.assertIn(["차량 리스 · KB (아빠 차량, 계속)", 813840], november_period["rows"])  # 11/2 출금 확인, 대표 11/11
 
     def test_vehicle_insurance_is_separate_and_effective_from_june(self):
         self.assertEqual(
@@ -177,7 +178,9 @@ class VehicleLeaseScheduleTests(unittest.TestCase):
         self.assertEqual(sum(october_rows.values()), 17266756)
         self.assertIn("차량 리스 · KB (아빠 차량, 인상)", october_rows)
         self.assertNotIn("차량 리스 · KB (아빠 차량, 인상)", november_rows)
-        self.assertEqual(sum(november_rows.values()), 17828995)
+        self.assertEqual(november_rows["차량 리스 · KB (아빠 차량, 계속)"], 813840)
+        self.assertNotIn("사스 서비스 · OpenAI", november_rows)
+        self.assertEqual(sum(november_rows.values()), 18079842)
         self.assertEqual(november_rows["사무실 월세"], 1430000)
 
     def test_future_change_schedule_is_visible(self):
@@ -195,10 +198,10 @@ class VehicleLeaseScheduleTests(unittest.TestCase):
         self.assertIn(("2026-08", "정기과금_나이스", "해지 확정 (월 54,890원 제외)"), visible_changes)
         self.assertIn(("2026-08", "네이버페이 Plus", "해지 확정 (월 14,800원 제외)"), visible_changes)
         self.assertIn(("2026-09", "BMW 리스료", "월 1,068,993원 → 678,028원"), visible_changes)
-        self.assertIn(("2026-11", "KB 리스료", "종료 (월 947,140원 제외)"), visible_changes)
+        self.assertIn(("2026-11", "KB 리스료", "계속 (아버지 차량, 월 947,140원 → 813,840원 — 11/2 출금 확인)"), visible_changes)
         self.assertIn(("2026-11", "사무실 월세", "추가 (월 1,430,000원)"), visible_changes)
         self.assertIn(("2026-10", "신용보증재단 대출", "원금 전액 상환 (월 657,464원 제외)"), visible_changes)
-        self.assertIn(("2026-11", "클린플러스 대출이자", "월 92,835원(10/15 첫 이자) → 172,214원(잔액 49,869,018원 기준)"), visible_changes)
+        self.assertIn(("2026-11", "클린플러스 대출이자", "월 92,835원(10/15 첫 이자) → 489,135원(잔액 141,641,317원 기준, 11/11 재계산)"), visible_changes)
 
     def test_august_to_december_forecast_table_uses_audited_totals(self):
         self.assertIn('id="fixedCostForecastRows"', self.html)
@@ -210,8 +213,8 @@ class VehicleLeaseScheduleTests(unittest.TestCase):
             "2026-08": 18222350,
             "2026-09": 17831385,
             "2026-10": 17266756,
-            "2026-11": 17828995,
-            "2026-12": 17828995,
+            "2026-11": 18079842,
+            "2026-12": 18079842,
         }
         for month, expected_total in expected_totals.items():
             rows = self.scheduled_fixed_cost_rows(month)
