@@ -180,7 +180,7 @@ class VehicleLeaseScheduleTests(unittest.TestCase):
         self.assertNotIn("차량 리스 · KB (아빠 차량, 인상)", november_rows)
         self.assertEqual(november_rows["차량 리스 · KB (아빠 차량, 계속)"], 813840)
         self.assertNotIn("사스 서비스 · OpenAI", november_rows)
-        self.assertEqual(sum(november_rows.values()), 18079842)
+        self.assertEqual(sum(november_rows.values()), 17172998)
         self.assertEqual(november_rows["사무실 월세"], 1430000)
 
     def test_future_change_schedule_is_visible(self):
@@ -213,8 +213,8 @@ class VehicleLeaseScheduleTests(unittest.TestCase):
             "2026-08": 18222350,
             "2026-09": 17831385,
             "2026-10": 17266756,
-            "2026-11": 18079842,
-            "2026-12": 18079842,
+            "2026-11": 17172998,
+            "2026-12": 17172998,
         }
         for month, expected_total in expected_totals.items():
             rows = self.scheduled_fixed_cost_rows(month)
