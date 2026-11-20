@@ -65,7 +65,9 @@ def fetch_rows(database_url, month, through_date=None):
                      select (to_jsonb(nv)->>'unmatched_profit_excluded')::boolean
                      from vw_naver_commerce_profit_daily nv
                      where nv.report_date = daily_source.report_date
-                   ), false)
+                   ), false),
+                   round(coalesce(crm_message_spend, 0))::bigint,
+                   coalesce(crm_message_spend_source, 'missing')
             from (
               select source_rows.*,
                      coalesce(gauge_rows.data_quality_bucket, 'UNKNOWN') as data_quality_bucket
@@ -85,7 +87,7 @@ def fetch_rows(database_url, month, through_date=None):
 def render_block(month, rows):
     entries = []
     quality_counts = {}
-    for (d, pay, ipay, npay, ic, nc, meta, google, nsa, idf, ndf, tdf, ms, gs, ns, q, _nu, _nue) in rows:
+    for (d, pay, ipay, npay, ic, nc, meta, google, nsa, idf, ndf, tdf, ms, gs, ns, q, _nu, _nue, crm, crms) in rows:
         quality_counts[q] = quality_counts.get(q, 0) + 1
         entry = {
             "day": d, "revenue": num(pay), "selfRevenueApi": num(ipay), "naverRevenueApi": num(npay),
@@ -93,6 +95,8 @@ def render_block(month, rows):
             "naverAd": num(nsa), "imwebDeliveryFee": num(idf), "naverDeliveryFee": num(ndf),
             "totalDeliveryFee": num(tdf), "metaSource": ms, "googleSource": gs,
             "naverSearchSource": ns, "quality": q,
+            # 2026-11-20 CRM 메시지 비용(솔라피+카카오 비즈월렛, VAT 제외)도 마케팅비로 차감
+            "crmMessage": num(crm), "crmSource": crms,
         }
         lines = ",\n".join(
             f'                              "{k}": {json.dumps(v, ensure_ascii=False)}' for k, v in entry.items()

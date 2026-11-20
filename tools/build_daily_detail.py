@@ -412,6 +412,7 @@ def build_month_detail(
         select extract(day from report_date)::int d,
                round(meta_ad_spend)::bigint meta, round(google_ads_spend)::bigint google,
                round(naver_searchad_spend)::bigint nsa,
+               round(coalesce(crm_message_spend, 0))::bigint crm,
                round(imweb_delivery_fee)::bigint idf, round(naver_delivery_fee)::bigint ndf,
                round(imweb_payment_amount)::bigint ipay, round(naver_payment_amount)::bigint npay,
                round(imweb_contribution)::bigint ic, round(naver_contribution)::bigint nc
@@ -771,7 +772,7 @@ def build_month_detail(
             "naver": {"pay": g["npay"], "fee": n_fee, "dfee": nv["dfee"], "cogs": nv["cogs"], "contrib": g["nc"],
                       "excludedUnmatchedRevenue": naver_excluded_revenue,
                       **resolve_channel_stats(stat_map, d, "n")},
-            "ads": {"meta": g["meta"], "google": g["google"], "naver": g["nsa"]},
+            "ads": {"meta": g["meta"], "google": g["google"], "naver": g["nsa"], "crm": g.get("crm", 0) or 0},
             "products": [[name, c["qty"], c["buyers"], c["amt"], c["cogs"], c["iAmt"], c["nAmt"]] for name, c in cats],
             "notes": notes,
         }
