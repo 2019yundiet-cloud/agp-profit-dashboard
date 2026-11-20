@@ -24,6 +24,9 @@ import psycopg2
 
 
 NAVER_UNMATCHED_PROFIT_EFFECTIVE_DATE = date(2026, 8, 27)
+# 2026-11-20 대표 승인: CRM 메시지 비용(솔라피+카카오 비즈월렛)을 마케팅비로 차감. 이 날짜부터
+# 두 채널 행(0원 포함)이 stg_ads_daily에 없으면 0으로 보지 않고 게시를 막는다.
+CRM_MESSAGE_SPEND_EFFECTIVE_DATE = date(2026, 11, 1)
 
 
 def num(v):
@@ -123,6 +126,21 @@ def validate_naver_unmatched_profit_contract(month, rows):
     if failures:
         raise SystemExit(
             "NAVER_UNMATCHED_PROFIT_CONTRACT_MISSING: " + ",".join(failures)
+        )
+
+
+def validate_crm_message_spend_contract(month, rows):
+    """Block a publish when a post-contract day lacks verified CRM spend rows."""
+    failures = []
+    for row in rows:
+        report_date = date.fromisoformat(f"{month}-{int(row[0]):02d}")
+        if report_date >= CRM_MESSAGE_SPEND_EFFECTIVE_DATE and row[19] != "stg_ads_daily":
+            failures.append(f"{report_date.isoformat()}({row[19]})")
+    if failures:
+        raise SystemExit(
+            "crm_spend_missing: " + ",".join(failures)
+            + " — python3 /Users/junho/Documents/codex/scripts/collect_crm_message_spend.py"
+            " --start-date <D> --end-date <D> --allow-db-write"
         )
 
 
@@ -243,6 +261,7 @@ def main():
 
     rows = fetch_rows(database_url, args.month, args.through_date)
     validate_naver_unmatched_profit_contract(args.month, rows)
+    validate_crm_message_spend_contract(args.month, rows)
     validate_row_coverage(args.month, rows)
     block, quality_str = render_block(args.month, rows)
     update_html(
